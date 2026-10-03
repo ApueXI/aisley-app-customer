@@ -1,12 +1,12 @@
 # Fresh Customer Flutter project setup
 
-These commands are implementation instructions to run **in the destination Flutter repository**, not commands executed in this documentation task. No Flutter project, package installation or backend configuration was created here.
+Creation, build and runtime commands below are implementation instructions for a destination Flutter repository. Executed SDK, dependency-resolution and analysis checks are recorded separately below. This documentation correction preserves the existing scaffold and application dependencies; feature packages were resolved only in a temporary verification project, and backend configuration was unchanged.
 
-## Stable baseline and compatibility evidence
+## Selected project SDK and compatibility evidence
 
-Use **Flutter 3.35.4 stable / Dart 3.9.2** (Flutter revision `d693b4b9dbac2acd4477aea4555ca6dcbea44ba2`). This is a concrete compatible baseline, not a claim to be the latest SDK. Official release metadata and package constraints inspected on 2026-10-03 are recorded in [package-baseline.json](references/package-baseline.json). [Flutter archive](https://docs.flutter.dev/install/archive)
+Preserve this project’s selected **Flutter 3.47.2 stable / Dart 3.13.2** (Flutter revision `d3b14c876900e553bc736ca19295fc09e3853e8e`), verified with `flutter --version --machine` on 2026-10-04. Its existing pubspec.yaml requires `sdk: ^3.13.2`; the historical Dart 3.9.2 baseline cannot satisfy that constraint. Do not downgrade the SDK or loosen the project constraint to follow the old handoff. [package-baseline.json](references/package-baseline.json) retains the 2026-10-03 metadata inspection separately from current executed checks.
 
-Install/select the baseline through your approved SDK tooling, then verify `flutter --version` and `flutter doctor -v`. Resolve dependencies and commit pubspec.lock in the application repository. All direct SDK constraints accept this baseline; flutter_map 8.2.2 accepts latlong2 ^0.9.1. Transitive resolution, Android toolchain/plugin behavior and browser compatibility are still required checks, not established by metadata inspection.
+For a fresh destination, select the same SDK through approved tooling and verify `flutter --version` and `flutter doctor -v`; preserve the selected SDK in this existing repository. Keep pubspec.lock committed. On 2026-10-04, `flutter pub get --enforce-lockfile` passed for the existing scaffold and `flutter analyze --no-pub` reported no issues. Separately, all ten package pins below resolved together with `sdk: ^3.13.2` in an isolated temporary manifest, including the optional map packages. The application’s dependencies and lockfile were unchanged. This proves dependency resolution, not feature implementation, plugin runtime behavior, Android/web builds or target acceptance; those checks remain pending.
 
 | Package | Pin | Purpose / constraint evidence |
 | --- | --- | --- |
@@ -21,7 +21,7 @@ Install/select the baseline through your approved SDK tooling, then verify `flut
 | [latlong2](https://pub.dev/packages/latlong2/versions/0.9.1) | 0.9.1 | Optional coordinates; Dart≥3 <4 |
 | [geolocator](https://pub.dev/packages/geolocator/versions/14.0.2) | 14.0.2 | Optional foreground GPS; Dart ^3.5 |
 
-## Create and copy
+## Fresh destination creation and copy
 
 ```sh
 flutter create --platforms=android,web --org com.aisley --project-name aisley_buyer .
@@ -33,7 +33,7 @@ Declare the following in the created pubspec.yaml (preserve name/description/ver
 
 ```yaml
 environment:
-  sdk: '>=3.9.2 <4.0.0'
+  sdk: '^3.13.2'
 dependencies:
   flutter:
     sdk: flutter
@@ -87,4 +87,4 @@ Disable Android auto backup or exclude secure-storage preferences using Android 
 - Suitable public Geoapify credentials with browser-origin restrictions and provider-supported Android restrictions/quotas. If the provider cannot safely support the intended native use, keep pinning disabled pending an owner-approved mediation design.
 - Map attribution/tile terms and trusted storefront reset-link deployment. Native reset app links and production browser security remain separate decisions.
 
-Do not modify server configuration to satisfy these inputs from the mobile task. Source compatibility inspection does not establish any build, live exchange, permission, device or browser acceptance result.
+Do not modify server configuration to satisfy these inputs from the mobile task. The historical metadata inspection and current dependency-resolution/scaffold-analysis checks do not establish any build, live exchange, permission, device or browser acceptance result.
