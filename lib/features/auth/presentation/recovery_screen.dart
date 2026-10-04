@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/platform/trusted_launcher.dart';
 import '../../../core/ui/form_page.dart';
@@ -38,6 +39,13 @@ class _RecoveryScreenState extends State<RecoveryScreen> {
       title: 'Recover your password',
       dirty: _email.text.isNotEmpty && !_action.succeeded,
       busy: _action.busy,
+      onCancel: () {
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go('/login');
+        }
+      },
       children: [
         const Text('Enter your email to request password recovery.'),
         if (_action.failure != null) FailureNotice(_action.failure!),

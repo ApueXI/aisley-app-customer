@@ -197,8 +197,8 @@ void main() {
         safeReturn('/checkout/result/$customerId'),
         '/checkout/result/$customerId',
       );
-      expect(safeReturn('/orders/invalid'), '/account');
-      expect(safeReturn('/checkout?buy_now=$customerId'), '/account');
+      expect(safeReturn('/orders/invalid'), '/');
+      expect(safeReturn('/checkout?buy_now=$customerId'), '/');
       for (final path in [
         '/cart',
         '/checkout',

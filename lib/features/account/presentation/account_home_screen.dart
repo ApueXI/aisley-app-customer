@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/ui/responsive_layout.dart';
+
 import '../../../core/security/session_controller.dart';
 import '../../../core/ui/form_page.dart';
 
@@ -12,7 +14,7 @@ class AccountHomeScreen extends StatelessWidget {
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: session,
     builder: (context, _) => ListView(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+      padding: pagePadding(context),
       children: [
         Text('Your account', style: Theme.of(context).textTheme.headlineSmall),
         const SizedBox(height: 6),

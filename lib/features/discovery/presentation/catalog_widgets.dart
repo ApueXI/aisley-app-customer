@@ -38,12 +38,14 @@ class ProductCardTile extends StatelessWidget {
           children: [
             Stack(
               children: [
-                CatalogImage(
-                  url: product.thumbnailUrl,
-                  discovery: discovery,
-                  width: double.infinity,
-                  height: 142,
-                  label: product.title,
+                AspectRatio(
+                  aspectRatio: 1.25,
+                  child: CatalogImage(
+                    url: product.thumbnailUrl,
+                    discovery: discovery,
+                    width: double.infinity,
+                    label: product.title,
+                  ),
                 ),
                 if (trailing != null)
                   Positioned(top: 4, right: 4, child: trailing!),
@@ -84,9 +86,11 @@ class ProductCardTile extends StatelessWidget {
                           color: Color(0xFFB86B00),
                         ),
                         const SizedBox(width: 3),
-                        Text(
-                          '${product.averageRating!.toStringAsFixed(1)} · ${product.reviewCount}',
-                          style: Theme.of(context).textTheme.bodySmall,
+                        Flexible(
+                          child: Text(
+                            '${product.averageRating!.toStringAsFixed(1)} · ${product.reviewCount}',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
                         ),
                       ],
                     ),
@@ -168,11 +172,10 @@ class SectionHeading extends StatelessWidget {
   final String title;
   final Widget? action;
   @override
-  Widget build(BuildContext context) => Row(
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Expanded(
-        child: Text(title, style: Theme.of(context).textTheme.titleLarge),
-      ),
+      Text(title, style: Theme.of(context).textTheme.titleLarge),
       ?action,
     ],
   );

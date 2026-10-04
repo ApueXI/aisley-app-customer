@@ -21,7 +21,7 @@ Home sections → Products/Shops search or detail → bounded discovery load mor
 
 - Render eligible server-selected ads/categories/deals/top/history/feed; omit empty optional rails and unavailable destinations. Category cards use Products keyword search by Category name, not an exact global category filter.
 - Card numeric prices/compact availability never authorize purchase. Purchase rails use purchasable visibility; recency may show visible out-of-stock Products. Cart badge comes from Cart API, not the Home viewer.cartItemCount placeholder.
-- Public Home is credential-free; authenticated Home is private. Clear viewer/history/feed immediately on account change, ignore old responses, deduplicate Product IDs, respect opaque cursor/end/client cap and preserve items on page errors. Impressions never record recency.
+- Backend public Home remains credential-free; Buyer Home mounts only after identity/consent verification. Clear viewer/history/feed immediately on account change, ignore old responses, deduplicate Product IDs, respect opaque cursor/end/client cap and preserve items on page errors. Impressions never record recency.
 - Bazaar/MoneyFest, voucher wallet and absent shortcut result pages remain deferred.
 
 The local bundle supplies the implementation contract. Upstream paths are optional provenance only.
@@ -29,6 +29,10 @@ Use this feature with its prerequisite session/consent boundary and the related 
 communication repositories.
 The Customer client cannot perform Seller/Admin/Logistics/Courier actions. Current Laravel ownership
 and capabilities remain authoritative.
+
+Buyer presentation requires verified active Customer identity and required consent for every shopping
+screen; public backend methods/envelopes remain unchanged. Auth/recovery/Terms/Privacy stay reachable.
+Phone/tablet padding, natural content heights and keyboard/text resizing follow [Buyer design](../../../design-buyer.md).
 
 ## MUST
 
@@ -40,8 +44,8 @@ and capabilities remain authoritative.
   Product detail.
 - Optional-auth Home is private even when viewer.isAuthenticated is false; never place it in a shared
   guest cache.
-- Authenticated recency is account-scoped. Guest hints resolve publicly and must never receive account
-  history.
+- Authenticated recency is account-scoped. Guest rails/storage/merge are removed from Buyer composition;
+  legacy public hints are best-effort deleted without touching other preferences.
 - Viewer displayName/email/location are nullable; hide absent personalization without inventing an
   address.
 - Viewer cartItemCount is currently a zero placeholder; use Cart data for a real private badge.
@@ -132,8 +136,8 @@ Duplicate submits are disabled. Supported uncertain UUID writes retain exact key
 session memory.
 Queries/pages belong to a full request signature and session generation. Drop stale success/error on
 either change.
-Private data is memory-only by default; token is secure-store only, guest recency holds bounded public
-hints only.
+Private data is memory-only; token is secure-store only. Recently Viewed is account-only.
+Never write or merge guest hints; legacy-key cleanup must not delay authentication.
 Local [failure contracts](../../../api/errors.md) define concrete codes and examples; do not require a
 universal error envelope.
 

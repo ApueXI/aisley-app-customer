@@ -43,6 +43,7 @@ class _ConsentScreenState extends State<ConsentScreen> {
     listenable: Listenable.merge([_model, widget.session]),
     builder: (context, _) => FormPage(
       title: 'Review required policies',
+      canLeave: false,
       busy: _model.busy,
       children: [
         const Text(
@@ -80,10 +81,6 @@ class _ConsentScreenState extends State<ConsentScreen> {
             onPressed: () => context.go(widget.returnTo),
             child: const Text('Continue'),
           ),
-        TextButton(
-          onPressed: () => context.go('/'),
-          child: const Text('Return to public Home'),
-        ),
         TextButton(
           onPressed: widget.session.signingOut ? null : widget.session.signOut,
           child: const Text('Sign out'),

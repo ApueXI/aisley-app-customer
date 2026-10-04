@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Read-only Chrome smoke checks. Run the Buyer web server on localhost:8766 first."""
+import argparse
 import base64
 import json
 import os
@@ -13,6 +14,9 @@ import urllib.request
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--synthetic-shopping', action='store_true', help='Also inject synthetic identity/API responses for shopping layout checks.')
+    args = parser.parse_args()
     driver = shutil.which('chromedriver')
     browser = shutil.which('chromium')
     if not driver or not browser:
@@ -55,31 +59,31 @@ def main():
         def wait_text(expected):
             for _ in range(100):
                 script("document.querySelector('flt-semantics-placeholder')?.click();")
-                if script('return document.body.innerText;').find(expected) >= 0:
+                if script("return document.body.innerText + '\\n' + Array.from(document.querySelectorAll('[aria-label]')).map(e => e.getAttribute('aria-label')).join('\\n');").find(expected) >= 0:
                     return
                 time.sleep(0.2)
             raise AssertionError('Expected public screen did not render: ' + expected)
 
         call(prefix + '/url', {'url': 'http://localhost:8766'})
-        wait_text('Search Products and Shops')
+        wait_text('Sign in with your approved Buyer account.')
         # Reload a real page and navigate browser history before instrumenting Fetch.
         call(prefix + '/refresh', {})
-        wait_text('Search Products and Shops')
+        wait_text('Sign in with your approved Buyer account.')
         script("window.location.hash = '/login';")
         wait_text('Sign in with your approved Buyer account.')
         call(prefix + '/back', {})
-        wait_text('Search Products and Shops')
-        for width, height in [(320, 640), (1024, 768), (640, 320), (390, 844)]:
+        wait_text('Sign in with your approved Buyer account.')
+        for width, height in [(320, 640), (360, 800), (390, 844), (412, 915), (600, 960), (800, 1280), (640, 320), (800, 360), (844, 390), (915, 412), (960, 600), (1280, 800)]:
             call(prefix + '/window/rect', {'width': width, 'height': height})
-            wait_text('Search Products and Shops')
-            assert script('return document.documentElement.scrollWidth <= window.innerWidth;'), 'Public page must fit browser width.'
+            wait_text('Sign in with your approved Buyer account.')
+            assert script('return document.documentElement.scrollWidth <= window.innerWidth;'), 'Sign-in page must fit browser width.'
         script("""
           window.buyerFetchCalls = [];
           const originalFetch = window.fetch;
           window.fetch = function(url, options) {
             if (['http://localhost:8000/api/v1/', 'http://127.0.0.1:8000/api/v1/']
                 .some(base => String(url).startsWith(base))) {
-              window.buyerFetchCalls.push({credentials: options?.credentials, redirect: options?.redirect});
+              window.buyerFetchCalls.push({path: new URL(String(url)).pathname, credentials: options?.credentials, redirect: options?.redirect});
             }
             return originalFetch.apply(this, arguments);
           };
@@ -89,9 +93,9 @@ def main():
                                 ('/forgot-password', 'Enter your email to request password recovery.'),
                                 ('/policies/terms_of_service', 'Version'),
                                 ('/policies/privacy_policy', 'Version'),
-                                ('/search?q=shirt&mode=products', 'Products'),
-                                ('/search?q=shop&mode=shops', 'Shops'),
-                                ('/shops', 'Shops'),
+                                ('/search?q=shirt&mode=products', 'Sign in with your approved Buyer account.'),
+                                ('/search?q=shop&mode=shops', 'Sign in with your approved Buyer account.'),
+                                ('/shops', 'Sign in with your approved Buyer account.'),
                                 ('/account/wishlist', 'Sign in with your approved Buyer account.'),
                                 ('/account/addresses', 'Sign in with your approved Buyer account.'),
                                 ('/cart', 'Sign in with your approved Buyer account.'),
@@ -106,28 +110,16 @@ def main():
                                 ('/checkout/result/11111111-1111-4111-8111-111111111111', 'Sign in with your approved Buyer account.')]:
             script('window.location.hash = ' + json.dumps(route) + ';')
             wait_text(expected)
-        discovery = call(prefix + '/execute/async', {'script': """
-          const done = arguments[arguments.length - 1];
-          fetch('http://127.0.0.1:8000/api/v1/customer/home', {credentials:'omit',redirect:'error',headers:{Accept:'application/json'}})
-            .then(response => response.json()).then(body => {
-              const product = [...body.recommendations.items, ...body.topProducts][0];
-              done(product ? {id:product.id,title:product.title,shop:product.shop} : null);
-            }).catch(() => done(null));
-        """, 'args': []})
-        assert discovery is not None, 'A public Product is needed for detail smoke acceptance.'
-        script('window.location.hash = ' + json.dumps('/products/' + discovery['id']) + ';')
-        wait_text(discovery['title'])
-        wait_text('Add to Cart')
-        script('window.location.hash = ' + json.dumps('/products/' + discovery['id'] + '/questions') + ';')
-        wait_text('Product questions')
-        wait_text('Sign in to ask a question')
-        script('window.location.hash = ' + json.dumps('/products/' + discovery['id'] + '/reviews') + ';')
-        wait_text('Product reviews')
-        wait_text('Reviews can be submitted from an eligible delivered Order item.')
-        script('window.location.hash = ' + json.dumps('/shops/' + discovery['shop']['slug']) + ';')
-        wait_text(discovery['shop']['name'])
-        assert 'This Shop is unavailable.' not in script('return document.body.innerText;')
+        for route in ['/products/11111111-1111-4111-8111-111111111111',
+                      '/products/11111111-1111-4111-8111-111111111111/questions',
+                      '/products/11111111-1111-4111-8111-111111111111/reviews',
+                      '/shops/sample-shop', '/']:
+            script('window.location.hash = ' + json.dumps(route) + ';')
+            wait_text('Sign in with your approved Buyer account.')
+            assert 'Public Home' not in script('return document.body.innerText;')
+            assert not script("return !!document.querySelector('[aria-label=Home]');")
         transport = script('return window.buyerFetchCalls;')
+        assert all('/platform/policies/' in item['path'] for item in transport), 'Shopping must not fetch before sign-in.'
         assert len(transport) >= 2 and all(item['credentials'] == 'omit' and item['redirect'] == 'error' for item in transport)
         result = call(prefix + '/execute/async', {'script': """
           const done = arguments[arguments.length - 1];
@@ -165,12 +157,15 @@ def main():
         """, 'args': []})
         assert commerce_denial == [401, 401], 'Commerce idempotency-header preflights must allow denial responses.'
         script("window.location.hash = '/';")
-        wait_text('Search Products and Shops')
+        wait_text('Sign in with your approved Buyer account.')
+        if args.synthetic_shopping:
+            from browser_synthetic import check_shopping
+            check_shopping(call, prefix, script, wait_text)
         screenshot = os.environ.get('BUYER_SCREENSHOT')
         if screenshot:
             with open(screenshot, 'wb') as output:
                 output.write(base64.b64decode(call(prefix + '/screenshot')))
-        print('PASS: reload, browser Back, narrow/wide/landscape Home, Products/Shops search, public Product/Shop detail, public Q&A/reviews, protected account/Cart/checkout/Order/communication guards, idempotency preflights, live policies, cookie/redirect isolation, CORS and invalid-bearer denial.')
+        print('PASS: reload/Back, phone/tablet portrait/landscape sign-in, authentication/policy layouts, every shopping guard without catalog fetch, idempotency preflights, live policies, cookie/redirect isolation, CORS and invalid-bearer denial.')
     finally:
         if session:
             try:

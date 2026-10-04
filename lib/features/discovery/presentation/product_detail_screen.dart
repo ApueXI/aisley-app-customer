@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
+import '../../../core/ui/responsive_layout.dart';
 import '../data/product_detail_model.dart';
 import 'catalog_widgets.dart';
 import 'product_controller.dart';
@@ -27,6 +28,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     widget.productId,
   );
   bool _recorded = false, _statusRequested = false;
+  final _galleryKey = GlobalKey(), _contentKey = GlobalKey();
 
   @override
   void initState() {
@@ -47,7 +49,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) => ShoppingPage(
     appBar: AppBar(title: const Text('Product')),
     body: ListenableBuilder(
       listenable: _controller,
@@ -91,43 +93,45 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     try {
       if (lease != null) {
         await widget.dependencies.recentlyViewed!.record(lease, id);
-      } else if (session.customer == null) {
-        await widget.dependencies.guestRecent!.record(
-          id,
-          widget.dependencies.clock().toUtc(),
-        );
       }
     } catch (_) {
       // A history failure never hides successfully loaded public Product detail.
     }
   }
 
-  Widget _unavailable(String message) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.inventory_2_outlined, size: 42),
-          const SizedBox(height: 10),
-          const Text('This Product is unavailable.'),
-          Text(message),
-          FilledButton(onPressed: _controller.load, child: const Text('Retry')),
-        ],
+  Widget _unavailable(String message) => SingleChildScrollView(
+    child: Center(
+      child: Padding(
+        padding: pagePadding(context),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.inventory_2_outlined, size: 42),
+            const SizedBox(height: 10),
+            const Text('This Product is unavailable.'),
+            Text(message),
+            FilledButton(
+              onPressed: _controller.load,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
       ),
     ),
   );
 
   Widget _detail(BuildContext context, ProductDetail product) => LayoutBuilder(
     builder: (context, constraints) {
-      final wide = constraints.maxWidth >= 760;
+      final padding = pageSpacing(context);
+      final width = (constraints.maxWidth - padding * 2).clamp(0.0, 1120.0);
+      final wide = width >= 840 && catalogTextScale(context) <= 1.5;
       final content = Column(
+        key: _contentKey,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (!wide && product.media.isNotEmpty) _gallery(product),
           const SizedBox(height: 12),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18),
+            padding: EdgeInsets.zero,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -225,27 +229,28 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ],
       );
       return SingleChildScrollView(
+        padding: EdgeInsets.all(padding),
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1080),
+            constraints: const BoxConstraints(maxWidth: 1120),
             child: wide
                 ? Padding(
                     padding: const EdgeInsets.only(top: 16),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: SizedBox(
-                            height: constraints.maxHeight * .72,
-                            child: _gallery(product),
-                          ),
-                        ),
+                        Expanded(child: _gallery(product)),
                         const SizedBox(width: 24),
-                        Expanded(flex: 2, child: content),
+                        Expanded(child: content),
                       ],
                     ),
                   )
-                : content,
+                : Column(
+                    children: [
+                      if (product.media.isNotEmpty) _gallery(product),
+                      content,
+                    ],
+                  ),
           ),
         ),
       );
@@ -265,22 +270,26 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               )
               .toList();
     final media = selected.isEmpty ? product.media : selected;
-    return SizedBox(
-      height: 320,
-      child: PageView.builder(
-        itemCount: media.length,
-        itemBuilder: (context, index) => Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(14),
-            child: CatalogImage(
-              url: media[index].url,
-              discovery: widget.dependencies.discovery!,
-              width: double.infinity,
-              height: 320,
-              label: media[index].altText.isEmpty
-                  ? product.title
-                  : media[index].altText,
+    return LayoutBuilder(
+      key: _galleryKey,
+      builder: (context, constraints) => SizedBox(
+        height: constraints.maxWidth.clamp(180.0, 480.0),
+        child: PageView.builder(
+          key: PageStorageKey('gallery-${product.id}'),
+          itemCount: media.length,
+          itemBuilder: (context, index) => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: CatalogImage(
+                url: media[index].url,
+                discovery: widget.dependencies.discovery!,
+                width: double.infinity,
+                fit: BoxFit.contain,
+                label: media[index].altText.isEmpty
+                    ? product.title
+                    : media[index].altText,
+              ),
             ),
           ),
         ),
@@ -338,6 +347,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           child: DropdownButtonFormField<String?>(
             initialValue: _controller.selectedValues[group.id],
             isExpanded: true,
+            itemHeight: null,
             decoration: InputDecoration(labelText: group.name),
             items: [
               DropdownMenuItem<String?>(

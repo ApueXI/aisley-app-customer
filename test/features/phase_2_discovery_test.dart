@@ -20,7 +20,11 @@ void main() {
   late SessionController session;
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
-    session = SessionController(FakeAuth(), FakePolicies(), MemoryTokenStore());
+    session = SessionController(
+      FakeAuth(),
+      FakePolicies(),
+      MemoryTokenStore()..token = 'synthetic-token',
+    );
     await session.bootstrap();
   });
   tearDown(() => session.dispose());
@@ -60,7 +64,6 @@ void main() {
     final controller = HomeController(
       discovery: repo,
       session: session,
-      guestStore: GuestRecentStore(),
       recentlyViewed: RecentlyViewedRepository(repo.api),
     );
     addTearDown(controller.dispose);
@@ -90,7 +93,6 @@ void main() {
     final controller = HomeController(
       discovery: repo,
       session: session,
-      guestStore: GuestRecentStore(),
       recentlyViewed: RecentlyViewedRepository(repo.api),
     );
     addTearDown(controller.dispose);

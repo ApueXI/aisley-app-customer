@@ -16,7 +16,7 @@ Public Terms/Privacy current/history reading, authenticated status and explicit 
 
 One platform-wide version stream serves all roles. Buyer reads public published current versions and published/superseded history. Drafts/Internal Rules never become Customer content. Reading history does not establish acceptance. Server policy controls decide required initial/re-consent; optional promotion preference remains separate.
 
-Public reader → active identity through /me → status → read exact required current version → explicit confirmation → acceptance → refreshed status → safe protected read destination. Public browsing remains usable when private consent cannot be resolved.
+Public reader → active identity through /me → status → read exact required current version → explicit confirmation → acceptance → refreshed status → safe protected read destination. Shopping remains blocked until identity and required consent resolve; public Terms/Privacy remains reachable.
 
 ## MUST
 
@@ -60,13 +60,13 @@ HTTP 409 POLICY_VERSION_STALE means requested version is no longer current/publi
 
 Protected actions can return403 POLICY_CONSENT_REQUIRED with code/message and `data:{required_policies:[{type,label,version,read_url,accept_url}],status_url}`. Version int and accept_url can be null. Validate returned paths against trusted API/type mapping; never send bearer to arbitrary URLs. Keep identity while suspending private work; open the reader. A descriptor is not consent acceptance and does not authorize replay of the blocked commerce write.
 
-HTTP 401 or explicit role/account-state denial clears invalid identity and private repositories; scoped policy/resource404 does not automatically sign out. Offline/status/decode failure leaves private routes blocked with Retry while public discovery remains usable. Do not persist a trusted accepted flag in ordinary preferences.
+HTTP 401 or explicit role/account-state denial clears invalid identity and private repositories; scoped policy/resource404 does not automatically sign out. Offline/status/decode failure leaves private routes blocked with Retry while public Terms/Privacy remains reachable. Do not persist a trusted accepted flag in ordinary preferences.
 
 ### Screen states and interaction
 
 Guest policy reader has loading/content/history/empty-history/unavailable states, with no authenticated acceptance promise. Authenticated consent screen shows each required policy, exact title/version/summary, readable content, unchecked confirmation and deliberate Accept. Independent success can retain one accepted policy while another still requires action; final status controls navigation.
 
-Busy disables duplicate acceptance; uncertain timeout offers exact same-version retry, never a guessed success. Current publication change resets confirmation. Back/cancel stays within safe public navigation when private access is blocked. Declining does not delete a valid session or silently accept; expose Logout and public Home. Large text/TalkBack/keyboard/48px targets/light-only presentation remain usable.
+Busy disables duplicate acceptance; uncertain timeout offers exact same-version retry, never a guessed success. Current publication change resets confirmation. The consent gate has no shopping Back/cancel escape. Declining preserves valid identity until explicit Sign out; never silently accept. Large text/TalkBack/keyboard/48px targets/light-only presentation remain usable.
 
 No native push, promotional opt-in, Admin policy authoring or internal-policy navigation is supplied. Public policy history does not reveal actor acceptances or private audit records.
 
@@ -92,7 +92,7 @@ Synthetic requests, nullable status/current versions, stale-conflict and denied 
 - [ ] Exact timeout retry accepts once; duplicate taps are disabled; partial Terms/Privacy success rechecks status.
 - [ ] Guest/current/history and private actor status use different cache/credential boundaries.
 - [ ] Logout/account switch discards delayed status/accept responses, private flags and confirmation drafts.
-- [ ] Decline/Back/public browsing/logout stay reachable without login/consent redirect loops.
+- [ ] Decline/policy Back/sign-out stay reachable without login/consent redirect loops.
 - [ ] Controlled Android/browser live acceptance is recorded separately from fixtures/analyze/build results.
 
 ### Provenance and release

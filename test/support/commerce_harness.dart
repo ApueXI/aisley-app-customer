@@ -134,7 +134,6 @@ class CommerceHarness {
     commerce: commerce,
     addresses: AddressRepository(api),
     discovery: DiscoveryRepository(api: api, session: session),
-    guestRecent: GuestRecentStore(),
     recentlyViewed: RecentlyViewedRepository(api),
     savedStatus: SavedStatusController(session, WishlistRepository(api)),
     clock: () => now,

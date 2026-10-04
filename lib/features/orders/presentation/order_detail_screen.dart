@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
+import '../../../core/ui/responsive_layout.dart';
 import 'order_action_dialogs.dart';
 import 'order_detail_controller.dart';
 import 'order_facts.dart';
@@ -60,7 +61,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
         mutations,
         widget.dependencies.session,
       ]),
-      builder: (context, _) => Scaffold(
+      builder: (context, _) => ShoppingPage(
         appBar: AppBar(
           title: const Text('Order'),
           actions: [
@@ -74,7 +75,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
         body: !widget.dependencies.session.active
             ? const SizedBox.shrink()
             : ListView(
-                padding: const EdgeInsets.all(20),
+                padding: pagePadding(context),
                 children: [
                   if (_controller.loading || mutations.busy(widget.id))
                     const LinearProgressIndicator(

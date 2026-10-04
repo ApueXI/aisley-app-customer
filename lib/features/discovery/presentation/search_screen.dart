@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
+import '../../../core/ui/responsive_layout.dart';
 import '../data/catalog_models.dart';
 import 'catalog_widgets.dart';
 import 'search_controller.dart';
@@ -59,86 +60,65 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) => ShoppingPage(
     appBar: AppBar(title: const Text('Search')),
-    body: SafeArea(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1000),
-          child: NestedScrollView(
-            headerSliverBuilder: (context, innerBoxIsScrolled) => [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (!widget.validRoute)
-                        const Text(
-                          'The search link has unsupported filters. Start a new search.',
-                        ),
-                      TextField(
-                        controller: _query,
-                        textInputAction: TextInputAction.search,
-                        maxLength: 100,
-                        onSubmitted: (_) => _submit(context),
-                        decoration: InputDecoration(
-                          labelText: 'Search Products or Shops',
-                          hintText: 'Enter a name',
-                          prefixIcon: const Icon(Icons.search),
-                          suffixIcon: IconButton(
-                            tooltip: 'Clear search',
-                            onPressed: () {
-                              _query.clear();
-                              _controller.search('');
-                              _updateRoute(context, page: null);
-                            },
-                            icon: const Icon(Icons.clear),
-                          ),
-                          border: const OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      SegmentedButton<SearchMode>(
-                        segments: const [
-                          ButtonSegment(
-                            value: SearchMode.products,
-                            label: Text('Products'),
-                            icon: Icon(Icons.shopping_bag_outlined),
-                          ),
-                          ButtonSegment(
-                            value: SearchMode.shops,
-                            label: Text('Shops'),
-                            icon: Icon(Icons.storefront_outlined),
-                          ),
-                        ],
-                        selected: {_controller.mode},
-                        onSelectionChanged: (selected) {
-                          _controller.setMode(selected.first);
-                          _updateRoute(context, page: null);
-                        },
-                      ),
-                      const SizedBox(height: 8),
-                      FilledButton.icon(
-                        onPressed:
-                            _controller.loading || _controller.coolingDown
-                            ? null
-                            : () => _submit(context),
-                        icon: const Icon(Icons.search),
-                        label: const Text('Search'),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-            body: ListenableBuilder(
-              listenable: _controller,
-              builder: (context, _) => _results(context),
+    body: ListView(
+      padding: pagePadding(context),
+      children: [
+        if (!widget.validRoute)
+          const Text(
+            'The search link has unsupported filters. Start a new search.',
+          ),
+        TextField(
+          controller: _query,
+          textInputAction: TextInputAction.search,
+          maxLength: 100,
+          onSubmitted: (_) => _submit(context),
+          decoration: InputDecoration(
+            labelText: 'Search Products or Shops',
+            hintText: 'Enter a name',
+            prefixIcon: const Icon(Icons.search),
+            suffixIcon: IconButton(
+              tooltip: 'Clear search',
+              icon: const Icon(Icons.clear),
+              onPressed: () {
+                _query.clear();
+                _controller.search('');
+                _updateRoute(context, page: null);
+              },
             ),
           ),
         ),
-      ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (final mode in SearchMode.values)
+              ChoiceChip(
+                label: Text(mode == SearchMode.products ? 'Products' : 'Shops'),
+                selected: _controller.mode == mode,
+                onSelected: (_) {
+                  _controller.setMode(mode);
+                  _updateRoute(context, page: null);
+                },
+              ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        FilledButton.icon(
+          onPressed: _controller.loading || _controller.coolingDown
+              ? null
+              : () => _submit(context),
+          icon: const Icon(Icons.search),
+          label: const Text('Search'),
+        ),
+        const SizedBox(height: 16),
+        ListenableBuilder(
+          listenable: _controller,
+          builder: (context, _) => _results(context),
+        ),
+      ],
     ),
   );
 
@@ -169,7 +149,7 @@ class _SearchScreenState extends State<SearchScreen> {
     if (_controller.error != null) {
       return Center(
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: pagePadding(context),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -233,35 +213,19 @@ class _SearchScreenState extends State<SearchScreen> {
     List<ProductCard> items,
     Pagination pagination,
   ) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: Text('${pagination.total} Products'),
-        ),
-      ),
-      Expanded(
-        child: GridView.builder(
-          padding: const EdgeInsets.all(12),
-          itemCount: items.length,
-          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
-            maxCrossAxisExtent: 240,
-            mainAxisExtent:
-                170 + 145 * MediaQuery.textScalerOf(context).scale(14) / 14,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
-          ),
-          itemBuilder: (context, index) {
-            final product = items[index];
-            return ProductCardTile(
+      Text('${pagination.total} Products'),
+      CatalogGrid(
+        children: [
+          for (final product in items)
+            ProductCardTile(
               width: double.infinity,
               product: product,
               discovery: widget.dependencies.discovery!,
               onTap: () => context.push('/products/${product.id}'),
-            );
-          },
-        ),
+            ),
+        ],
       ),
       _pagination(context, pagination.currentPage, pagination.lastPage),
     ],
@@ -272,25 +236,15 @@ class _SearchScreenState extends State<SearchScreen> {
     List<ShopSummary> items,
     Pagination pagination,
   ) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: Text('${pagination.total} Shops'),
+      Text('${pagination.total} Shops'),
+      for (final shop in items)
+        ShopCardTile(
+          shop: shop,
+          discovery: widget.dependencies.discovery!,
+          onTap: () => context.push('/shops/${shop.slug}'),
         ),
-      ),
-      Expanded(
-        child: ListView.builder(
-          padding: const EdgeInsets.all(12),
-          itemCount: items.length,
-          itemBuilder: (context, index) => ShopCardTile(
-            shop: items[index],
-            discovery: widget.dependencies.discovery!,
-            onTap: () => context.push('/shops/${items[index].slug}'),
-          ),
-        ),
-      ),
       _pagination(context, pagination.currentPage, pagination.lastPage),
     ],
   );

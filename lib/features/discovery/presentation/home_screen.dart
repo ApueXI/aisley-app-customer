@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
+import '../../../core/ui/responsive_layout.dart';
 import '../data/catalog_models.dart';
 import '../data/home_models.dart';
 import 'catalog_widgets.dart';
@@ -19,9 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
   late final HomeController _controller = HomeController(
     discovery: widget.dependencies.discovery!,
     session: widget.dependencies.session,
-    guestStore: widget.dependencies.guestRecent!,
     recentlyViewed: widget.dependencies.recentlyViewed!,
-    clock: widget.dependencies.clock,
   );
 
   @override
@@ -45,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
         final home = _controller.home;
         return SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+          padding: pagePadding(context),
           child: Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 1120),
@@ -53,15 +52,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _searchBar(context),
-                  if (!widget.dependencies.session.active)
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton.icon(
-                        onPressed: () => context.push('/login'),
-                        icon: const Icon(Icons.person_outline),
-                        label: const Text('Sign in'),
-                      ),
-                    ),
                   if (_controller.loading && home == null)
                     const Padding(
                       padding: EdgeInsets.only(top: 56),
@@ -96,18 +86,6 @@ class _HomeScreenState extends State<HomeScreen> {
                         context,
                         'Recently viewed',
                         home.recentlyViewed,
-                      ),
-                    if (!widget.dependencies.session.active &&
-                        _controller.guestRecentlyViewed.isNotEmpty)
-                      _productRail(
-                        context,
-                        'Recently viewed on this device',
-                        _controller.guestRecentlyViewed,
-                      ),
-                    if (_controller.guestStorageUnavailable &&
-                        _controller.guestRecentlyViewed.isNotEmpty)
-                      const Text(
-                        'Recent items are available for this visit, but could not be saved on this device.',
                       ),
                     if (_controller.recommendations.isNotEmpty)
                       _recommendations(context),
@@ -197,43 +175,30 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _campaignBanner(BuildContext context, HomeCampaign campaign) => Card(
     clipBehavior: Clip.antiAlias,
     margin: const EdgeInsets.only(top: 12, bottom: 20),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     child: InkWell(
       onTap: () => widget.dependencies.launcher.open(campaign.destinationUrl),
-      child: SizedBox(
-        height: 188,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            if (campaign.imageMobileUrl ?? campaign.imageDesktopUrl
-                case final url?)
-              Positioned.fill(
-                child: CatalogImage(
-                  url: url,
-                  discovery: widget.dependencies.discovery!,
-                  width: double.infinity,
-                  height: 188,
-                  label: campaign.altText,
-                ),
-              )
-            else
-              const ColoredBox(color: Color(0xFFF4EAF1)),
-            Align(
-              alignment: Alignment.bottomLeft,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                color: const Color(0xCC251323),
-                child: Text(
-                  campaign.title,
-                  style: Theme.of(context).textTheme.titleLarge
-                      ?.copyWith(color: Colors.white),
-                  semanticsLabel: campaign.altText,
-                ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (campaign.imageMobileUrl ?? campaign.imageDesktopUrl
+              case final url?)
+            AspectRatio(
+              aspectRatio: 2.4,
+              child: CatalogImage(
+                url: url,
+                discovery: widget.dependencies.discovery!,
+                label: campaign.altText,
               ),
             ),
-          ],
-        ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              campaign.title,
+              style: Theme.of(context).textTheme.titleLarge,
+              semanticsLabel: campaign.altText,
+            ),
+          ),
+        ],
       ),
     ),
   );
@@ -246,40 +211,18 @@ class _HomeScreenState extends State<HomeScreen> {
     children: [
       const SectionHeading(title: 'Explore categories'),
       const SizedBox(height: 8),
-      SizedBox(
-        height: 102 + (MediaQuery.textScalerOf(context).scale(14) - 14) * 3,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          itemCount: categories.length,
-          separatorBuilder: (_, _) => const SizedBox(width: 8),
-          itemBuilder: (context, index) {
-            final category = categories[index];
-            return SizedBox(
-              width: 96,
-              child: TextButton(
-                onPressed: () => context.push(
-                  '/search?mode=products&q=${Uri.encodeQueryComponent(category.name)}',
-                ),
-                style: TextButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 10,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    side: const BorderSide(color: Color(0xFFE8E1E6)),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Text(
-                  category.name,
-                  maxLines: 3,
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                ),
+      Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          for (final category in categories)
+            OutlinedButton(
+              onPressed: () => context.push(
+                '/search?mode=products&q=${Uri.encodeQueryComponent(category.name)}',
               ),
-            );
-          },
-        ),
+              child: Text(category.name),
+            ),
+        ],
       ),
       const SizedBox(height: 18),
     ],
@@ -318,17 +261,22 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        SizedBox(
-          height: 310 + (MediaQuery.textScalerOf(context).scale(16) - 16) * 8,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: products.length,
-            separatorBuilder: (_, _) => const SizedBox(width: 10),
-            itemBuilder: (context, index) => ProductCardTile(
-              product: products[index],
-              discovery: widget.dependencies.discovery!,
-              onTap: () => context.push('/products/${products[index].id}'),
-            ),
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (final product in products)
+                Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: ProductCardTile(
+                    width: 184 * catalogTextScale(context),
+                    product: product,
+                    discovery: widget.dependencies.discovery!,
+                    onTap: () => context.push('/products/${product.id}'),
+                  ),
+                ),
+            ],
           ),
         ),
       ],
@@ -342,31 +290,16 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         const SectionHeading(title: 'Picked for you'),
         const SizedBox(height: 8),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final columns = (constraints.maxWidth / 210).floor().clamp(1, 5);
-            return GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: _controller.recommendations.length,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: columns,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-                mainAxisExtent:
-                    310 + (MediaQuery.textScalerOf(context).scale(16) - 16) * 8,
+        CatalogGrid(
+          children: [
+            for (final product in _controller.recommendations)
+              ProductCardTile(
+                width: double.infinity,
+                product: product,
+                discovery: widget.dependencies.discovery!,
+                onTap: () => context.push('/products/${product.id}'),
               ),
-              itemBuilder: (context, index) {
-                final product = _controller.recommendations[index];
-                return ProductCardTile(
-                  width: double.infinity,
-                  product: product,
-                  discovery: widget.dependencies.discovery!,
-                  onTap: () => context.push('/products/${product.id}'),
-                );
-              },
-            );
-          },
+          ],
         ),
       ],
     ),

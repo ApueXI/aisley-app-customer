@@ -238,7 +238,7 @@ void main() {
       safeReturn(
         '/messages/shops/new/$customerId?context_type=order&context_id=$otherId',
       ),
-      '/messages/shops/new/$customerId?context_type=order&context_id=$otherId',
+      '/',
     );
     for (final path in [
       '/notifications/no',
@@ -247,7 +247,7 @@ void main() {
       '/messages/shops/new/$customerId?context_type=order&context_id=no',
       '/messages/shops/new/$customerId?context_type=order&context_type=product&context_id=$otherId',
     ]) {
-      expect(safeReturn(path), '/account');
+      expect(safeReturn(path), '/');
     }
   });
 }

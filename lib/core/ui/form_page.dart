@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../networking/api_failure.dart';
+import 'responsive_layout.dart';
 
 class FormPage extends StatefulWidget {
   const FormPage({
@@ -11,10 +12,11 @@ class FormPage extends StatefulWidget {
     this.dirty = false,
     this.busy = false,
     this.onCancel,
+    this.canLeave = true,
   });
   final String title;
   final List<Widget> children;
-  final bool dirty, busy;
+  final bool dirty, busy, canLeave;
   final VoidCallback? onCancel;
   @override
   State<FormPage> createState() => _FormPageState();
@@ -23,7 +25,7 @@ class FormPage extends StatefulWidget {
 class _FormPageState extends State<FormPage> {
   bool _allowPop = false, _confirming = false;
   Future<void> _leave() async {
-    if (_confirming) return;
+    if (_confirming || !widget.canLeave) return;
     _confirming = true;
     if ((widget.dirty || widget.busy) && !_allowPop) {
       final leave = await confirmDiscard(
@@ -53,25 +55,28 @@ class _FormPageState extends State<FormPage> {
 
   @override
   Widget build(BuildContext context) => PopScope(
-    canPop: _allowPop || !widget.dirty && !widget.busy,
+    canPop: widget.canLeave && (_allowPop || !widget.dirty && !widget.busy),
     onPopInvokedWithResult: (didPop, _) {
       if (!didPop) _leave();
     },
     child: Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
-        leading: IconButton(
-          tooltip: 'Cancel',
-          icon: const Icon(Icons.arrow_back),
-          onPressed: _leave,
-        ),
+        automaticallyImplyLeading: false,
+        leading: widget.canLeave
+            ? IconButton(
+                tooltip: 'Cancel',
+                icon: const Icon(Icons.arrow_back),
+                onPressed: _leave,
+              )
+            : null,
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: pagePadding(context),
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 480),
+              constraints: const BoxConstraints(maxWidth: 560),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: widget.children
@@ -115,6 +120,7 @@ Future<bool> confirmDiscard(BuildContext context, String message) async =>
     await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        scrollable: true,
         title: const Text('Leave this screen?'),
         content: Text(message),
         actions: [
@@ -140,6 +146,7 @@ Future<bool> confirmAction(
     await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        scrollable: true,
         title: Text(title),
         content: Text(message),
         actions: [

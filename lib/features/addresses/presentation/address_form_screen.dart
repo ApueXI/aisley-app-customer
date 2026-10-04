@@ -174,6 +174,7 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
               children: [
                 DropdownButtonFormField<String>(
                   isExpanded: true,
+                  itemHeight: null,
                   initialValue:
                       const ['shipping', 'billing', 'both'].contains(_type)
                       ? _type

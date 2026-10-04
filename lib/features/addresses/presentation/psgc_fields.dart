@@ -105,6 +105,7 @@ class _PsgcFieldsState extends State<PsgcFields> {
                   DropdownButtonFormField<PsgcRegion>(
                     initialValue: _region,
                     isExpanded: true,
+                    itemHeight: null,
                     decoration: const InputDecoration(
                       labelText: 'Select region',
                     ),
@@ -124,6 +125,7 @@ class _PsgcFieldsState extends State<PsgcFields> {
                     ),
                     initialValue: _province,
                     isExpanded: true,
+                    itemHeight: null,
                     decoration: const InputDecoration(
                       labelText: 'Select province',
                     ),
@@ -175,6 +177,7 @@ class _PsgcFieldsState extends State<PsgcFields> {
                     ),
                     initialValue: _city,
                     isExpanded: true,
+                    itemHeight: null,
                     decoration: const InputDecoration(
                       labelText: 'Select city / municipality',
                     ),
@@ -198,6 +201,7 @@ class _PsgcFieldsState extends State<PsgcFields> {
                     key: ValueKey('barangay:${_city?.code}:${_barangay?.code}'),
                     initialValue: _barangay,
                     isExpanded: true,
+                    itemHeight: null,
                     decoration: const InputDecoration(
                       labelText: 'Select barangay',
                     ),

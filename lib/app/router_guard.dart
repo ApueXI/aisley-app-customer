@@ -6,7 +6,7 @@ import '../core/commerce/commerce_value.dart';
 String safeReturn(String? value) {
   final uri = Uri.tryParse(value ?? '');
   if (uri == null || uri.hasScheme || uri.hasAuthority || uri.hasFragment) {
-    return '/account';
+    return '/';
   }
   if (uri.path == '/search' &&
       DiscoveryRouteQuery.parse(uri, kind: 'search').valid) {
@@ -22,7 +22,7 @@ String safeReturn(String? value) {
   }
   if (safeCommunicationReturn(uri)) return uri.toString();
   if (uri.path == '/checkout' && !uri.hasQuery) return '/cart';
-  if (uri.hasQuery) return '/account';
+  if (uri.hasQuery) return '/';
   if (const [
         '/',
         '/cart',
@@ -44,27 +44,23 @@ String safeReturn(String? value) {
       ).hasMatch(uri.path)) {
     return uri.path;
   }
-  return '/account';
+  return '/';
 }
 
 String? guardRoute(SessionController session, Uri uri) {
   final target = safeReturn(uri.queryParameters['returnTo']);
   final encoded = Uri.encodeComponent(target);
-  final private =
-      uri.path.startsWith('/messages/') ||
-      uri.path == '/notifications' ||
-      uri.path.startsWith('/notifications/') ||
-      uri.path == '/support-tickets' ||
-      uri.path.startsWith('/support-tickets/') ||
-      uri.path.startsWith('/order-items/') ||
-      uri.path == '/cart' ||
-      uri.path == '/orders' ||
-      uri.path.startsWith('/orders/') ||
-      uri.path == '/checkout' ||
-      uri.path.startsWith('/checkout/') ||
-      uri.path == '/account' ||
-      uri.path.startsWith('/account/');
-  if (private && !session.active) {
+  final beforeSignIn =
+      const [
+        '/login',
+        '/register',
+        '/approval',
+        '/forgot-password',
+        '/session',
+        '/consent',
+      ].contains(uri.path) ||
+      uri.path.startsWith('/policies/');
+  if (!beforeSignIn && !session.active) {
     final back = Uri.encodeComponent(safeReturn(uri.toString()));
     return switch (session.phase) {
       SessionPhase.signedOut ||
@@ -76,6 +72,21 @@ String? guardRoute(SessionController session, Uri uri) {
   if (session.active &&
       const ['/login', '/session', '/consent'].contains(uri.path)) {
     return target;
+  }
+  if (const ['/login', '/session'].contains(uri.path) &&
+      session.phase == SessionPhase.consentRequired) {
+    return '/consent?returnTo=$encoded';
+  }
+  if (uri.path == '/login' &&
+      const [
+        SessionPhase.checkingStorage,
+        SessionPhase.checkingIdentity,
+        SessionPhase.checkingConsent,
+        SessionPhase.storageUnavailable,
+        SessionPhase.identityUnavailable,
+        SessionPhase.consentUnavailable,
+      ].contains(session.phase)) {
+    return '/session?returnTo=$encoded';
   }
   if (uri.path == '/session' &&
       const [
@@ -104,7 +115,6 @@ bool safeCommunicationReturn(Uri uri) {
         '/messages/courier',
         '/notifications',
         '/support-tickets',
-        '/support-tickets/new',
       ].contains(uri.path)) {
     return true;
   }
@@ -135,30 +145,6 @@ bool safeCommunicationReturn(Uri uri) {
       p[2] == 'order' &&
       validUuid(p[3])) {
     return true;
-  }
-  if (!uri.hasQuery &&
-      p.length == 4 &&
-      p[0] == 'order-items' &&
-      validUuid(p[1]) &&
-      p[2] == 'review' &&
-      validUuid(p[3])) {
-    return true;
-  }
-  if (p.length == 4 &&
-      p[0] == 'messages' &&
-      p[1] == 'shops' &&
-      p[2] == 'new' &&
-      validUuid(p[3])) {
-    if (!uri.hasQuery) return true;
-    return uri.queryParametersAll.values.every((v) => v.length == 1) &&
-        uri.queryParameters.keys.every(
-          (k) => const ['context_type', 'context_id'].contains(k),
-        ) &&
-        const [
-          'product',
-          'order',
-        ].contains(uri.queryParameters['context_type']) &&
-        validUuid(uri.queryParameters['context_id'] ?? '');
   }
   return false;
 }

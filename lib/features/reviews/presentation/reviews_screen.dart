@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/ui/responsive_layout.dart';
+
 import '../../../app/app_dependencies.dart';
 import '../../discovery/presentation/catalog_image.dart';
 import '../data/review_models.dart';
@@ -37,7 +39,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: controller,
-    builder: (context, _) => Scaffold(
+    builder: (context, _) => ShoppingPage(
       appBar: AppBar(
         title: const Text('Product reviews'),
         actions: [
@@ -52,7 +54,7 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
       ),
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(20),
+          padding: pagePadding(context),
           children: [
             if (controller.loading)
               const LinearProgressIndicator(semanticsLabel: 'Loading reviews'),

@@ -132,6 +132,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       title: 'Create an account',
       busy: _action.busy,
       dirty: _fields.values.any((c) => c.text.isNotEmpty) || _sex != null,
+      onCancel: () {
+        if (context.canPop()) {
+          context.pop();
+        } else {
+          context.go('/login');
+        }
+      },
       children: [
         const Text(
           'Registration requires Admin approval before you can sign in.',
@@ -168,6 +175,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 initialValue: _sex,
                 focusNode: _focus['sex'],
                 isExpanded: true,
+                itemHeight: null,
                 decoration: const InputDecoration(labelText: 'Sex'),
                 items: const [
                   DropdownMenuItem(value: 'male', child: Text('Male')),

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../core/security/session_controller.dart';
 import '../core/ui/form_page.dart';
+import '../core/ui/responsive_layout.dart';
 import 'commerce_state.dart';
 
 class BuyerShell extends StatelessWidget {
@@ -17,53 +18,61 @@ class BuyerShell extends StatelessWidget {
   final CommerceState? commerce;
   @override
   Widget build(BuildContext context) => ListenableBuilder(
-    listenable: commerce?.cart ?? session,
-    builder: (context, _) => Scaffold(
-      appBar: AppBar(
-        title: const Text('AISLEY'),
-        actions: [
-          IconButton(
-            tooltip: 'Terms and privacy',
-            icon: const Icon(Icons.policy_outlined),
-            onPressed: () => context.push('/policies/terms_of_service'),
-          ),
-        ],
-      ),
-      body: SafeArea(child: navigation),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: navigation.currentIndex,
-        onDestinationSelected: (index) {
-          if (index == 2) commerce?.cart.load();
-          navigation.goBranch(
-            index,
-            initialLocation: index == navigation.currentIndex,
-          );
-        },
-        destinations: [
-          const NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            label: 'Home',
-          ),
-          const NavigationDestination(
-            icon: Icon(Icons.storefront_outlined),
-            label: 'Shops',
-          ),
-          NavigationDestination(
-            icon: Badge(
-              isLabelVisible:
-                  commerce?.cart.badge != null && commerce!.cart.badge! > 0,
-              label: Text('${commerce?.cart.badge ?? 0}'),
-              child: const Icon(Icons.shopping_cart_outlined),
+    listenable: Listenable.merge([
+      session,
+      if (commerce != null) commerce!.cart,
+    ]),
+    builder: (context, _) => !session.active
+        ? const SizedBox.shrink()
+        : Scaffold(
+            appBar: AppBar(
+              title: const Text('AISLEY'),
+              actions: [
+                IconButton(
+                  tooltip: 'Terms and privacy',
+                  icon: const Icon(Icons.policy_outlined),
+                  onPressed: () => context.push('/policies/terms_of_service'),
+                ),
+              ],
             ),
-            label: 'Cart',
+            body: SafeArea(child: ContentViewport(child: navigation)),
+            bottomNavigationBar: MediaQuery.viewInsetsOf(context).bottom > 0
+                ? null
+                : NavigationBar(
+                    selectedIndex: navigation.currentIndex,
+                    onDestinationSelected: (index) {
+                      if (index == 2) commerce?.cart.load();
+                      navigation.goBranch(
+                        index,
+                        initialLocation: index == navigation.currentIndex,
+                      );
+                    },
+                    destinations: [
+                      const NavigationDestination(
+                        icon: Icon(Icons.home_outlined),
+                        label: 'Home',
+                      ),
+                      const NavigationDestination(
+                        icon: Icon(Icons.storefront_outlined),
+                        label: 'Shops',
+                      ),
+                      NavigationDestination(
+                        icon: Badge(
+                          isLabelVisible:
+                              commerce?.cart.badge != null &&
+                              commerce!.cart.badge! > 0,
+                          label: Text('${commerce?.cart.badge ?? 0}'),
+                          child: const Icon(Icons.shopping_cart_outlined),
+                        ),
+                        label: 'Cart',
+                      ),
+                      const NavigationDestination(
+                        icon: Icon(Icons.person_outline),
+                        label: 'Account',
+                      ),
+                    ],
+                  ),
           ),
-          const NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            label: 'Account',
-          ),
-        ],
-      ),
-    ),
   );
 }
 
@@ -75,12 +84,11 @@ class ShellScreen extends StatelessWidget {
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: session,
     builder: (context, _) {
-      final private = section == 'Account' || section == 'Cart';
-      if (private && !session.active) {
+      if (!session.active) {
         return const Center(child: Text('Verifying access…'));
       }
       return SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: pagePadding(context),
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 560),
@@ -93,7 +101,8 @@ class ShellScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(switch (section) {
-                  'Home' => 'Product discovery is not available in this version. You can sign in, register, or read our policies.',
+                  'Home' =>
+                    'Product discovery is not available in this version.',
                   'Shops' => 'Shop browsing is not available in this version.',
                   'Cart' =>
                     'Your shopping cart is not available in this version.',
@@ -121,16 +130,6 @@ class ShellScreen extends StatelessWidget {
                           },
                     child: const Text('Sign out'),
                   ),
-                ] else if (section == 'Home') ...[
-                  if (!session.active)
-                    FilledButton(
-                      onPressed: () => context.push('/login'),
-                      child: const Text('Sign in'),
-                    ),
-                  TextButton(
-                    onPressed: () => context.push('/register'),
-                    child: const Text('Create an account'),
-                  ),
                 ],
                 TextButton(
                   onPressed: () => context.push('/policies/terms_of_service'),
@@ -157,6 +156,7 @@ class SessionScreen extends StatelessWidget {
     listenable: session,
     builder: (context, _) => FormPage(
       title: 'Checking your session',
+      canLeave: false,
       children: [
         if (session.checking)
           const LinearProgressIndicator(semanticsLabel: 'Checking session'),
@@ -168,10 +168,6 @@ class SessionScreen extends StatelessWidget {
         if (session.failure != null) FailureNotice(session.failure!),
         if (!session.checking)
           FilledButton(onPressed: session.retry, child: const Text('Retry')),
-        TextButton(
-          onPressed: () => context.go('/'),
-          child: const Text('Public Home'),
-        ),
         if (!session.checking)
           TextButton(
             onPressed: session.signOut,
@@ -187,6 +183,7 @@ class ApprovalScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) => FormPage(
     title: 'Registration submitted',
+    onCancel: () => context.go('/login'),
     children: [
       const Text(
         'Your registration is pending Admin approval. No sign-in session has been created.',
@@ -197,10 +194,6 @@ class ApprovalScreen extends StatelessWidget {
       FilledButton(
         onPressed: () => context.go('/login'),
         child: const Text('Return to sign in'),
-      ),
-      TextButton(
-        onPressed: () => context.go('/'),
-        child: const Text('Public Home'),
       ),
     ],
   );

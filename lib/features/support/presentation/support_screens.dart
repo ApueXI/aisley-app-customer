@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
+import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/form_page.dart';
 import '../../../core/ui/foreground_poll.dart';
 import '../../../core/communication/text_rules.dart';
@@ -32,7 +33,7 @@ class _TicketInboxScreenState extends State<TicketInboxScreen> {
       listenable: Listenable.merge([controller, widget.dependencies.session]),
       builder: (context, _) => !widget.dependencies.session.active
           ? const SizedBox.shrink()
-          : Scaffold(
+          : ShoppingPage(
               appBar: AppBar(
                 title: const Text('Support tickets'),
                 actions: [
@@ -47,7 +48,7 @@ class _TicketInboxScreenState extends State<TicketInboxScreen> {
               ),
               body: SafeArea(
                 child: ListView(
-                  padding: const EdgeInsets.all(20),
+                  padding: pagePadding(context),
                   children: [
                     FilledButton.icon(
                       onPressed: () async {
@@ -62,6 +63,7 @@ class _TicketInboxScreenState extends State<TicketInboxScreen> {
                       key: ValueKey('status/${controller.status}'),
                       initialValue: controller.status,
                       isExpanded: true,
+                      itemHeight: null,
                       decoration: const InputDecoration(labelText: 'Status'),
                       items: [
                         const DropdownMenuItem(
@@ -84,6 +86,7 @@ class _TicketInboxScreenState extends State<TicketInboxScreen> {
                       key: ValueKey('category/${controller.category}'),
                       initialValue: controller.category,
                       isExpanded: true,
+                      itemHeight: null,
                       decoration: const InputDecoration(labelText: 'Category'),
                       items: [
                         const DropdownMenuItem(
@@ -331,6 +334,7 @@ class _TicketComposerScreenState extends State<TicketComposerScreen> {
                       initialValue:
                           c.pending?.body['category'] as String? ?? c.category,
                       isExpanded: true,
+                      itemHeight: null,
                       decoration: InputDecoration(
                         labelText: 'Category',
                         errorText: c.fieldErrors['category'],

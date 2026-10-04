@@ -58,7 +58,7 @@ For a fresh destination, select the same SDK through approved tooling and verify
 | [dio](https://pub.dev/packages/dio/versions/5.9.0) | 5.9.0 | JSON, cancellation, multipart; Dart≥2.18 <4 |
 | [flutter_secure_storage](https://pub.dev/packages/flutter_secure_storage/versions/10.0.0) | 10.0.0 | Token only; Dart≥3.3 <4 / Flutter≥3.19 |
 | [image_picker](https://pub.dev/packages/image_picker/versions/1.2.0) | 1.2.0 | XFile photo adapter; Dart ^3.6 / Flutter≥3.27 |
-| [shared_preferences](https://pub.dev/packages/shared_preferences/versions/2.5.3) | 2.5.3 | Guest recency and nonsecret choices; Dart ^3.5 / Flutter≥3.24 |
+| [shared_preferences](https://pub.dev/packages/shared_preferences/versions/2.5.3) | 2.5.3 | Retired guest-key cleanup and nonsecret choices; Dart ^3.5 / Flutter≥3.24 |
 | [url_launcher](https://pub.dev/packages/url_launcher/versions/6.3.2) | 6.3.2 | Reviewed external recovery/policy links; Dart ^3.6 / Flutter≥3.27 |
 | [flutter_markdown_plus](https://pub.dev/packages/flutter_markdown_plus/versions/1.0.12) | 1.0.12 | Product/policy Markdown; Dart ^3.4 / Flutter≥3.27.1 |
 | [flutter_map](https://pub.dev/packages/flutter_map/versions/8.2.2) | 8.2.2 | Optional raster pin editor; Dart≥3.6 <4 / Flutter≥3.27 |

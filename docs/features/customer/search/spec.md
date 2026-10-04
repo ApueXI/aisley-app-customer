@@ -29,6 +29,10 @@ communication repositories.
 The Customer client cannot perform Seller/Admin/Logistics/Courier actions. Current Laravel
 ownership and capabilities remain authoritative.
 
+Buyer presentation requires verified active Customer identity and required consent for every shopping
+screen; public backend methods/envelopes remain unchanged. Auth/recovery/Terms/Privacy stay reachable.
+Phone/tablet padding, natural content heights and keyboard/text resizing follow [Buyer design](../../../design-buyer.md).
+
 ## MUST
 
 ### Feature behavior and boundaries
@@ -130,8 +134,8 @@ Duplicate submits are disabled. Supported uncertain UUID writes retain exact key
 session memory.
 Queries/pages belong to a full request signature and session generation. Drop stale
 success/error on either change.
-Private data is memory-only by default; token is secure-store only, guest recency holds bounded
-public hints only.
+Private data is memory-only; token is secure-store only. Recently Viewed is account-only.
+Never write or merge guest hints; legacy-key cleanup must not delay authentication.
 Local [failure contracts](../../../api/errors.md) define concrete codes and examples; do not
 require a universal error envelope.
 

@@ -30,43 +30,29 @@ void main() {
     session = SessionController(auth, policies, storage);
   });
   tearDown(() => session.dispose());
-  testWidgets(
-    'dirty sign-in cancellation confirms discard and returns to Home',
-    (tester) async {
-      final dependencies = AppDependencies(
-        config: testConfig,
-        auth: auth,
-        policies: policies,
-        session: session,
-        launcher: TrustedLauncher(testConfig),
-      );
-      await tester.pumpWidget(BuyerApp(dependencies: dependencies));
-      await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
-      await tester.pumpAndSettle();
-      await tester.enterText(
-        find.byType(TextFormField).first,
-        'buyer@example.invalid',
-      );
-      await tester.pump();
-      await tester.tap(find.byTooltip('Cancel'));
-      await tester.pumpAndSettle();
-      expect(
-        find.text('Discard the information entered in this form?'),
-        findsOneWidget,
-      );
-      await tester.tap(find.text('Stay'));
-      await tester.pumpAndSettle();
-      expect(find.byType(TextFormField), findsNWidgets(2));
-      await tester.tap(find.byTooltip('Cancel'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Leave'));
-      await tester.pumpAndSettle();
-      expect(find.text('Welcome to AISLEY'), findsOneWidget);
-      expect(find.byType(TextFormField), findsNothing);
-      await tester.pumpWidget(const SizedBox());
-    },
-  );
+  testWidgets('root sign-in has no shopping navigation or cancel escape', (
+    tester,
+  ) async {
+    final dependencies = AppDependencies(
+      config: testConfig,
+      auth: auth,
+      policies: policies,
+      session: session,
+      launcher: TrustedLauncher(testConfig),
+    );
+    await tester.pumpWidget(BuyerApp(dependencies: dependencies));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byType(TextFormField).first,
+      'buyer@example.invalid',
+    );
+    await tester.pump();
+    expect(find.byTooltip('Cancel'), findsNothing);
+    expect(find.byType(NavigationBar), findsNothing);
+    expect(find.text('Public Home'), findsNothing);
+    expect(find.byType(TextFormField), findsNWidgets(2));
+    await tester.pumpWidget(const SizedBox());
+  });
   testWidgets(
     'login labels, tap targets, contrast and keyboard focus remain accessible',
     (tester) async {
@@ -104,7 +90,7 @@ void main() {
         '/cart?add=1',
         '/account#token',
       ]) {
-        expect(safeReturn(path), '/account');
+        expect(safeReturn(path), '/');
       }
       expect(safeReturn('/cart'), '/cart');
     },
@@ -121,7 +107,10 @@ void main() {
         guardRoute(session, Uri.parse('/cart')),
         '/login?returnTo=%2Fcart',
       );
-      expect(guardRoute(session, Uri.parse('/shops')), null);
+      expect(
+        guardRoute(session, Uri.parse('/shops')),
+        '/login?returnTo=%2Fshops',
+      );
       session.phase = SessionPhase.consentRequired;
       expect(
         guardRoute(session, Uri.parse('/cart')),
@@ -130,7 +119,7 @@ void main() {
     },
   );
   testWidgets(
-    'shell offers public policy/auth entry and private Cart sign-in gate',
+    'successful normal sign-in opens Home then logout hides shopping',
     (tester) async {
       final dependencies = AppDependencies(
         config: testConfig,
@@ -141,14 +130,22 @@ void main() {
       );
       await tester.pumpWidget(BuyerApp(dependencies: dependencies));
       await tester.pumpAndSettle();
-      expect(find.text('Welcome to AISLEY'), findsOneWidget);
-      await tester.tap(find.text('Cart'));
-      await tester.pumpAndSettle();
-      expect(find.widgetWithText(FilledButton, 'Sign in'), findsOneWidget);
-      expect(
-        find.text('Your shopping cart is not available in this version.'),
-        findsNothing,
+      await tester.enterText(
+        find.byType(TextFormField).first,
+        'buyer@example.invalid',
       );
+      await tester.enterText(find.byType(TextFormField).last, 'Synthetic123');
+      await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
+      await tester.pumpAndSettle();
+      expect(find.byType(NavigationBar), findsOneWidget);
+      expect(
+        find.text('Product discovery is not available in this version.'),
+        findsOneWidget,
+      );
+      await session.signOut();
+      await tester.pumpAndSettle();
+      expect(find.byType(NavigationBar), findsNothing);
+      expect(find.byType(TextFormField), findsNWidgets(2));
       await tester.pumpWidget(const SizedBox());
     },
   );
@@ -318,13 +315,13 @@ void main() {
       );
       await tester.pumpWidget(BuyerApp(dependencies: dependencies));
       await tester.pump();
-      await tester.tap(find.text('Account'));
-      await tester.pump();
+      expect(find.byType(NavigationBar), findsNothing);
+      expect(find.text('Checking your session'), findsOneWidget);
       expect(find.text('Buyer A'), findsNothing);
       expect(session.active, false);
       me.complete();
       await tester.pumpAndSettle();
-      expect(find.text('Buyer A'), findsOneWidget);
+      expect(find.byType(NavigationBar), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
     },
   );

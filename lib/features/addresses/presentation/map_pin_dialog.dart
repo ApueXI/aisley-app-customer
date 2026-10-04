@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import '../../../core/ui/responsive_layout.dart';
+
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
@@ -63,7 +66,7 @@ class _MapPinDialogState extends State<MapPinDialog> {
 
   @override
   Widget build(BuildContext context) => Dialog.fullscreen(
-    child: Scaffold(
+    child: ShoppingPage(
       appBar: AppBar(
         title: const Text('Confirm address pin'),
         leading: IconButton(
@@ -73,7 +76,7 @@ class _MapPinDialogState extends State<MapPinDialog> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: pagePadding(context),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [

@@ -28,6 +28,10 @@ communication repositories.
 The Customer client cannot perform Seller/Admin/Logistics/Courier actions. Current Laravel ownership
 and capabilities remain authoritative.
 
+Buyer presentation requires verified active Customer identity and required consent for every shopping
+screen; public backend methods/envelopes remain unchanged. Auth/recovery/Terms/Privacy stay reachable.
+Phone/tablet padding, natural content heights and keyboard/text resizing follow [Buyer design](../../../design-buyer.md).
+
 ## MUST
 
 ### Feature behavior and boundaries
@@ -58,8 +62,8 @@ and capabilities remain authoritative.
   repository/eligibility.
 - No Seller dashboard, recipient lookup, Shop voucher wallet or arbitrary public Seller contact UI
   belongs here.
-- Public catalogue reads remain usable for guests; purchase/save/chat actions request active
-  Customer/consent.
+- Buyer catalogue screens require verified active Customer/consent; public backend methods remain
+  credential-free, with unchanged visibility and ownership rules.
 - Tenant visibility is enforced by Laravel; client filters cannot expose another Shop’s inventory.
 - Test keyword/category intersection, no-results with stable options, unknown category and inactive
   Shop.
@@ -130,8 +134,8 @@ Duplicate submits are disabled. Supported uncertain UUID writes retain exact key
 session memory.
 Queries/pages belong to a full request signature and session generation. Drop stale success/error on
 either change.
-Private data is memory-only by default; token is secure-store only, guest recency holds bounded
-public hints only.
+Private data is memory-only; token is secure-store only. Recently Viewed is account-only.
+Never write or merge guest hints; legacy-key cleanup must not delay authentication.
 Local [failure contracts](../../../api/errors.md) define concrete codes and examples; do not require
 a universal error envelope.
 

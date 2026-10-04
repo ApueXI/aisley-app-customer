@@ -125,6 +125,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   DropdownButtonFormField<String>(
                     isExpanded: true,
+                    itemHeight: null,
                     initialValue: _sex,
                     decoration: const InputDecoration(labelText: 'Sex'),
                     items: [

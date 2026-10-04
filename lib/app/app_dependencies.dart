@@ -20,7 +20,6 @@ import '../features/addresses/data/map_location_service.dart';
 import '../features/discovery/data/discovery_repository.dart';
 import '../features/policies/data/policy_repository.dart';
 import '../features/saved/data/saved_repository.dart';
-import '../features/saved/presentation/recent_merge_coordinator.dart';
 import '../features/saved/presentation/saved_status_controller.dart';
 
 class AppDependencies {
@@ -35,9 +34,7 @@ class AppDependencies {
     this.addresses,
     this.wishlist,
     this.recentlyViewed,
-    this.guestRecent,
     this.savedStatus,
-    this.recentMerge,
     this.mapLocations,
     this.photoPicker,
     this.providerClient,
@@ -65,13 +62,7 @@ class AppDependencies {
     final addresses = AddressRepository(client);
     final wishlist = WishlistRepository(client);
     final recentlyViewed = RecentlyViewedRepository(client);
-    final guestRecent = GuestRecentStore();
     final savedStatus = SavedStatusController(session, wishlist);
-    final recentMerge = RecentMergeCoordinator(
-      session: session,
-      repository: recentlyViewed,
-      guestStore: guestRecent,
-    );
     final mapDio = Dio();
     configureHttpAdapter(mapDio, publicMapProvider: true);
     final mapLocations = MapLocationService(config, client: mapDio);
@@ -87,9 +78,7 @@ class AppDependencies {
       addresses: addresses,
       wishlist: wishlist,
       recentlyViewed: recentlyViewed,
-      guestRecent: guestRecent,
       savedStatus: savedStatus,
-      recentMerge: recentMerge,
       mapLocations: mapLocations,
       photoPicker: PhotoPickerAdapter(),
       providerClient: mapDio,
@@ -115,9 +104,7 @@ class AppDependencies {
   final AddressRepository? addresses;
   final WishlistRepository? wishlist;
   final RecentlyViewedRepository? recentlyViewed;
-  final GuestRecentStore? guestRecent;
   final SavedStatusController? savedStatus;
-  final RecentMergeCoordinator? recentMerge;
   final MapLocationService? mapLocations;
   final PhotoPickerAdapter? photoPicker;
   final Dio? providerClient;
@@ -126,7 +113,6 @@ class AppDependencies {
   void dispose() {
     communication?.dispose();
     commerce?.dispose();
-    recentMerge?.dispose();
     savedStatus?.dispose();
     providerClient?.close(force: true);
     discovery?.dispose();

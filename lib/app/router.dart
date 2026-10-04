@@ -97,7 +97,7 @@ GoRouter buyerRouter(AppDependencies dependencies) {
                               page: query.page,
                               limit: query.limit,
                             )
-                          : const _Unavailable();
+                          : const _Unavailable(embedded: true);
                     }
                     if (entry.key == '/cart' && dependencies.commerce != null) {
                       return CartScreen(dependencies: dependencies);
@@ -301,15 +301,30 @@ GoRouter buyerRouter(AppDependencies dependencies) {
 }
 
 class _Unavailable extends StatelessWidget {
-  const _Unavailable();
+  const _Unavailable({this.embedded = false});
+  final bool embedded;
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Unavailable')),
-    body: Center(
-      child: TextButton(
-        onPressed: () => context.go('/'),
-        child: const Text('Return to Home'),
+  Widget build(BuildContext context) {
+    final body = Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('This destination is unavailable.'),
+            TextButton(
+              onPressed: () => context.go('/'),
+              child: const Text('Continue'),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
+    );
+    return embedded
+        ? body
+        : Scaffold(
+            appBar: AppBar(title: const Text('Unavailable')),
+            body: body,
+          );
+  }
 }

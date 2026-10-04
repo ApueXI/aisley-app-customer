@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/saved/data/legacy_recent_cleanup.dart';
 import 'app_dependencies.dart';
 import 'router.dart';
 import 'theme.dart';
@@ -18,6 +21,7 @@ class _BuyerAppState extends State<BuyerApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    unawaited(removeLegacyRecentHints());
     widget.dependencies.session.bootstrap();
   }
 

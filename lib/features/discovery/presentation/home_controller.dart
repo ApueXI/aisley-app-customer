@@ -15,25 +15,19 @@ class HomeController extends ChangeNotifier with RequestCooldown {
   HomeController({
     required this.discovery,
     required this.session,
-    required this.guestStore,
     required this.recentlyViewed,
-    DateTime Function()? clock,
   }) {
     session.registerPrivateCleanup(clearPrivate);
-    _clock = clock ?? DateTime.now;
     _sessionStamp = _stamp;
     session.addListener(_sessionChanged);
   }
   final DiscoveryRepository discovery;
   final SessionController session;
-  final GuestRecentStore guestStore;
   final RecentlyViewedRepository recentlyViewed;
-  late final DateTime Function() _clock;
   BuyerHome? home;
   List<ProductCard> recommendations = const [];
-  List<ProductCard> guestRecentlyViewed = const [];
   String? cursor, error, pageError;
-  bool loading = false, loadingMore = false, guestStorageUnavailable = false;
+  bool loading = false, loadingMore = false;
   int _queryGeneration = 0;
   bool _disposed = false;
 
@@ -49,7 +43,6 @@ class HomeController extends ChangeNotifier with RequestCooldown {
     _queryGeneration++;
     home = null;
     recommendations = const [];
-    guestRecentlyViewed = const [];
     cursor = null;
     error = null;
     pageError = null;
@@ -61,7 +54,7 @@ class HomeController extends ChangeNotifier with RequestCooldown {
   }
 
   Future<void> load({bool refresh = false}) async {
-    if (_disposed || loading || coolingDown) return;
+    if (_disposed || !session.active || loading || coolingDown) return;
     final lease = session.active ? session.verifiedLease : null;
     final generation = ++_queryGeneration;
     final epoch = session.generation;
@@ -69,7 +62,6 @@ class HomeController extends ChangeNotifier with RequestCooldown {
     if (refresh || home != null && _homeOwner != customerId) {
       home = null;
       recommendations = const [];
-      guestRecentlyViewed = const [];
       cursor = null;
     }
     _homeOwner = customerId;
@@ -87,9 +79,6 @@ class HomeController extends ChangeNotifier with RequestCooldown {
       cursor = recommendations.length >= 200
           ? null
           : result.recommendations.nextCursor;
-      if (lease == null && session.customer == null) {
-        await _loadGuestRecentlyViewed(generation, epoch);
-      }
     } on ApiFailure catch (failure) {
       if (_current(generation, epoch, lease)) error = describeFailure(failure);
     } finally {
@@ -102,30 +91,10 @@ class HomeController extends ChangeNotifier with RequestCooldown {
 
   String? _homeOwner;
 
-  Future<void> _loadGuestRecentlyViewed(int generation, int epoch) async {
-    try {
-      final hints = await guestStore.read();
-      if (!_current(generation, epoch, null)) return;
-      guestStorageUnavailable = !guestStore.persisted;
-      if (hints.isEmpty) return;
-      final products = await recentlyViewed.resolve(
-        hints.map((hint) => hint.productId).toList(),
-      );
-      if (!_current(generation, epoch, null)) return;
-      final byId = {for (final item in products) item.id: item};
-      guestRecentlyViewed = [
-        for (final hint in hints)
-          if (byId[hint.productId] case final ProductCard product) product,
-      ];
-    } on ApiFailure {
-      // Recent history can fail independently from the public Home projection.
-      if (_current(generation, epoch, null)) guestRecentlyViewed = const [];
-    }
-  }
-
   Future<void> loadMore() async {
     final next = cursor;
-    if (coolingDown ||
+    if (!session.active ||
+        coolingDown ||
         loading ||
         loadingMore ||
         next == null ||
@@ -164,8 +133,6 @@ class HomeController extends ChangeNotifier with RequestCooldown {
     try {
       if (lease != null) {
         await recentlyViewed.record(lease, productId);
-      } else if (session.customer == null) {
-        await guestStore.record(productId, _clock().toUtc());
       }
     } catch (_) {
       // A failed history write never turns a visible Product into an error page.
@@ -176,7 +143,7 @@ class HomeController extends ChangeNotifier with RequestCooldown {
       !_disposed &&
       generation == _queryGeneration &&
       epoch == session.generation &&
-      (lease == null ? !session.active : lease.isCurrent());
+      (session.active && lease != null && lease.isCurrent());
 
   List<ProductCard> _unique(Iterable<ProductCard> values) {
     final found = <String>{};
@@ -192,7 +159,6 @@ class HomeController extends ChangeNotifier with RequestCooldown {
     if (_homeOwner != null) {
       home = null;
       recommendations = const [];
-      guestRecentlyViewed = const [];
       cursor = null;
       _homeOwner = null;
       error = null;

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -13,9 +12,8 @@ import 'package:aisley_mobile_buyer/features/account/presentation/account_contro
 import 'package:aisley_mobile_buyer/features/auth/data/auth_models.dart';
 import 'package:aisley_mobile_buyer/features/discovery/data/discovery_repository.dart';
 import 'package:aisley_mobile_buyer/features/discovery/presentation/search_controller.dart';
-import 'package:aisley_mobile_buyer/features/saved/data/saved_models.dart';
 import 'package:aisley_mobile_buyer/features/saved/data/saved_repository.dart';
-import 'package:aisley_mobile_buyer/features/saved/presentation/recent_merge_coordinator.dart';
+import 'package:aisley_mobile_buyer/features/saved/data/legacy_recent_cleanup.dart';
 import 'package:aisley_mobile_buyer/features/saved/presentation/saved_status_controller.dart';
 
 import 'package:aisley_mobile_buyer/features/policies/data/policy_models.dart';
@@ -332,81 +330,21 @@ void main() {
     expect(repo.passwordWrites, 2);
   });
 
-  test('guest storage omits corruption, serializes concurrent views and keeps the newest twelve public hints', () async {
-    final now = DateTime.utc(2026, 10, 4);
-    SharedPreferences.setMockInitialValues({
-      GuestRecentStore.storageKey: [
-        'corrupt',
-        jsonEncode(
-          GuestRecentHint(productId: customerId, viewedAt: now).toJson(),
-        ),
-      ],
-    });
-    final store = GuestRecentStore(clock: () => now);
-    expect((await store.read()).single.productId, customerId);
-    await Future.wait([
-      for (var index = 1; index <= 15; index++)
-        store.record(
-          '${index.toString().padLeft(8, '0')}-1111-4111-8111-111111111111',
-          now.subtract(Duration(seconds: index)),
-        ),
-    ]);
-    final hints = await store.read();
-    expect(hints.length, 12);
-    expect(hints.first.productId, customerId);
-    final preferences = await SharedPreferences.getInstance();
-    for (final raw in preferences.getStringList(GuestRecentStore.storageKey)!) {
-      expect((jsonDecode(raw) as Map).keys.toSet(), {'productId', 'viewedAt'});
-    }
-  });
-
-  test('denied guest storage retains bounded in-memory hints with a truthful persistence flag', () async {
-    final now = DateTime.utc(2026, 10, 4);
-    final store = GuestRecentStore(
-      preferences: () async => throw StateError('denied'),
-      clock: () => now,
-    );
-    await store.record(customerId, now);
-    expect((await store.read()).single.productId, customerId);
-    expect(store.persisted, isFalse);
-  });
-
-  test('partial guest merge removes only acknowledged timestamps and never delays identity verification', () async {
-    final now = DateTime.utc(2026, 10, 4);
-    final store = GuestRecentStore(clock: () => now);
-    await store.record(customerId, now.subtract(const Duration(minutes: 2)));
-    await store.record(otherId, now.subtract(const Duration(minutes: 1)));
-    final pending = Completer<ResponseBody>();
-    final adapter = FakeAdapter((_) => pending.future);
-    final api = ApiClient(
-      testConfig,
-      privateClient: Dio()..httpClientAdapter = adapter,
-    );
-    addTearDown(api.close);
-    final merger = RecentMergeCoordinator(
-      session: session,
-      repository: RecentlyViewedRepository(api, clock: () => now),
-      guestStore: store,
-    );
-    addTearDown(merger.dispose);
-    await Future<void>.delayed(Duration.zero);
-    expect(session.active, isTrue);
-    expect(merger.busy, isTrue);
-    await store.record(customerId, now);
-    pending.complete(
-      jsonReply({
-        'data': {
-          'mergedProductIds': [customerId],
-          'mergedCount': 1,
-        },
-      }),
-    );
-    for (var index = 0; index < 10 && merger.busy; index++) {
-      await Future<void>.delayed(Duration.zero);
-    }
-    expect((await store.read()).map((hint) => hint.productId).toSet(), {
-      customerId,
-      otherId,
-    });
-  });
+  test(
+    'legacy hint cleanup removes only its key and storage failure is harmless',
+    () async {
+      SharedPreferences.setMockInitialValues({
+        legacyRecentKey: ['corrupt'],
+        'unrelated': 'preserve',
+      });
+      await removeLegacyRecentHints();
+      final preferences = await SharedPreferences.getInstance();
+      expect(preferences.containsKey(legacyRecentKey), isFalse);
+      expect(preferences.getString('unrelated'), 'preserve');
+      await removeLegacyRecentHints(
+        preferences: () async => throw StateError('denied'),
+      );
+      expect(session.active, isTrue);
+    },
+  );
 }

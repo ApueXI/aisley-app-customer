@@ -85,6 +85,7 @@ class _ReviewComposerScreenState extends State<ReviewComposerScreen> {
             if (c.reviewId == null) ...[
               DropdownButtonFormField<int>(
                 isExpanded: true,
+                itemHeight: null,
                 initialValue: c.pending?.rating ?? c.rating,
                 decoration: InputDecoration(
                   labelText: 'Rating',

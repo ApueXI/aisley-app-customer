@@ -72,6 +72,7 @@ class _CartLineEditorState extends State<CartLineEditor> {
                   true)
                 DropdownButtonFormField<String>(
                   isExpanded: true,
+                  itemHeight: null,
                   decoration: const InputDecoration(
                     labelText: 'Replace variant (optional)',
                   ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
+import '../../../core/ui/responsive_layout.dart';
 import '../data/catalog_models.dart';
 import 'catalog_widgets.dart';
 import 'shop_controllers.dart';
@@ -52,181 +53,109 @@ class _ShopScreenState extends State<ShopScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) => ShoppingPage(
     appBar: AppBar(title: const Text('Shop')),
     body: ListenableBuilder(
       listenable: _controller,
       builder: (context, _) {
         final result = _controller.result;
-        return NestedScrollView(
-          headerSliverBuilder: (context, innerBoxIsScrolled) => [
-            SliverToBoxAdapter(
-              child: Column(
-                children: [
-                  if (_controller.shop != null)
-                    _shopHeader(context, _controller.shop!),
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                    child: Column(
-                      children: [
-                        TextField(
-                          controller: _query,
-                          maxLength: 100,
-                          textInputAction: TextInputAction.search,
-                          onSubmitted: (_) => _applyFilters(context),
-                          decoration: InputDecoration(
-                            labelText: 'Search this Shop',
-                            hintText: 'Product name',
-                            prefixIcon: const Icon(Icons.search),
-                            suffixIcon: IconButton(
-                              tooltip: 'Clear keyword',
-                              onPressed: () {
-                                _query.clear();
-                                _applyFilters(context);
-                              },
-                              icon: const Icon(Icons.clear),
-                            ),
-                          ),
-                        ),
-                        if (result != null && result.categories.isNotEmpty)
-                          DropdownButtonFormField<String?>(
-                            initialValue:
-                                result.categories.any(
-                                  (item) => item.slug == _controller.category,
-                                )
-                                ? _controller.category
-                                : null,
-                            isExpanded: true,
-                            decoration: const InputDecoration(
-                              labelText: 'Product category',
-                            ),
-                            items: [
-                              const DropdownMenuItem<String?>(
-                                value: null,
-                                child: Text('All Product categories'),
-                              ),
-                              for (final category in result.categories)
-                                DropdownMenuItem<String?>(
-                                  value: category.slug,
-                                  child: Text(category.name),
-                                ),
-                            ],
-                            onChanged: (value) => _replaceShopRoute(
-                              context,
-                              query: _query.text.trim(),
-                              category: value,
-                              page: 1,
-                              clearCategory: value == null,
-                            ),
-                          ),
-                        const SizedBox(height: 8),
-                        FilledButton.icon(
-                          onPressed: () => _applyFilters(context),
-                          icon: const Icon(Icons.filter_alt_outlined),
-                          label: const Text('Apply filters'),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+        return ListView(
+          padding: pagePadding(context),
+          children: [
+            if (_controller.shop != null)
+              _shopHeader(context, _controller.shop!),
+            TextField(
+              controller: _query,
+              maxLength: 100,
+              textInputAction: TextInputAction.search,
+              onSubmitted: (_) => _applyFilters(context),
+              decoration: InputDecoration(
+                labelText: 'Search this Shop',
+                hintText: 'Product name',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: IconButton(
+                  tooltip: 'Clear keyword',
+                  onPressed: () {
+                    _query.clear();
+                    _applyFilters(context);
+                  },
+                  icon: const Icon(Icons.clear),
+                ),
               ),
             ),
-          ],
-          body: Column(
-            children: [
-              if (_controller.loading && result == null)
-                const Expanded(
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      semanticsLabel: 'Loading Shop Products',
-                    ),
-                  ),
-                )
-              else if (_controller.error != null && result == null)
-                Expanded(child: _error(context, _controller.error!))
-              else if (result != null)
-                Expanded(
-                  child: Column(
-                    children: [
-                      if (_controller.error != null)
-                        _inlineError(_controller.error!, _controller.retry),
-                      if (_controller.loading) const LinearProgressIndicator(),
-                      if (_controller.page > result.pagination.lastPage)
-                        Expanded(
-                          child: Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Text('This page is no longer available.'),
-                                TextButton(
-                                  onPressed: () =>
-                                      _replaceShopRoute(context, page: 1),
-                                  child: const Text('Go to first page'),
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
-                      else if (result.items.isEmpty)
-                        const Expanded(
-                          child: Center(
-                            child: Text('No Products match these filters.'),
-                          ),
-                        )
-                      else ...[
-                        Expanded(
-                          child: LayoutBuilder(
-                            builder: (context, constraints) {
-                              final columns = (constraints.maxWidth / 210)
-                                  .floor()
-                                  .clamp(1, 5);
-                              return GridView.builder(
-                                padding: const EdgeInsets.all(12),
-                                itemCount: result.items.length,
-                                gridDelegate:
-                                    SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: columns,
-                                      crossAxisSpacing: 8,
-                                      mainAxisSpacing: 8,
-                                      mainAxisExtent:
-                                          170 +
-                                          145 *
-                                              MediaQuery.textScalerOf(context)
-                                                  .scale(14) /
-                                              14,
-                                    ),
-                                itemBuilder: (context, index) {
-                                  final product = result.items[index];
-                                  return ProductCardTile(
-                                    width: double.infinity,
-                                    product: product,
-                                    discovery: widget.dependencies.discovery!,
-                                    onTap: () =>
-                                        context.push('/products/${product.id}'),
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                        ),
-                        _pagination(context, result.pagination),
-                      ],
-                    ],
-                  ),
-                )
-              else
-                const Expanded(
-                  child: Center(child: Text('Shop Products are unavailable.')),
+            if (result != null && result.categories.isNotEmpty)
+              DropdownButtonFormField<String?>(
+                initialValue:
+                    result.categories.any((c) => c.slug == _controller.category)
+                    ? _controller.category
+                    : null,
+                isExpanded: true,
+                itemHeight: null,
+                decoration: const InputDecoration(
+                  labelText: 'Product category',
                 ),
+                items: [
+                  const DropdownMenuItem<String?>(
+                    value: null,
+                    child: Text('All Product categories'),
+                  ),
+                  for (final category in result.categories)
+                    DropdownMenuItem<String?>(
+                      value: category.slug,
+                      child: Text(category.name),
+                    ),
+                ],
+                onChanged: (value) => _replaceShopRoute(
+                  context,
+                  query: _query.text.trim(),
+                  category: value,
+                  page: 1,
+                  clearCategory: value == null,
+                ),
+              ),
+            const SizedBox(height: 8),
+            FilledButton.icon(
+              onPressed: () => _applyFilters(context),
+              icon: const Icon(Icons.filter_alt_outlined),
+              label: const Text('Apply filters'),
+            ),
+            const SizedBox(height: 16),
+            if (_controller.loading)
+              const LinearProgressIndicator(
+                semanticsLabel: 'Loading Shop Products',
+              ),
+            if (_controller.error != null) _error(context, _controller.error!),
+            if (result != null) ...[
+              if (_controller.page > result.pagination.lastPage) ...[
+                const Text('This page is no longer available.'),
+                TextButton(
+                  onPressed: () => _replaceShopRoute(context, page: 1),
+                  child: const Text('Go to first page'),
+                ),
+              ] else if (result.items.isEmpty)
+                const Text('No Products match these filters.')
+              else
+                CatalogGrid(
+                  children: [
+                    for (final product in result.items)
+                      ProductCardTile(
+                        width: double.infinity,
+                        product: product,
+                        discovery: widget.dependencies.discovery!,
+                        onTap: () => context.push('/products/${product.id}'),
+                      ),
+                  ],
+                ),
+              _pagination(context, result.pagination),
             ],
-          ),
+          ],
         );
       },
     ),
   );
 
   Widget _shopHeader(BuildContext context, ShopSummary shop) => Padding(
-    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+    padding: const EdgeInsets.only(bottom: 16),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -266,20 +195,11 @@ class _ShopScreenState extends State<ShopScreen> {
     ),
   );
 
-  Widget _inlineError(String message, VoidCallback retry) => Padding(
-    padding: const EdgeInsets.all(8),
-    child: Row(
-      children: [
-        Expanded(child: Text(message)),
-        TextButton(onPressed: retry, child: const Text('Retry')),
-      ],
-    ),
-  );
-
   Widget _pagination(BuildContext context, Pagination pagination) => Padding(
     padding: const EdgeInsets.only(bottom: 12),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    child: Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         IconButton(
           tooltip: 'Previous page',

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
+import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/form_page.dart';
 import '../../checkout/domain/checkout_intent.dart';
 import '../data/cart_models.dart';
@@ -29,7 +30,7 @@ class _CartScreenState extends State<CartScreen> {
       builder: (context, _) {
         if (!widget.dependencies.session.active) return const SizedBox.shrink();
         return ListView(
-          padding: const EdgeInsets.all(16),
+          padding: pagePadding(context),
           children: [
             Text('Your Cart', style: Theme.of(context).textTheme.headlineSmall),
             TextButton.icon(

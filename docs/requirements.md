@@ -2,7 +2,7 @@
 
 Status: Phases 1–4 implemented; live/device acceptance remains partial. See [Phase 4 evidence](references/phase-4-verification.md), [Phase 3 evidence](references/phase-3-verification.md). Backend availability is recorded in [feature specs](features/README.md) and [API inventory](api/endpoints.md).
 
-Guests can discover visible Products/Shops, search, inspect Product media and valid variants, read public Q&A/reviews, read Terms/Privacy, and keep bounded local Recently Viewed hints. Private actions require an active Admin-approved Customer and required server policy consent.
+All shopping screens require an active Admin-approved Customer verified through `/me` and required server policy consent. Before verification, login, registration, approval information, recovery and Terms/Privacy remain reachable. Recently Viewed uses authenticated account history only; guest hints are neither written nor merged. Public API contracts remain unchanged.
 
 The app must cover all 19 canonical Customer feature areas: Customer Auth, auth-aware navigation, Homepage, Search, Browse Shop, View Product, Account Management, Address Book, Wishlist, Recently Viewed, View Cart, Checkout, Voucher Usage, Order Status, Order Modification/Cancellation, Shop Chat, Product Q&A, Reviews/Ratings, and Support Tickets. Additional owning specs cover notifications, policy viewing/consent, Logistics messages, and Courier messages.
 
@@ -29,7 +29,7 @@ Bazaar/MoneyFest placeholders, guest Cart/Wishlist merge, voucher claiming/walle
 | --- | --- | --- |
 | Auth/navigation/consent | trusted API, secure TokenStore, session generation, public policy reader | Admin approval and current server consent |
 | Home/search/Shop/Product | public typed repositories, safe URL mapping, bounded pagination | backend publication/Shop visibility and variant completeness |
-| Profile/addresses/save/history | verified Customer, uploads, offline PSGC, guest-store isolation | owned account/defaults and unchanged Order snapshots |
+| Profile/addresses/save/history | verified Customer, uploads, offline PSGC, account-history isolation | owned account/defaults and unchanged Order snapshots |
 | Cart/quote/vouchers/place | owned shipping address, exact intent, server totals, frozen keys | atomic reservations/redemptions and one Order per Shop |
 | Orders/cancel/correct | immutable snapshots, current actions/revisions, tracking pages | locked transition window; no Buyer fulfillment power |
 | Shop/Logistics/Courier chat | separate eligibility/context/DTO/read/polling state | participants resolved by server, readonly after relationship ends |

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
+import '../../../core/ui/responsive_layout.dart';
 import '../data/notification_models.dart';
 import 'notification_controllers.dart';
 
@@ -35,7 +36,7 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
     listenable: Listenable.merge([controller, widget.dependencies.session]),
     builder: (context, _) => !widget.dependencies.session.active
         ? const SizedBox.shrink()
-        : Scaffold(
+        : ShoppingPage(
             appBar: AppBar(
               title: const Text('Notifications'),
               actions: [
@@ -50,7 +51,7 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
             ),
             body: SafeArea(
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: pagePadding(context),
                 children: [
                   Wrap(
                     spacing: 8,
@@ -164,11 +165,11 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
         });
       }
       final target = item == null ? null : notificationDestination(item);
-      return Scaffold(
+      return ShoppingPage(
         appBar: AppBar(title: const Text('Notification')),
         body: SafeArea(
           child: ListView(
-            padding: const EdgeInsets.all(24),
+            padding: pagePadding(context),
             children: [
               if (controller.loading)
                 const LinearProgressIndicator(

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/ui/responsive_layout.dart';
+
 import '../../../core/ui/form_page.dart';
 import '../../../core/communication/text_rules.dart';
 
@@ -208,7 +210,7 @@ class _MessageThreadViewState extends State<MessageThreadView> {
     onPopInvokedWithResult: (didPop, _) {
       if (!didPop) _leave();
     },
-    child: Scaffold(
+    child: ShoppingPage(
       appBar: AppBar(
         title: Text(widget.title),
         leading: IconButton(
@@ -232,146 +234,144 @@ class _MessageThreadViewState extends State<MessageThreadView> {
           ),
         ],
       ),
-      body: SafeArea(
-        child: ListView(
-          controller: _scroll,
-          padding: const EdgeInsets.all(20),
-          children: [
-            if (widget.subtitle != null) Text(widget.subtitle!),
-            if (widget.contextAction != null) widget.contextAction!,
-            if (widget.loading || widget.sending)
-              const LinearProgressIndicator(
-                semanticsLabel: 'Updating conversation',
-              ),
-            if (widget.error != null)
-              Semantics(liveRegion: true, child: Text(widget.error!)),
-            if (widget.arrivals > 0)
-              TextButton(
-                onPressed: _viewArrivals,
-                child: Text('${widget.arrivals} new messages · View'),
-              ),
-            if (widget.more)
-              TextButton(
-                onPressed:
-                    widget.loading ||
-                        widget.paging ||
-                        widget.sending ||
-                        widget.coolingDown
-                    ? null
-                    : widget.loadMore,
-                child: Text(widget.paging ? 'Loading…' : 'Load older messages'),
-              ),
-            if (widget.pageError != null) Text(widget.pageError!),
-            if (widget.rows.isEmpty && !widget.loading && widget.error == null)
-              const Text('Your first sent message starts the conversation.'),
-            for (final row in widget.rows)
-              Padding(
-                key: _rows.putIfAbsent(row.id, () => GlobalKey()),
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      row.mine ? 'You' : row.label,
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                    SelectableText(row.body),
-                    if (row.context != null) Text(row.context!),
-                    if (row.at != null)
-                      Text(
-                        row.at!.toLocal().toString(),
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                  ],
-                ),
-              ),
-            if (widget.readError != null) ...[
-              Text(widget.readError!),
-              TextButton(
-                onPressed: widget.coolingDown || widget.rows.isEmpty
-                    ? null
-                    : () => _displayed(retry: true),
-                child: const Text('Retry read marker'),
-              ),
-            ],
-            if (!widget.allowed)
-              Text(
-                'Read only. ${widget.reason ?? 'Sending is currently unavailable.'}',
-              ),
-            if (widget.pending) ...[
-              const Text(
-                'A send is unresolved. The original text and key are kept for exact retry.',
-              ),
-              TextButton(
-                onPressed:
-                    widget.sending ||
-                        widget.loading ||
-                        widget.coolingDown ||
-                        widget.conflict
-                    ? null
-                    : widget.retry,
-                child: const Text('Retry exact message'),
-              ),
-            ],
-            if (widget.conflict)
-              TextButton(
-                onPressed: widget.loading || widget.sending || !widget.allowed
-                    ? null
-                    : () async {
-                        if (await confirmAction(
-                          context,
-                          title: 'Review changed conversation',
-                          message: 'The previous request was rejected. Review current permissions and send the draft as a new attempt?',
-                          action: 'Review draft',
-                        )) {
-                          widget.reviewConflict();
-                        }
-                      },
-                child: const Text('Review conflict'),
-              ),
-            Form(
-              key: _form,
-              child: TextFormField(
-                controller: _text,
-                focusNode: _focus,
-                enabled: widget.allowed && !widget.pending && !widget.sending,
-                minLines: 2,
-                maxLines: 6,
-                decoration: InputDecoration(
-                  labelText: 'Message',
-                  helperText: 'Plain text, up to 2,000 characters',
-                  errorText: widget.fieldError,
-                ),
-                validator: (v) => plainTextError(v, 2000),
-                onChanged: (v) {
-                  widget.changed(v);
-                  setState(() {});
-                },
-              ),
+      body: ListView(
+        controller: _scroll,
+        padding: pagePadding(context),
+        children: [
+          if (widget.subtitle != null) Text(widget.subtitle!),
+          if (widget.contextAction != null) widget.contextAction!,
+          if (widget.loading || widget.sending)
+            const LinearProgressIndicator(
+              semanticsLabel: 'Updating conversation',
             ),
-            const SizedBox(height: 12),
-            FilledButton(
+          if (widget.error != null)
+            Semantics(liveRegion: true, child: Text(widget.error!)),
+          if (widget.arrivals > 0)
+            TextButton(
+              onPressed: _viewArrivals,
+              child: Text('${widget.arrivals} new messages · View'),
+            ),
+          if (widget.more)
+            TextButton(
               onPressed:
-                  !widget.allowed ||
-                      widget.pending ||
-                      widget.conflict ||
+                  widget.loading ||
+                      widget.paging ||
                       widget.sending ||
-                      widget.loading ||
                       widget.coolingDown
                   ? null
-                  : () {
-                      if (validateForm(_form.currentState!)) widget.send();
-                    },
-              child: Text(widget.sending ? 'Sending…' : 'Send message'),
+                  : widget.loadMore,
+              child: Text(widget.paging ? 'Loading…' : 'Load older messages'),
             ),
+          if (widget.pageError != null) Text(widget.pageError!),
+          if (widget.rows.isEmpty && !widget.loading && widget.error == null)
+            const Text('Your first sent message starts the conversation.'),
+          for (final row in widget.rows)
+            Padding(
+              key: _rows.putIfAbsent(row.id, () => GlobalKey()),
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    row.mine ? 'You' : row.label,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  SelectableText(row.body),
+                  if (row.context != null) Text(row.context!),
+                  if (row.at != null)
+                    Text(
+                      row.at!.toLocal().toString(),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                ],
+              ),
+            ),
+          if (widget.readError != null) ...[
+            Text(widget.readError!),
             TextButton(
-              onPressed: widget.loading || widget.sending || widget.coolingDown
+              onPressed: widget.coolingDown || widget.rows.isEmpty
                   ? null
-                  : widget.refresh,
-              child: const Text('Retry / refresh'),
+                  : () => _displayed(retry: true),
+              child: const Text('Retry read marker'),
             ),
           ],
-        ),
+          if (!widget.allowed)
+            Text(
+              'Read only. ${widget.reason ?? 'Sending is currently unavailable.'}',
+            ),
+          if (widget.pending) ...[
+            const Text(
+              'A send is unresolved. The original text and key are kept for exact retry.',
+            ),
+            TextButton(
+              onPressed:
+                  widget.sending ||
+                      widget.loading ||
+                      widget.coolingDown ||
+                      widget.conflict
+                  ? null
+                  : widget.retry,
+              child: const Text('Retry exact message'),
+            ),
+          ],
+          if (widget.conflict)
+            TextButton(
+              onPressed: widget.loading || widget.sending || !widget.allowed
+                  ? null
+                  : () async {
+                      if (await confirmAction(
+                        context,
+                        title: 'Review changed conversation',
+                        message: 'The previous request was rejected. Review current permissions and send the draft as a new attempt?',
+                        action: 'Review draft',
+                      )) {
+                        widget.reviewConflict();
+                      }
+                    },
+              child: const Text('Review conflict'),
+            ),
+          Form(
+            key: _form,
+            child: TextFormField(
+              controller: _text,
+              focusNode: _focus,
+              enabled: widget.allowed && !widget.pending && !widget.sending,
+              minLines: 2,
+              maxLines: 6,
+              decoration: InputDecoration(
+                labelText: 'Message',
+                helperText: 'Plain text, up to 2,000 characters',
+                errorText: widget.fieldError,
+              ),
+              validator: (v) => plainTextError(v, 2000),
+              onChanged: (v) {
+                widget.changed(v);
+                setState(() {});
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
+          FilledButton(
+            onPressed:
+                !widget.allowed ||
+                    widget.pending ||
+                    widget.conflict ||
+                    widget.sending ||
+                    widget.loading ||
+                    widget.coolingDown
+                ? null
+                : () {
+                    if (validateForm(_form.currentState!)) widget.send();
+                  },
+            child: Text(widget.sending ? 'Sending…' : 'Send message'),
+          ),
+          TextButton(
+            onPressed: widget.loading || widget.sending || widget.coolingDown
+                ? null
+                : widget.refresh,
+            child: const Text('Retry / refresh'),
+          ),
+        ],
       ),
     ),
   );

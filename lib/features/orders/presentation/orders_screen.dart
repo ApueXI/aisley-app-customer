@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
+import '../../../core/ui/responsive_layout.dart';
 import '../data/order_models.dart';
 import 'orders_controller.dart';
 
@@ -45,7 +46,7 @@ class _OrdersScreenState extends State<OrdersScreen>
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: _controller,
-    builder: (context, _) => Scaffold(
+    builder: (context, _) => ShoppingPage(
       appBar: AppBar(
         title: const Text('Orders'),
         actions: [
@@ -57,7 +58,7 @@ class _OrdersScreenState extends State<OrdersScreen>
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: pagePadding(context),
         children: [
           if (_controller.tabs.isNotEmpty)
             Wrap(

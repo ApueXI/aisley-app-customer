@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
+import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/form_page.dart';
 import '../data/address_models.dart';
 import 'address_controller.dart';
@@ -31,7 +32,7 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) => ShoppingPage(
     appBar: AppBar(
       title: const Text('Address book'),
       actions: [
@@ -45,7 +46,7 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
     body: ListenableBuilder(
       listenable: _controller,
       builder: (context, _) => ListView(
-        padding: const EdgeInsets.all(16),
+        padding: pagePadding(context),
         children: [
           FilledButton.icon(
             onPressed: () => _open('/account/addresses/new'),
@@ -72,7 +73,7 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
   Widget _address(BuyerAddress address) => Card(
     margin: const EdgeInsets.only(top: 12),
     child: Padding(
-      padding: const EdgeInsets.all(16),
+      padding: pagePadding(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

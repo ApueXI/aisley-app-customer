@@ -434,7 +434,7 @@ void main() {
       '//evil.invalid',
       '/account#token',
     ]) {
-      expect(safeReturn(value), '/account');
+      expect(safeReturn(value), '/');
     }
     expect(
       guardRoute(session, Uri.parse('/account/photo')),

@@ -6,17 +6,17 @@ Phases 1–4 Flutter flows are implemented with partial acceptance; controlled a
 
 Use native bottom destinations **Home**, **Shops**, **Cart**, **Account**, with search reachable from discovery screens. These bottom destinations are implemented. Account links to Profile, Addresses, Orders, Wishlist, Recently Viewed, Notifications, Shop messages, Logistics messages, Courier messages, Support tickets, Settings/promotional preference, Policies/consent, and Logout. Distinct channels can share compatible rendering widgets while retaining separate repositories, routes, eligibility and read state.
 
-Product/Shop/Order detail and forms open on the current navigation stack; Android Back and browser Back return predictably. Validate destination IDs and allow-listed return routes, including notification web-path mapping. A guest opening Cart/Account-private content sees sign-in and a safe return; the app requires an intentional retry of a protected mutation after sign-in.
+Product/Shop/Order detail and forms open on the current navigation stack; Android Back and browser Back return predictably. Validate destination IDs and allow-listed return routes, including notification web-path mapping. A signed-out user opening any shopping destination sees sign-in and a validated read return; the app requires an intentional retry of a protected mutation after sign-in.
 
 ## Registration, sign-in and access
 
 Profile + credentials → pending Customer/Application (no token) → informational approval screen → Admin decision outside the app → login with `device_name` → securely stored Customer token → `/me` → consent status → required Terms/Privacy read and explicit acceptance → private shopping. Keep account-state denial distinct from invalid credentials and network/storage failure. There is no applicant status-polling API. Recovery requests are generic; emailed reset links currently target the storefront.
 
-At cold start, keep public browsing usable and private state hidden while one controller restores the stored token through `/me`. Recheck required consent. On logout, revoke the current token when online and clear local private state. An uncertain revocation requires truthful feedback; account switching must still clear the old identity and reject delayed responses.
+At cold start, show session checking/retry and hide every shopping widget/navigation while one controller restores the stored token through `/me`. Recheck required consent. On logout, revoke the current token when online and clear local private state. An uncertain revocation requires truthful feedback; account switching must still clear the old identity and reject delayed responses.
 
 ## Discovery and Product configuration
 
-Home rails → Products/Shops search or Shop storefront → visible Product Detail → gallery, safe description, current price/availability → choose only a complete server-listed variant combination and bounded quantity → Add to Cart or Buy Now. Guest Recently Viewed records a successful Product Detail visit only, up to 12 `{productId, viewedAt}` hints; cards are resolved through the public visibility API. Authenticated history uses server time/retention. Merge guest hints after confirmed login without delaying authentication.
+Home rails → Products/Shops search or Shop storefront → visible Product Detail → gallery, safe description, current price/availability → choose only a complete server-listed variant combination and bounded quantity → Add to Cart or Buy Now. Recently Viewed records a successful authenticated detail visit using server time/retention. Never write/merge guest hints. Remove only the retired public hints key best-effort without delaying authentication.
 
 ## Address and checkout
 
@@ -56,8 +56,8 @@ These are **Flutter navigation paths**, not new APIs. Use go_router branches for
 
 | Entry | Required behavior |
 | --- | --- |
-| Guest opens private destination | sign-in with allow-listed read return; cancelling returns safely |
-| Restoring token | one /me, then consent; no private widgets before identity verified |
+| Signed-out shopping entry | sign-in with allow-listed read return; root sign-in has no shopping escape |
+| Restoring token | one /me, then consent; no shopping widgets or catalog fetch before verification |
 | Required policy publication | preserve identity; reader confirms exact version; status refresh unlocks safe read |
 | Product Add Cart | complete variant/quantity, active Customer/consent; additive mutation has no durable replay |
 | Product Buy Now | creates intent without changing Cart; owned address/COD quote/review before Place |
@@ -78,4 +78,4 @@ Visible online chats poll at15s and on focus/reconnect, preserving pending first
 
 ## Feature implementation sequence
 
-Implement root configuration/token/session/error/router composition and shared consent first. Then public discovery/Shop/Product DTOs and navigation; account/PSGC addresses/wishlist/guest history; Cart/quote/vouchers/place and owned Order projections; independent channels/notifications/Q&A/reviews/support. Each phase uses its own repositories/controllers and tests without importing another role’s screens. Reuse focused presentation widgets only when wire/permission/state ownership stays separate. See [architecture](architecture.md) and [setup](setup.md).
+Implement root configuration/token/session/error/router composition and shared consent first. Then public discovery/Shop/Product DTOs and navigation; account/PSGC addresses/wishlist/account history; Cart/quote/vouchers/place and owned Order projections; independent channels/notifications/Q&A/reviews/support. Each phase uses its own repositories/controllers and tests without importing another role’s screens. Reuse focused presentation widgets only when wire/permission/state ownership stays separate. See [architecture](architecture.md) and [setup](setup.md).

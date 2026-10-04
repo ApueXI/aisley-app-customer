@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
+import '../../../core/ui/responsive_layout.dart';
 import 'catalog_widgets.dart';
 import 'shop_controllers.dart';
 
@@ -41,148 +42,75 @@ class _ShopDirectoryScreenState extends State<ShopDirectoryScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    body: ListenableBuilder(
-      listenable: _controller,
-      builder: (context, _) {
-        final result = _controller.result;
-        return NestedScrollView(
-          headerSliverBuilder: (context, innerBoxIsScrolled) => [
-            SliverToBoxAdapter(
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        OutlinedButton.icon(
-                          onPressed: () => context.push('/search?mode=shops'),
-                          icon: const Icon(Icons.search),
-                          label: const Text('Search Shops'),
-                        ),
-                        if (result != null && result.categories.isNotEmpty)
-                          DropdownButtonFormField<String?>(
-                            initialValue:
-                                result.categories.any(
-                                  (item) => item.slug == _controller.category,
-                                )
-                                ? _controller.category
-                                : null,
-                            isExpanded: true,
-                            decoration: const InputDecoration(
-                              labelText: 'Shop category',
-                              prefixIcon: Icon(Icons.category_outlined),
-                            ),
-                            items: [
-                              const DropdownMenuItem<String?>(
-                                value: null,
-                                child: Text('All Shop categories'),
-                              ),
-                              for (final category in result.categories)
-                                DropdownMenuItem<String?>(
-                                  value: category.slug,
-                                  child: Text(category.name),
-                                ),
-                            ],
-                            onChanged: (value) =>
-                                _replaceRoute(context, value, 1),
-                          ),
-                      ],
-                    ),
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: _controller,
+    builder: (context, _) {
+      final result = _controller.result;
+      return ListView(
+        padding: pagePadding(context),
+        children: [
+          Text('Shops', style: Theme.of(context).textTheme.headlineSmall),
+          OutlinedButton.icon(
+            onPressed: () => context.push('/search?mode=shops'),
+            icon: const Icon(Icons.search),
+            label: const Text('Search Shops'),
+          ),
+          if (result != null && result.categories.isNotEmpty)
+            DropdownButtonFormField<String?>(
+              initialValue:
+                  result.categories.any((c) => c.slug == _controller.category)
+                  ? _controller.category
+                  : null,
+              isExpanded: true,
+              itemHeight: null,
+              decoration: const InputDecoration(labelText: 'Shop category'),
+              items: [
+                const DropdownMenuItem<String?>(
+                  value: null,
+                  child: Text('All Shop categories'),
+                ),
+                for (final category in result.categories)
+                  DropdownMenuItem<String?>(
+                    value: category.slug,
+                    child: Text(category.name),
                   ),
-                ],
+              ],
+              onChanged: (value) => _replaceRoute(context, value, 1),
+            ),
+          if (_controller.loading)
+            const LinearProgressIndicator(semanticsLabel: 'Loading Shops'),
+          if (_controller.error != null) _error(_controller.error!),
+          if (result != null) ...[
+            if (_controller.page > result.pagination.lastPage) ...[
+              const Text('This page is no longer available.'),
+              TextButton(
+                onPressed: () =>
+                    _replaceRoute(context, _controller.category, 1),
+                child: const Text('Go to first page'),
               ),
+            ] else if (result.items.isEmpty)
+              const Text('No Shops are listed in this category.')
+            else
+              for (final shop in result.items)
+                ShopCardTile(
+                  shop: shop,
+                  discovery: widget.dependencies.discovery!,
+                  onTap: () => context.push('/shops/${shop.slug}'),
+                ),
+            _pagination(
+              context,
+              result.pagination.currentPage,
+              result.pagination.lastPage,
             ),
           ],
-          body: Column(
-            children: [
-              if (_controller.loading && result == null)
-                const Expanded(
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      semanticsLabel: 'Loading Shops',
-                    ),
-                  ),
-                )
-              else if (_controller.error != null && result == null)
-                Expanded(child: _error(_controller.error!))
-              else if (result != null)
-                Expanded(
-                  child: Column(
-                    children: [
-                      if (_controller.error != null)
-                        _inlineError(_controller.error!, _controller.retry),
-                      if (_controller.loading)
-                        const LinearProgressIndicator(
-                          semanticsLabel: 'Refreshing Shops',
-                        ),
-                      if (_controller.page > result.pagination.lastPage)
-                        Expanded(
-                          child: Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Text('This page is no longer available.'),
-                                TextButton(
-                                  onPressed: () => _replaceRoute(
-                                    context,
-                                    _controller.category,
-                                    1,
-                                  ),
-                                  child: const Text('Go to first page'),
-                                ),
-                              ],
-                            ),
-                          ),
-                        )
-                      else if (result.items.isEmpty)
-                        const Expanded(
-                          child: Center(
-                            child: Text(
-                              'No Shops are listed in this category.',
-                            ),
-                          ),
-                        )
-                      else ...[
-                        Expanded(
-                          child: ListView.builder(
-                            padding: const EdgeInsets.symmetric(horizontal: 12),
-                            itemCount: result.items.length,
-                            itemBuilder: (context, index) {
-                              final shop = result.items[index];
-                              return ShopCardTile(
-                                shop: shop,
-                                discovery: widget.dependencies.discovery!,
-                                onTap: () =>
-                                    context.push('/shops/${shop.slug}'),
-                              );
-                            },
-                          ),
-                        ),
-                        _pagination(
-                          context,
-                          result.pagination.currentPage,
-                          result.pagination.lastPage,
-                        ),
-                      ],
-                    ],
-                  ),
-                )
-              else
-                const Expanded(
-                  child: Center(child: Text('Shop directory is unavailable.')),
-                ),
-            ],
-          ),
-        );
-      },
-    ),
+        ],
+      );
+    },
   );
 
   Widget _error(String message) => Center(
     child: Padding(
-      padding: const EdgeInsets.all(20),
+      padding: pagePadding(context),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -198,20 +126,11 @@ class _ShopDirectoryScreenState extends State<ShopDirectoryScreen> {
     ),
   );
 
-  Widget _inlineError(String message, VoidCallback retry) => Padding(
-    padding: const EdgeInsets.all(8),
-    child: Row(
-      children: [
-        Expanded(child: Text(message)),
-        TextButton(onPressed: retry, child: const Text('Retry')),
-      ],
-    ),
-  );
-
   Widget _pagination(BuildContext context, int current, int last) => Padding(
     padding: const EdgeInsets.only(bottom: 12),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    child: Wrap(
+      alignment: WrapAlignment.center,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         IconButton(
           tooltip: 'Previous page',

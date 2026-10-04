@@ -56,8 +56,10 @@ registered PSGC assets. No `flutter create` or asset-copy step is needed.
 
 The app uses public compile-time configuration via `--dart-define`; setup does not
 require copying a backend `.env` file. Coordinate API access and approved test data
-with the backend owner. Guests can browse public content. Private workflows require
-an active, Admin-approved Customer account and current policy consent. Registration
+with the backend owner. Every shopping screen requires an active, Admin-approved
+Customer verified through `/me` and current required consent. Authentication, approval,
+recovery and Terms/Privacy remain reachable before sign-in. Layouts target Android phones
+and tablets in portrait, landscape and split-screen; desktop layouts are outside scope. Registration
 creates a pending account; approval takes place outside Buyer.
 
 ## Run locally

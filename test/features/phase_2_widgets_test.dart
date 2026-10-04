@@ -67,7 +67,6 @@ void main() {
       discovery: DiscoveryRepository(api: api, session: session),
       accounts: FakeAccountRepository(),
       addresses: AddressRepository(api),
-      guestRecent: GuestRecentStore(),
       recentlyViewed: RecentlyViewedRepository(api),
       savedStatus: SavedStatusController(session, WishlistRepository(api)),
     );

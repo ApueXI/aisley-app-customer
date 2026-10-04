@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
+import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/form_page.dart';
 import '../../discovery/presentation/catalog_widgets.dart';
 import 'saved_products_controller.dart';
@@ -40,7 +41,7 @@ class _SavedProductsScreenState extends State<SavedProductsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
+  Widget build(BuildContext context) => ShoppingPage(
     appBar: AppBar(
       title: Text(_history ? 'Recently viewed' : 'Wishlist'),
       actions: [
@@ -54,38 +55,8 @@ class _SavedProductsScreenState extends State<SavedProductsScreen> {
     body: ListenableBuilder(
       listenable: _controller,
       builder: (context, _) => ListView(
-        padding: const EdgeInsets.all(16),
+        padding: pagePadding(context),
         children: [
-          if (_history)
-            ListenableBuilder(
-              listenable: widget.dependencies.recentMerge!,
-              builder: (context, _) {
-                final merge = widget.dependencies.recentMerge!;
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (merge.busy)
-                      const LinearProgressIndicator(
-                        semanticsLabel: 'Synchronizing guest viewing hints',
-                      ),
-                    if (merge.failed) ...[
-                      Text(
-                        merge.error ?? 'Some guest viewing hints could not be synchronized.',
-                      ),
-                      TextButton(
-                        onPressed: () async {
-                          await merge.mergePending(retry: true);
-                          if (mounted) await _controller.load();
-                        },
-                        child: const Text(
-                          'Retry guest history synchronization',
-                        ),
-                      ),
-                    ],
-                  ],
-                );
-              },
-            ),
           if (_controller.loading)
             const LinearProgressIndicator(
               semanticsLabel: 'Loading saved Products',

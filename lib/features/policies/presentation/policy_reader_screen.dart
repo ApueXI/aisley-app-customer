@@ -51,7 +51,7 @@ class _PolicyReaderScreenState extends State<PolicyReaderScreen> {
         if (context.canPop()) {
           context.pop();
         } else {
-          context.go('/');
+          context.go('/login');
         }
       },
       children: [

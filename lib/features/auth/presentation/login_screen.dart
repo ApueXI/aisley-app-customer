@@ -6,11 +6,7 @@ import '../../../core/ui/form_page.dart';
 import 'action_view_model.dart';
 
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({
-    super.key,
-    required this.session,
-    this.returnTo = '/account',
-  });
+  const LoginScreen({super.key, required this.session, this.returnTo = '/'});
   final SessionController session;
   final String returnTo;
   @override
@@ -59,6 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
     listenable: Listenable.merge([_action, widget.session]),
     builder: (context, _) => FormPage(
       title: 'Sign in',
+      canLeave: false,
       dirty: _email.text.isNotEmpty || _password.text.isNotEmpty,
       busy: _action.busy,
       children: [
