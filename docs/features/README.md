@@ -1,13 +1,13 @@
 # Buyer feature index
 
-All Flutter implementation and acceptance criteria are pending. Backend status describes inspected Laravel availability; upstream checkboxes are not imported as mobile completion. Read shared API/design/security guides first.
+Phase 1 authentication, navigation and policy implementation is complete; target acceptance and later Flutter features remain pending. See [Phase 1 evidence](../references/phase-1-verification.md). Backend status describes inspected Laravel availability; upstream checkboxes are not imported as mobile completion. Read shared API/design/security guides first.
 
 Before creating, revising or implementing a Customer feature, read [Customer specification rules](customer/rule.md) and [agent instructions](../AGENTS.md). New or revised Customer specs use WHAT/MUST/HOW and 200–230 physical lines, overriding the feature-spec skill's shorter preference. All 22 Customer specs now meet that rule; shared policy consent has its own complete contract outside the Customer length range.
 
 | Feature | Phase | Backend boundary | Flutter |
 | --- | --- | --- | --- |
-| [Customer authentication](customer/customer-auth/spec.md) | 1 | Auth/approval-aware registration, login and recovery implemented; address/ID registration and native reset links deferred. | Pending |
-| [Auth-aware navigation](customer/customer_verify_auth/spec.md) | 1 | /me role/status and policy guards implemented; storefront session UX has its own separate implementation. | Pending |
+| [Customer authentication](customer/customer-auth/spec.md) | 1 | Auth/approval-aware registration, login and recovery implemented; address/ID registration and native reset links deferred. | Implemented; target acceptance pending |
+| [Auth-aware navigation](customer/customer_verify_auth/spec.md) | 1 | /me role/status and policy guards implemented; storefront session UX has its own separate implementation. | Implemented; target acceptance pending |
 | [Homepage and discovery](customer/customer-homepage/spec.md) | 2 | Public aggregation, optional personalization and cursor discovery implemented; shortcut/error/cache gaps remain. | Pending |
 | [Products and Shops search](customer/search/spec.md) | 2 | Separate public Product/Shop search endpoints and ranked result modes implemented. | Pending |
 | [Shop directory and storefront](customer/browse-shop/spec.md) | 2 | Directory/detail, category filtering and optional Shop-scoped q search implemented. | Pending |
@@ -28,6 +28,6 @@ Before creating, revising or implementing a Customer feature, read [Customer spe
 | [Inbox notifications and preference](customer/notifications/spec.md) | 4 | Allow-listed own list/detail/read and in-app promotion preference implemented; unread-count/read-all/native push absent. | Pending |
 | [Logistics delivery messages](customer/logistics-messaging/spec.md) | 4 | Separate owned active-Order/current-handler text/history/send/read APIs implemented. | Pending |
 | [Delivery Courier messages](customer/courier-messaging/spec.md) | 4 | Accepted-final-mile counterpart APIs and private Customer Order-context read implemented; live/race release gates open. | Pending |
-| [Policies and consent](shared/policy-viewing-consent/spec.md) | 1 | Public versions/status/acceptance/enforcement implemented | Pending |
+| [Policies and consent](shared/policy-viewing-consent/spec.md) | 1 | Public versions/status/acceptance/enforcement implemented | Implemented; target acceptance pending |
 
 The first 19 entries cover all canonical Customer areas. Notifications, separate Logistics/Courier messaging and shared consent add four explicit contracts. No dedicated canonical Customer notification spec exists; its portable spec records actual API behavior and the source gap.

@@ -1,6 +1,6 @@
 # Buyer requirements
 
-Status: documentation baseline; every Flutter capability below is pending. Backend availability is recorded in [feature specs](features/README.md) and [API inventory](api/endpoints.md).
+Status: Phase 1 foundation/authentication implemented; target acceptance and later capabilities remain pending. See [Phase 1 evidence](references/phase-1-verification.md). Backend availability is recorded in [feature specs](features/README.md) and [API inventory](api/endpoints.md).
 
 Guests can discover visible Products/Shops, search, inspect Product media and valid variants, read public Q&A/reviews, read Terms/Privacy, and keep bounded local Recently Viewed hints. Private actions require an active Admin-approved Customer and required server policy consent.
 
@@ -45,7 +45,7 @@ Quote/batch/Order totals are PHP money strings; Product/Cart numeric prices are 
 
 Every supported screen must distinguish loading, empty, validation, forbidden, consent-required, stale, offline, unavailable, throttled, conflict and uncertain mutation. Preserve safe input across recoverable failure, prevent duplicate submits and honor only supported replay. Browser file paths, cookies and server map keys must never be substituted for approved native/web adapters.
 
-All 22 Customer specs and shared consent remain Flutter pending. Execute parser/repository/view-model/widget tests, analyzer, Android/web builds, installed-device and fixed-origin browser checks, followed by controlled live exchanges. Record the backend checkout/SDK/packages/configuration with results. [Verification](verification.md) separates completed documentation checks from these unexecuted application gates.
+Phase 1 Customer specs and shared consent have implementation evidence; the remaining Customer features and target acceptance remain pending. Execute parser/repository/view-model/widget tests, analyzer, Android/web builds, installed-device and fixed-origin browser checks, followed by controlled live exchanges. Record the backend checkout/SDK/packages/configuration with results. [Verification](verification.md) separates completed documentation checks from these unexecuted application gates.
 
 ## Explicit deferred inventory
 

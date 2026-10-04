@@ -3,7 +3,7 @@ feature: customer_verify_auth
 role: Customer
 platform: Flutter / Dart
 phase: 1
-flutter_status: Pending
+flutter_status: Implemented; target acceptance pending
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 ---
@@ -15,7 +15,7 @@ contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 Backend: /me role/status and policy guards implemented; storefront session UX has its own separate
 implementation.
 
-Flutter: **pending**. These are implementation requirements, not completed screens or tests.
+Flutter: **implemented; target acceptance pending**. See the Phase 1 verification record for evidence.
 
 App load → one deduplicated secure-token restoration → /me → guest/active/denied/retry → consent → private route.
 

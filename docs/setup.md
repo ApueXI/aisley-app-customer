@@ -1,5 +1,35 @@
 # Fresh Customer Flutter project setup
 
+## Current Phase 1 local development
+
+Phase 1 now uses the five pinned auth/foundation packages in pubspec.yaml; maps, uploads,
+PSGC and nonsecret preferences remain later-phase work. Preserve the historical SDK/package
+checks below; current executed checks and limits are in [Phase 1 evidence](references/phase-1-verification.md).
+
+The authorized API is `http://localhost:8000/api/v1`. Buyer browser testing stays at
+`http://localhost:8766`; the documented recovery storefront default is `http://localhost:3000`.
+Debug builds default to these origins. Android uses the emulator host alias `10.0.2.2`
+on ports 8000/3000. Only localhost, 127.0.0.1 and 10.0.2.2 may use debug HTTP;
+release configuration requires explicit HTTPS origins. Do not substitute a phone's own
+localhost for the development computer; installed-device connectivity remains unverified.
+
+```sh
+flutter pub get --enforce-lockfile
+flutter run -d web-server --web-hostname localhost --web-port 8766
+flutter build apk --debug
+flutter test
+BUYER_LIVE_API=1 flutter test test/live/public_api_test.dart
+CHROME_EXECUTABLE=/usr/bin/chromium flutter test --platform chrome test/web
+python3 tool/browser_smoke.py
+```
+
+The browser smoke tool needs an already running Buyer web server/API plus Chromium and
+chromedriver; it uses an isolated temporary profile, sends no real credentials, and creates
+no accounts. Live tests cover public policies, denial and CORS only. Authenticated live flows
+and installed Android acceptance remain open. No backend process/configuration is managed here.
+
+The original fresh-project instructions and historical checks follow.
+
 Creation, build and runtime commands below are implementation instructions for a destination Flutter repository. Executed SDK, dependency-resolution and analysis checks are recorded separately below. This documentation correction preserves the existing scaffold and application dependencies; feature packages were resolved only in a temporary verification project, and backend configuration was unchanged.
 
 ## Selected project SDK and compatibility evidence

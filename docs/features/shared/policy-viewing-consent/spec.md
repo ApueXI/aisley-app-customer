@@ -3,7 +3,7 @@ feature: policy-viewing-consent
 role: Customer
 platform: Flutter / Dart
 phase: 1
-flutter_status: Pending
+flutter_status: Implemented; target acceptance pending
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 ---
@@ -12,7 +12,7 @@ contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 
 ## WHAT
 
-Public Terms/Privacy current/history reading, authenticated status and explicit version acceptance are implemented in Laravel. All Buyer Flutter DTOs/repositories/controllers/screens and target acceptance remain **pending**. This shared spec is complete without the Customer200–230-line requirement.
+Public Terms/Privacy current/history reading, authenticated status and explicit version acceptance are implemented in Laravel. Buyer Flutter DTOs/repositories/controllers/screens are implemented; authenticated live and installed-device acceptance remain **pending**. See [Phase 1 evidence](../../../references/phase-1-verification.md). This shared spec is complete without the Customer200–230-line requirement.
 
 One platform-wide version stream serves all roles. Buyer reads public published current versions and published/superseded history. Drafts/Internal Rules never become Customer content. Reading history does not establish acceptance. Server policy controls decide required initial/re-consent; optional promotion preference remains separate.
 

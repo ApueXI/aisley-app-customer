@@ -1,14 +1,14 @@
 # Backend and Buyer integration gaps
 
-Baseline reviewed 2026-10-03. All Buyer Flutter implementation is pending even where APIs exist. This register identifies unavailable platform behavior, source contradictions and integration/release decisions; it does not authorize backend changes.
+Baseline reviewed 2026-10-03. Phase 1 is implemented with verification recorded separately; later Buyer implementation and unverified target gates remain pending. This register identifies unavailable platform behavior, source contradictions and integration/release decisions; it does not authorize backend changes.
 
 | ID | Gap and evidence | Buyer delivery treatment | Owner / phase |
 | --- | --- | --- | --- |
 | G01 | Customer RegisterRequest/controller omit reference-required address/ID evidence | Profile/credentials-only pending registration; explain limitation; no copied Courier upload parts | Customer API/Admin review; 1 follow-up |
 | G02 | No pending-applicant read, rejection resubmission, appeal exception or email-verification policy | Informational pending/rejected state and later login; no protected applicant support | Customer Auth; 1 |
 | G03 | Reset mail URL targets configured storefront; native links not configured | Use trusted storefront recovery; approve native app-link/reset handoff separately | Auth/deployment; 1 |
-| G04 | Buyer `localhost:8766` absent from default CORS; exposed headers empty | Backend owner allow-lists exact origin, keeps non-stateful token path and exposes Retry-After as needed | API/deployment; 1/5 |
-| G05 | Fresh-project SDK/package/architecture choices now supplied with official metadata | Selected SDK reconciled 2026-10-04; scaffold resolution/analysis and isolated ten-pin resolution passed. Feature analysis/build/storage/target checks remain pending | Flutter; 1/5 |
+| G04 | Historical CORS default omitted Buyer; local API now permits localhost:8766, verified 2026-10-04. Exposed headers remain absent | Public browser reads and Authorization preflight pass; backend owner must expose Retry-After. Authenticated cookie isolation remains a target gate | API/deployment; 1/5 |
+| G05 | Fresh-project SDK/package/architecture choices supplied and Phase 1 dependencies resolved | Flutter 3.47.2 / Dart 3.13.2, locked dependencies, Phase 1 analysis/tests and Android/web builds pass; installed-device and real-account gates remain open | Flutter; 1/5 |
 | G06 | All 19 source-identical PSGC assets/manifest supplied; Dart loader still unimplemented | Copy/register assets, verify hierarchy/cascade/manual fallback and NCR coverage | Flutter/data; 2 |
 | G07 | Optional flutter_map/latlong2/geolocator chosen; native public credential suitability still external | Geoapify intentional pin only; keep text-only if credential/permission/provider gate unresolved | Maps/deployment; 2/5 |
 | G08 | Portable Cart/Product contracts reconciled against source; historical canonical contradictions preserved upstream | Use local typed operations/specs; no backend/runtime fix implied | Documentation resolved; Flutter 3 |
@@ -23,7 +23,7 @@ Baseline reviewed 2026-10-03. All Buyer Flutter implementation is pending even w
 | G17 | Support ticket notifications/linked records/attachments deferred; requester UI says description but API uses body | Only subject/category/body create, revision-checked reply; pending/inactive Customers have no exception | Support; 4 |
 | G18 | Sanctum token expiration currently null; no refresh/revoke-all/session registry API | Secure restore and /me revalidation; current-token logout, documented password token effects; no invented refresh schedule | Security/Auth; 1/5 |
 | G19 | Portable contracts now cover inspected behavior; canonical historical wording remains optional evidence | Local specs/typed contracts govern implementation; log live contract differences separately | Documentation resolved; each phase |
-| G20 | Native Android and real-browser Buyer integration never run; source tests were inspected only | Record actual analyze/tests/build/device/browser/live results later; preserve all unchecked mobile criteria | Flutter/release; 5 |
+| G20 | Phase 1 Android builds, Chromium UI/transport and public localhost API checks now pass; installed Android and live authenticated flows remain unverified | See [Phase 1 evidence](phase-1-verification.md); preserve broad acceptance criteria until target/account checks pass | Flutter/release; 1/5 |
 | G21 | Address correction implementation does not fully demonstrate current published-rate/coverage revalidation | It checks owned shipping-address completeness and Order eligibility but does not recalculate the saved shipping quote; review material-location changes with the backend owner before release | Order/Finance/API; 3/5 |
 
 Unavailable APIs must not be mocked into production success. Test fixtures may model future/denied states clearly, but future endpoint proposals need separate backend authorization and acceptance.

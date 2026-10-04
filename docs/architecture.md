@@ -1,6 +1,6 @@
 # Buyer Flutter architecture
 
-This is the selected fresh-project blueprint, not a completed Flutter implementation. Android is the delivery target; browser support is for local testing at localhost:8766. Existing repositories must merge these choices with their own instructions and record material differences before implementation. Backend contracts were inspected at checkout `57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50`; the historical baseline remains in provenance.
+Phase 1 now implements this selected blueprint; later subsystems remain planned. See [implementation evidence](references/phase-1-verification.md). Android is the delivery target; browser support is for local testing at localhost:8766. Existing repositories must merge these choices with their own instructions and record material differences before implementation. Backend contracts were inspected at checkout `57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50`; the historical baseline remains in provenance.
 
 ## Composition and dependencies
 
@@ -36,7 +36,7 @@ Repository methods return typed successes or failures; widgets never index raw J
 
 `API_BASE_URL` includes `/api/v1`; `API_ORIGIN` is derived and validated. A relative returned `/api/v1/...` URL resolves against the origin, never against the already-prefixed base. Use a credential-free Dio client for public catalog/provider reads and a trusted-origin client for private calls. Both set `Accept: application/json`; JSON mutations set JSON Content-Type and multipart owns its boundary.
 
-Configure 15-second overall JSON deadlines as well as Dio connect/send/receive timeouts. An overall deadline includes the entire exchange. Uploads use a separate bounded deadline and progress state. A timeout cancels the transport but does not prove rollback. Disable credentialed redirect following and authorize only exact API-origin requests; public storage/provider origins receive no bearer. Web uses BrowserHttpClientAdapter with credentials disabled and no CookieJar.
+Configure 15-second overall JSON deadlines as well as Dio connect/send/receive timeouts. An overall deadline includes the entire exchange. Uploads use a separate bounded deadline and progress state. A timeout cancels the transport but does not prove rollback. Disable credentialed redirect following and authorize only exact API-origin requests; public storage/provider origins receive no bearer. Phase 1 web uses a Dio JSON Fetch adapter with credentials omitted and redirect:error, because the pinned XHR BrowserHttpClientAdapter cannot disable redirects. No CookieJar is used; multipart adapters remain later-phase work.
 
 Failure includes transport/decode category, HTTP status, optional code/message, field errors and readable Retry-After. No global automatic write retry. GET/resolve read retries use bounded backoff and query generation checks. [Operation contracts](api/operations.md) own mutation replay; [errors](api/errors.md) own global handling. Do not require a code when Laravel only returns a message.
 
@@ -72,4 +72,4 @@ PSGC assets ship in this bundle; the typed reader preserves actual hierarchy and
 
 ## Setup and verification
 
-[Fresh project setup](setup.md) contains exact SDK/package pins, asset declarations, environment and Android/web commands. Top-level package metadata compatibility was inspected; transitive resolution and all builds/tests remain unexecuted. [Verification](verification.md) defines the tests needed to graduate each pending feature. Deployment/CORS/map credentials are external inputs, not bundled server settings.
+[Fresh project setup](setup.md) contains exact SDK/package pins, asset declarations, environment and Android/web commands. Historical package metadata inspection is separate from the executed Phase 1 dependency, test and build evidence linked above. [Verification](verification.md) defines the tests needed to graduate each pending feature. Deployment/CORS/map credentials are external inputs, not bundled server settings.
