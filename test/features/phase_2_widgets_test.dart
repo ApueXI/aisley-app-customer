@@ -159,23 +159,14 @@ void main() {
     await tester.pumpWidget(const SizedBox());
   });
   testWidgets(
-    'Product detail keeps later purchasing disabled and records only displayed detail',
+    'Product detail records displayed detail when commerce is not configured',
     (tester) async {
       await show(
         tester,
         ProductDetailScreen(dependencies: dependencies, productId: customerId),
       );
       expect(tester.takeException(), isNull);
-      await tester.ensureVisible(find.text('Add to Cart'));
-      await tester.pumpAndSettle();
-      expect(
-        tester
-            .widget<FilledButton>(
-              find.widgetWithText(FilledButton, 'Add to Cart'),
-            )
-            .onPressed,
-        isNull,
-      );
+      expect(find.text('Purchasing is unavailable.'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
     },

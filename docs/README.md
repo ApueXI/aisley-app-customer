@@ -1,6 +1,6 @@
 # Buyer Flutter documentation bundle
 
-Historical baseline: **`7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0`**. New contract inspection before editing: **2026-10-03**, checkout **`57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50`**. Buyer Flutter implementation: **Phase 1 implemented; target acceptance and later phases pending**. See [Phase 1 evidence](references/phase-1-verification.md).
+Historical baseline: **`7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0`**. New contract inspection before editing: **2026-10-03**, checkout **`57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50`**. Buyer Flutter implementation: **Phases 1–3 implemented; live/device acceptance and Phase 4 remain pending**. See [Phase 3 evidence](references/phase-3-verification.md), [Phase 2 evidence](references/phase-2-verification.md) and [Phase 1 evidence](references/phase-1-verification.md).
 
 This portable bundle defines a new standalone Flutter/Dart Customer app targeting Android, with the same application tested in a local browser. Laravel, Sanctum, PostgreSQL, and configured blob storage remain the platform backend. `customer` is the only persisted/API role; Buyer is product terminology.
 
@@ -31,7 +31,7 @@ Copy **this directory's complete contents** into the standalone repository's `do
 
 The [documentation validation record](references/documentation-validation.md) records completed checks and their limits.
 
-The handoff includes complete feature contracts, a concrete stable SDK/package blueprint, synthetic examples and all nineteen unchanged PSGC reference assets with attribution/checksums. The original documentation handoff included no Flutter implementation, credentials or server configuration; this repository now implements Phase 1 separately under lib/. Copy the assets using [setup](setup.md). Local documents supply implementation authority; upstream source paths/hashes are optional audit provenance. A missing monorepo checkout is not an implementation dependency.
+The handoff includes complete feature contracts, a concrete stable SDK/package blueprint, synthetic examples and all nineteen unchanged PSGC reference assets with attribution/checksums. The original documentation handoff included no Flutter implementation, credentials or server configuration; this repository now implements Phases 1–3 separately under lib/. Copy the assets using [setup](setup.md). Local documents supply implementation authority; upstream source paths/hashes are optional audit provenance. A missing monorepo checkout is not an implementation dependency.
 
 Configured backend origins, approved test accounts, localhost CORS/header visibility and suitable public map credentials remain external deployment inputs. Validate live integration against the deployed backend; record material differences and actual Flutter results in Progress without rewriting the historical baseline.
 
@@ -39,4 +39,4 @@ The bundle is now tracked at `docs/docs-mobile-buyer/`, following its relocation
 
 ## Customer specification maintenance
 
-Read [Customer rules](features/customer/rule.md) before creating or revising a Customer spec, including authentication. New or revised specs use WHAT/MUST/HOW and contain 200–230 physical lines; this local rule overrides the feature-spec skill's shorter length preference. All 22 Customer specs now meet the length requirement and define requests, types, states, replay and tests. Shared consent is also complete. Phase 1 implementation evidence is recorded separately; remaining feature implementation and target acceptance gates stay open.
+Read [Customer rules](features/customer/rule.md) before creating or revising a Customer spec, including authentication. New or revised specs use WHAT/MUST/HOW and contain 200–230 physical lines; this local rule overrides the feature-spec skill's shorter length preference. All 22 Customer specs now meet the length requirement and define requests, types, states, replay and tests. Shared consent is also complete. Phases 1–3 implementation evidence is recorded separately; Phase 4 implementation and live/device acceptance gates stay open.

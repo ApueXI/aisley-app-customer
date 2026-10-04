@@ -1,6 +1,6 @@
 # Buyer Flutter acceptance and release checks
 
-The broad release checks below remain open where they include unimplemented features or live/device acceptance. Executed Phase 2 checks are recorded in [Phase 2 evidence](references/phase-2-verification.md); Phase 1 checks are recorded in [Phase 1 evidence](references/phase-1-verification.md) and [Progress](PROGRESS.md). Source-test inspection proves existing test definitions, not a newly executed test or device result.
+The broad release checks below remain open where they include unimplemented features or live/device acceptance. Executed Phase 3 checks are in [Phase 3 evidence](references/phase-3-verification.md); Phase 2 checks are recorded in [Phase 2 evidence](references/phase-2-verification.md); Phase 1 checks are recorded in [Phase 1 evidence](references/phase-1-verification.md) and [Progress](PROGRESS.md). Source-test inspection proves existing test definitions, not a newly executed test or device result.
 
 For each phase record backend commit/configuration, target/origin, Flutter SDK/approved package versions, commands run, actual results and unresolved gates. Use controlled development accounts; never log credentials, evidence or private transcripts.
 

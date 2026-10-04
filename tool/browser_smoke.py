@@ -83,7 +83,11 @@ def main():
                                 ('/shops', 'Shops'),
                                 ('/account/wishlist', 'Sign in with your approved Buyer account.'),
                                 ('/account/addresses', 'Sign in with your approved Buyer account.'),
-                                ('/cart', 'Sign in with your approved Buyer account.')]:
+                                ('/cart', 'Sign in with your approved Buyer account.'),
+                                ('/checkout', 'Sign in with your approved Buyer account.'),
+                                ('/orders', 'Sign in with your approved Buyer account.'),
+                                ('/orders/11111111-1111-4111-8111-111111111111', 'Sign in with your approved Buyer account.'),
+                                ('/checkout/result/11111111-1111-4111-8111-111111111111', 'Sign in with your approved Buyer account.')]:
             script('window.location.hash = ' + json.dumps(route) + ';')
             wait_text(expected)
         discovery = call(prefix + '/execute/async', {'script': """
@@ -97,7 +101,7 @@ def main():
         assert discovery is not None, 'A public Product is needed for detail smoke acceptance.'
         script('window.location.hash = ' + json.dumps('/products/' + discovery['id']) + ';')
         wait_text(discovery['title'])
-        wait_text('Purchasing is currently unavailable.')
+        wait_text('Add to Cart')
         script('window.location.hash = ' + json.dumps('/shops/' + discovery['shop']['slug']) + ';')
         wait_text(discovery['shop']['name'])
         assert 'This Shop is unavailable.' not in script('return document.body.innerText;')
@@ -123,13 +127,28 @@ def main():
             .then(response => done({status: response.status})).catch(() => done({status: 0}));
         """, 'args': []})
         assert denial['status'] == 401  # Also exercises a real Authorization preflight.
+        commerce_denial = call(prefix + '/execute/async', {'script': """
+          const done = arguments[arguments.length - 1];
+          Promise.all([
+            ['POST', 'customer/checkout/place'],
+            ['PATCH', 'customer/orders/11111111-1111-4111-8111-111111111111/modification']
+          ].map(async ([method, path]) => {
+            const response = await fetch('http://127.0.0.1:8000/api/v1/' + path,
+              {method, credentials:'omit', redirect:'error', body:'{}', headers:{
+                Accept:'application/json', 'Content-Type':'application/json',
+                Authorization:'Bearer invalid-smoke-test',
+                'Idempotency-Key':'11111111-1111-4111-8111-111111111111'}});
+            return response.status;
+          })).then(done).catch(() => done([]));
+        """, 'args': []})
+        assert commerce_denial == [401, 401], 'Commerce idempotency-header preflights must allow denial responses.'
         script("window.location.hash = '/';")
         wait_text('Search Products and Shops')
         screenshot = os.environ.get('BUYER_SCREENSHOT')
         if screenshot:
             with open(screenshot, 'wb') as output:
                 output.write(base64.b64decode(call(prefix + '/screenshot')))
-        print('PASS: Home, Products/Shops search, public Product/Shop detail, protected account/Cart guards, live policies, cookie/redirect isolation, CORS and invalid-bearer denial.')
+        print('PASS: Home, Products/Shops search, public Product/Shop detail, protected account/Cart/checkout/Order guards, idempotency preflights, live policies, cookie/redirect isolation, CORS and invalid-bearer denial.')
     finally:
         if session:
             try:

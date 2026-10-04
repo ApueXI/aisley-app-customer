@@ -1,6 +1,6 @@
 # Backend and Buyer integration gaps
 
-Baseline reviewed 2026-10-03. Phase 1 is implemented with verification recorded separately; later Buyer implementation and unverified target gates remain pending. This register identifies unavailable platform behavior, source contradictions and integration/release decisions; it does not authorize backend changes.
+Baseline reviewed 2026-10-03. Phases 1–3 are implemented with verification recorded separately; Phase 4 and unverified live/device gates remain pending. This register identifies unavailable platform behavior, source contradictions and integration/release decisions; it does not authorize backend changes.
 
 | ID | Gap and evidence | Buyer delivery treatment | Owner / phase |
 | --- | --- | --- | --- |
@@ -24,7 +24,7 @@ Baseline reviewed 2026-10-03. Phase 1 is implemented with verification recorded 
 | G18 | Sanctum token expiration currently null; no refresh/revoke-all/session registry API | Secure restore and /me revalidation; current-token logout, documented password token effects; no invented refresh schedule | Security/Auth; 1/5 |
 | G19 | Portable contracts now cover inspected behavior; canonical historical wording remains optional evidence | Local specs/typed contracts govern implementation; log live contract differences separately | Documentation resolved; each phase |
 | G20 | Phase 1 Android builds, Chromium UI/transport and public localhost API checks now pass; installed Android and live authenticated flows remain unverified | See [Phase 1 evidence](phase-1-verification.md); preserve broad acceptance criteria until target/account checks pass | Flutter/release; 1/5 |
-| G21 | Address correction implementation does not fully demonstrate current published-rate/coverage revalidation | It checks owned shipping-address completeness and Order eligibility but does not recalculate the saved shipping quote; review material-location changes with the backend owner before release | Order/Finance/API; 3/5 |
+| G21 | Address correction implementation does not fully demonstrate current published-rate/coverage revalidation | It checks owned shipping-address completeness and Order eligibility but does not recalculate the saved shipping quote; Phase 3 enables only recipient/contact changes at an identical trimmed, complete location (empty optional line two equals null); block location changes pending backend-owner rate/coverage revalidation | Order/Finance/API; 3/5 |
 
 Unavailable APIs must not be mocked into production success. Test fixtures may model future/denied states clearly, but future endpoint proposals need separate backend authorization and acceptance.
 
@@ -42,3 +42,7 @@ Corrected portable contract details: Account uses account envelope; Quote Addres
 ## Phase 2 runtime checks — 2026-10-04
 
 Local contract baseline remains `57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50`; running Laravel revision is unidentified. Public Home/recommendations, Products/Shops search, directory/category/Shop browsing, Product detail and resolver parse successfully. Account, addresses, Wishlist, recency and avatar deny unauthenticated reads. No new runtime contract conflict was observed in that scope. G04 Retry-After exposure, G07 provider credentials, G15 upload hardening and G23 deployed NCR coverage remain open. [Phase 2 evidence](phase-2-verification.md) separates synthetic private workflows, public live checks and unverified acceptance.
+
+## Phase 3 runtime checks — 2026-10-04
+
+Cart/Orders/detail/tracking/Batch unauthenticated denial and exact localhost:8766 POST/PATCH Idempotency-Key preflights pass. Running backend revision remains unidentified; no authenticated commerce or transactional behavior was verified. G04/G11/G12/G21 remain open. [Phase 3 evidence](phase-3-verification.md) records synthetic replay, lifecycle and G21 restriction checks separately.

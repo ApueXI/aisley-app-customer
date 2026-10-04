@@ -6,6 +6,7 @@ import '../data/product_detail_model.dart';
 import 'catalog_widgets.dart';
 import 'product_controller.dart';
 import 'product_information.dart';
+import 'product_purchase_actions.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   const ProductDetailScreen({
@@ -184,15 +185,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           child: Text(widget.dependencies.savedStatus!.error!),
                         ),
                 ),
-                const Text('Purchasing is currently unavailable.'),
-                const SizedBox(height: 10),
-                FilledButton.icon(
-                  onPressed: null,
-                  icon: const Icon(Icons.add_shopping_cart),
-                  label: const Text('Add to Cart'),
+                ProductPurchaseActions(
+                  dependencies: widget.dependencies,
+                  product: _controller,
                 ),
-                const SizedBox(height: 8),
-                const OutlinedButton(onPressed: null, child: Text('Buy Now')),
                 const SizedBox(height: 20),
                 _shopCard(context, product),
                 ProductInformation(

@@ -15,7 +15,7 @@ contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 Backend: Product Detail Resource, media/valid variants and current purchase handoffs implemented;
 canonical checklist retains historical foundation wording.
 
-Flutter: **implemented; acceptance partial**. See [Phase 2 evidence](../../../references/phase-2-verification.md); live-account/device gates remain open.
+Flutter: **implemented; acceptance partial**. See [Phase 2 evidence](../../../references/phase-2-verification.md); live-account/device gates remain open. Phase 3 now enables intentional Cart/Buy Now handoffs; see [commerce evidence](../../../references/phase-3-verification.md).
 
 Visible Product → gallery/description → complete valid variant + quantity → Cart or Buy Now.
 

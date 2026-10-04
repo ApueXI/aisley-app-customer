@@ -1,10 +1,10 @@
 # Fresh Customer Flutter project setup
 
-## Current Phase 1 local development
+## Current Phases 1–3 local development
 
-Phase 1 now uses the five pinned auth/foundation packages in pubspec.yaml; maps, uploads,
-PSGC and nonsecret preferences remain later-phase work. Preserve the historical SDK/package
-checks below; current executed checks and limits are in [Phase 1 evidence](references/phase-1-verification.md).
+The ten approved package pins support implemented auth, discovery/account and commerce.
+Maps/uploads/PSGC/preferences are implemented; no dependency was added for Phase 3. Preserve
+historical SDK/package checks; current results are in [Phase 3 evidence](references/phase-3-verification.md).
 
 The authorized API is `http://localhost:8000/api/v1`. Buyer browser testing stays at
 `http://localhost:8766`; the documented recovery storefront default is `http://localhost:3000`.
@@ -29,7 +29,7 @@ python3 tool/browser_smoke.py
 
 The browser smoke tool needs an already running Buyer web server/API plus Chromium and
 chromedriver; it uses an isolated temporary profile, sends no real credentials, and creates
-no accounts. Live tests cover public policies, denial and CORS only. Authenticated live flows
+no accounts. Live tests cover public discovery/policies, denial and CORS/idempotency preflight only. Authenticated live flows
 and installed Android acceptance remain open. No backend process/configuration is managed here.
 
 The original fresh-project instructions and historical checks follow.
@@ -116,7 +116,7 @@ Disable Android auto backup or exclude secure-storage preferences using Android 
 ## Inputs required from deployment owners
 
 - Reachable API/storefront origins, approved test Customer accounts, approval/consent state and representative visible Products/rates/vouchers/Orders.
-- Customer browser CORS must allow exactly http://localhost:8766 while preserving existing origins; required methods/preflights and Authorization, Content-Type, Idempotency-Key. Expose Retry-After. Current defaults omit this origin/header exposure.
+- Customer browser CORS must allow exactly http://localhost:8766 while preserving existing origins; required methods/preflights and Authorization, Content-Type, Idempotency-Key. Expose Retry-After. Localhost origin and required preflights pass; Retry-After exposure remains open.
 - Keep token-only Buyer browser origin outside Sanctum stateful domains; credentials disabled. Validate no same-host web-guard cookie contamination because Sanctum tries web identity before bearer fallback.
 - Suitable public Geoapify credentials with browser-origin restrictions and provider-supported Android restrictions/quotas. If the provider cannot safely support the intended native use, keep pinning disabled pending an owner-approved mediation design.
 - Map attribution/tile terms and trusted storefront reset-link deployment. Native reset app links and production browser security remain separate decisions.

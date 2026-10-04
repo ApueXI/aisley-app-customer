@@ -1,10 +1,10 @@
 # Buyer shopping workflows
 
-All Flutter flows are pending. [API guides](api/endpoints.md) define existing backend calls; [feature index](features/README.md) assigns ownership.
+Phases 1–3 Flutter flows are implemented with partial acceptance; communication/reviews/support and live/device gates remain pending. See [Phase 3 evidence](references/phase-3-verification.md). [API guides](api/endpoints.md) define existing backend calls; [feature index](features/README.md) assigns ownership.
 
 ## Navigation
 
-Use native bottom destinations **Home**, **Shops**, **Cart**, **Account**, with search reachable from discovery screens. This is the proposed Flutter navigation, not an existing implementation. Account links to Profile, Addresses, Orders, Wishlist, Recently Viewed, Notifications, Shop messages, Logistics messages, Courier messages, Support tickets, Settings/promotional preference, Policies/consent, and Logout. Distinct channels can share compatible rendering widgets while retaining separate repositories, routes, eligibility and read state.
+Use native bottom destinations **Home**, **Shops**, **Cart**, **Account**, with search reachable from discovery screens. These bottom destinations are implemented. Account links to Profile, Addresses, Orders, Wishlist, Recently Viewed, Notifications, Shop messages, Logistics messages, Courier messages, Support tickets, Settings/promotional preference, Policies/consent, and Logout. Distinct channels can share compatible rendering widgets while retaining separate repositories, routes, eligibility and read state.
 
 Product/Shop/Order detail and forms open on the current navigation stack; Android Back and browser Back return predictably. Validate destination IDs and allow-listed return routes, including notification web-path mapping. A guest opening Cart/Account-private content sees sign-in and a safe return; the app requires an intentional retry of a protected mutation after sign-in.
 
@@ -39,7 +39,7 @@ Changing items, address or vouchers requires a fresh quote. A stale quote requir
 
 COD begins `placed`/pending payment. Seller acceptance starts processing; prepared pickup freezes a shared waybill; accepted first-mile Courier confirms Seller handoff; Logistics receives/sorts/transfers/dispatches; accepted final-mile Courier performs delivery evidence/intent; Logistics validates and commits authoritative completion. Buyer reads safe projections only. An Order's `assigned` Courier display alone does not authorize Courier chat.
 
-While the server permits an owned `placed` Order, Customer can confirm cancellation with optional reason or correct its delivery address using an owned shipping/both row. Each write has a UUID key; modification may carry the expected revision. Seller processing closes this window. Correction produces a new immutable snapshot version and must preserve financial/serviceability rules; current shipping-rate/coverage revalidation is a recorded backend gap (G21), requiring owner review for material-location changes. Changes to Address Book never reroute an Order automatically. Item, quantity, voucher, repricing, return and refund changes remain deferred.
+While the server permits an owned `placed` Order, Customer can confirm cancellation with optional reason or correct its delivery address using an owned shipping/both row. Each write has a UUID key; modification may carry the expected revision. Seller processing closes this window. Correction produces a new immutable snapshot version and must preserve financial/serviceability rules; current shipping-rate/coverage revalidation is a recorded backend gap (G21), requiring owner review for material-location changes. Phase 3 permits only recipient/contact changes with identical trimmed street/locality/postal/country fields; empty optional line two is null and unverifiable locations are blocked. Changes to Address Book never reroute an Order automatically. Item, quantity, voucher, repricing, return and refund changes remain deferred.
 
 ## Communication and after delivery
 

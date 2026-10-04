@@ -76,7 +76,7 @@ PolicyRepository owns current/history/status/accept parsing and public/private c
 
 Inject repositories, HTTP clients, clock and session generation through AppDependencies. Widgets use immutable DTOs and ChangeNotifier/ListenableBuilder. Actor-scoped responses carry generation/Customer UUID; reject late status/accept errors and successes after logout/account switch. Clear confirmation/private accepted state/listeners when identity changes; public policy content can remain publicly cached.
 
-After acceptance, refresh status. Resume safe read navigation only when all_required_accepted true. Never automatically retry checkout/chat/support writes that were blocked. A new policy requirement encountered mid-session stops timers/private mutations until resolved; repository cancellation does not prove a pending server write rolled back.
+After acceptance, refresh status. Resume safe read navigation only when all_required_accepted true. Never automatically retry checkout/chat/support writes that were blocked. A new policy requirement stops protected work; cancellation does not prove rollback. Phase 3 clears projections/drafts but preserves only minimal frozen unresolved commerce requests for the same valid identity. After consent, reconciliation requires deliberate exact-key retry; no write automatically replays.
 
 Synthetic requests, nullable status/current versions, stale-conflict and denied examples are supplied in [policy examples](../../../api/examples/policy-viewing-consent.json), [wire tables](../../../api/field-index.md), [operations](../../../api/operations.md) and [failure handling](../../../api/errors.md). No monorepo files are required to implement these contracts.
 

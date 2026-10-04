@@ -3,7 +3,7 @@ feature: view-cart
 role: Customer
 platform: Flutter / Dart
 phase: 3
-flutter_status: Pending
+flutter_status: Implemented; acceptance partial
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 ---
@@ -15,7 +15,7 @@ contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 Backend: Cart routes/tables/service/Resources/tests implemented despite stale Draft spec claiming no
 API.
 
-Flutter: **pending**. These are implementation requirements, not completed screens or tests.
+Flutter: **implemented; acceptance partial**. See [Phase 3 evidence](../../../references/phase-3-verification.md); live-account/device gates remain open.
 
 Valid Product configuration → Add → owned lines → quantity/variation/remove → selected checkout.
 
@@ -185,13 +185,13 @@ a universal error envelope.
   reserve stock.
 - [ ] Android and fixed-origin local browser verify loading/empty/errors, keyboard/back/focus,
   supported permission/retry states and cleanup after identity loss.
-- [ ] DTO fixtures reject wrong required types, distinguish null/absent/false/empty and preserve
+- [x] DTO fixtures reject wrong required types, distinguish null/absent/false/empty and preserve
   wire casing.
-- [ ] Each consumed operation uses its documented method/body/envelope and correct public/private
+- [x] Each consumed operation uses its documented method/body/envelope and correct public/private
   credential behavior.
 - [ ] Exercise normal, empty, malformed, denied, consent-required, validation, conflict, throttle,
   offline and timeout outcomes.
-- [ ] Delayed responses/errors after logout/account switch cannot repopulate private state or
+- [x] Delayed responses/errors after logout/account switch cannot repopulate private state or
   restart disposed work.
 - [ ] Same-key replay applies only where supported; additive Cart/image requests are never globally
   retried.
@@ -214,3 +214,6 @@ Append actual implementation/test outcomes to [Progress](../../../PROGRESS.md) a
 history.
 Follow [architecture](../../../architecture.md), [setup](../../../setup.md) and
 [verification](../../../verification.md).
+
+Spec revision 2026-10-04: Phase 3 client implemented against the unchanged inspected checkout;
+synthetic verification is separate from live commerce and installed-device acceptance.

@@ -1,6 +1,6 @@
 # Buyer Flutter architecture
 
-Phase 1 now implements this selected blueprint; later subsystems remain planned. See [implementation evidence](references/phase-1-verification.md). Android is the delivery target; browser support is for local testing at localhost:8766. Existing repositories must merge these choices with their own instructions and record material differences before implementation. Backend contracts were inspected at checkout `57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50`; the historical baseline remains in provenance.
+Phases 1–3 implement this blueprint; communication/reviews/support remain planned. See [Phase 3 evidence](references/phase-3-verification.md). Android is the delivery target; browser support is for local testing at localhost:8766. Existing repositories must merge these choices with their own instructions and record material differences before implementation. Backend contracts were inspected at checkout `57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50`; the historical baseline remains in provenance.
 
 ## Composition and dependencies
 
@@ -36,7 +36,7 @@ Repository methods return typed successes or failures; widgets never index raw J
 
 `API_BASE_URL` accepts an origin or a full `/api/v1` base, with an optional trailing slash; AppConfig normalizes the base to `/api/v1` and validates the derived API origin. Other paths, user information, queries and fragments are rejected. A relative returned `/api/v1/...` URL resolves against the origin, never against the already-prefixed base. Use a credential-free Dio client for public catalog/provider reads and a trusted-origin client for private calls. Both set `Accept: application/json`; JSON mutations set JSON Content-Type and multipart owns its boundary.
 
-Configure 15-second overall JSON deadlines as well as Dio connect/send/receive timeouts. An overall deadline includes the entire exchange. Uploads use a separate bounded deadline and progress state. A timeout cancels the transport but does not prove rollback. Disable credentialed redirect following and authorize only exact API-origin requests; public storage/provider origins receive no bearer. Phase 1 web uses a Dio JSON Fetch adapter with credentials omitted and redirect:error, because the pinned XHR BrowserHttpClientAdapter cannot disable redirects. No CookieJar is used; multipart adapters remain later-phase work.
+Configure 15-second overall JSON deadlines as well as Dio connect/send/receive timeouts. An overall deadline includes the entire exchange. Uploads use a separate bounded deadline and progress state. A timeout cancels the transport but does not prove rollback. Disable credentialed redirect following and authorize only exact API-origin requests; public storage/provider origins receive no bearer. Phase 1 web uses a Dio JSON Fetch adapter with credentials omitted and redirect:error, because the pinned XHR BrowserHttpClientAdapter cannot disable redirects. No CookieJar is used; byte multipart adapters are implemented in Phase 2.
 
 Failure includes transport/decode category, HTTP status, optional code/message, field errors and readable Retry-After. No global automatic write retry. GET/resolve read retries use bounded backoff and query generation checks. [Operation contracts](api/operations.md) own mutation replay; [errors](api/errors.md) own global handling. Do not require a code when Laravel only returns a message.
 
@@ -48,7 +48,7 @@ Maintain a monotonically increasing session generation and verified Customer UUI
 
 Secure storage holds the token only. Read/write/delete failure fails closed for protected screens and exposes Retry. A newly minted token must be stored successfully before opening private routes; if storage fails, best-effort current-token logout and truthful feedback are needed. No ordinary-preferences fallback. Android uses platform-backed storage; localhost web uses the package's origin-bound WebCrypto implementation. Browser acceptance is separate from Android storage acceptance.
 
-Private caches/drafts/quotes/keys/photos are memory-only. Logout/account loss clears all of them and guest/private history separation. If secure deletion fails, clear memory and prevent restoration until deletion succeeds; never show successful durable sign-out while a token remains restorable. Offline local sign-out cannot guarantee server revocation. Password change keeps current bearer and revokes others; reset revokes all personal access tokens. No refresh-token endpoint or token expiry timer is supplied.
+Private caches/drafts/quotes/keys/photos are memory-only. Logout/account loss clears all private state while preserving guest/private history separation. Consent clears projections/drafts; minimal frozen unresolved commerce requests survive only for the same valid identity and require deliberate reconciliation. If secure deletion fails, clear memory and prevent restoration until deletion succeeds; never show successful durable sign-out while a token remains restorable. Offline local sign-out cannot guarantee server revocation. Password change keeps current bearer and revokes others; reset revokes all personal access tokens. No refresh-token endpoint or token expiry timer is supplied.
 
 ## Navigation and identity-dependent reads
 
@@ -62,7 +62,7 @@ Pagination state stores query signature, cursor/page, deduplicated items, loadin
 
 Catalog/Cart numeric prices are display hints. Quote/Order monetary strings are authoritative, parsed to integer minor units without floating-point totals. Quote ID/expiry and exact intent determine placement. Changing address, quantities, variant or vouchers invalidates quote. Display new prices and require deliberate review/Place; never silently repeat a blocked/expired write.
 
-Store uncertain supported operations as immutable `PendingMutation(key, payload, sessionGeneration, context)`. Disable competing edits until exact retry or authoritative reconciliation. Checkout has no GET-by-key endpoint and keys are memory-only: process-death recovery remains G12. Cart add and image uploads have no durable replay guarantee. No offline write queue.
+Store uncertain supported operations as immutable `PendingMutation(key, payload, sessionGeneration, context)`. Disable competing edits until exact retry or authoritative reconciliation. Checkout has no GET-by-key endpoint and keys are memory-only: process-death recovery remains G12. Cart add and image uploads have no durable replay guarantee. No offline write queue. Phase 3 session composition owns Cart/checkout/Order mutation records across navigation; G21 limits correction to contact changes at an identical verified location.
 
 ## Native, web and provider adapters
 

@@ -70,6 +70,31 @@ void main() {
       lease.cancellation.cancel();
     },
   );
+  test('commerce UUID header survives Fetch and no automatic placement retry occurs', () async {
+    _evaluate(
+      "globalThis.buyerCount = 0; globalThis.fetch = async (url, options) => { buyerCount++; globalThis.buyerKey = options.headers['Idempotency-Key']; globalThis.buyerMode = JSON.parse(options.body).mode; return new Response(JSON.stringify({code:'QUOTE_STALE'}), {status:409, headers:{'Content-Type':'application/json'}}); }"
+          .toJS,
+    );
+    final lease = SessionLease('synthetic-token', () => true, (_) {});
+    await expectLater(
+      client.request(
+        'POST',
+        'customer/checkout/place',
+        body: {'mode': 'buy_now'},
+        lease: lease,
+        idempotencyKey: '11111111-1111-4111-8111-111111111111',
+      ),
+      throwsA(isA<ApiFailure>()),
+    );
+    expect(
+      (_evaluate(
+        "buyerCount === 1 && buyerKey === '11111111-1111-4111-8111-111111111111' && buyerMode === 'buy_now'"
+            .toJS,
+      ) as JSBoolean).toDart,
+      true,
+    );
+    lease.cancellation.cancel();
+  });
   test('redirect failure does not retry a password mutation', () async {
     _evaluate(
       '''

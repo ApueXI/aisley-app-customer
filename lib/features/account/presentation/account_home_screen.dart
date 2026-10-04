@@ -51,6 +51,12 @@ class AccountHomeScreen extends StatelessWidget {
           route: '/account/addresses',
         ),
         _AccountDestination(
+          icon: Icons.receipt_long_outlined,
+          title: 'Orders',
+          subtitle: 'Status, tracking and permitted changes',
+          route: '/orders',
+        ),
+        _AccountDestination(
           icon: Icons.favorite_border,
           title: 'Wishlist',
           subtitle: 'Products you saved',

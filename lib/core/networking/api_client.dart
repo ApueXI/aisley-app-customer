@@ -71,7 +71,16 @@ class ApiClient {
     Map<String, Object?>? queryParameters,
     SessionLease? lease,
     bool readOnlyOperation = false,
+    String? idempotencyKey,
   }) async {
+    if (idempotencyKey != null &&
+        (lease == null ||
+            !const ['POST', 'PATCH', 'DELETE'].contains(method) ||
+            readOnlyOperation ||
+            !RegExp(r'^[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$')
+                .hasMatch(idempotencyKey))) {
+      throw const ApiFailure(FailureKind.decode);
+    }
     final response = await _send(
       method,
       path,
@@ -80,7 +89,10 @@ class ApiClient {
       lease: lease,
       deadline: deadline,
       retryRead: method == 'GET' || readOnlyOperation,
-      headers: {if (body != null) 'Content-Type': Headers.jsonContentType},
+      headers: {
+        if (body != null) 'Content-Type': Headers.jsonContentType,
+        'Idempotency-Key': ?idempotencyKey,
+      },
     );
     if (response.statusCode == 204) {
       return const <String, dynamic>{};

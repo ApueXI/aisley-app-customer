@@ -3,10 +3,11 @@
 Standalone Flutter Customer client for the external Laravel API. Phase 1 implements
 authentication, secure session restoration, policy reading/consent and protected navigation.
 Phase 2 adds Home, Products/Shops search, Shop browsing, Product detail, account
-workflows, addresses, Wishlist and Recently Viewed. Purchasing remains unavailable.
+workflows, addresses, Wishlist and Recently Viewed. Phase 3 adds Cart, COD checkout,
+vouchers, Orders/tracking, cancellation and same-location recipient/contact correction.
 
 See [local setup](docs/setup.md), [delivery phases](docs/README.md), and
-[verification evidence and remaining gates](docs/references/phase-2-verification.md).
+[verification evidence and remaining gates](docs/references/phase-3-verification.md).
 
 ```sh
 flutter pub get --enforce-lockfile

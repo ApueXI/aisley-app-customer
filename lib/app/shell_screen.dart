@@ -3,49 +3,66 @@ import 'package:go_router/go_router.dart';
 
 import '../core/security/session_controller.dart';
 import '../core/ui/form_page.dart';
+import 'commerce_state.dart';
 
 class BuyerShell extends StatelessWidget {
   const BuyerShell({
     super.key,
     required this.navigation,
     required this.session,
+    this.commerce,
   });
   final StatefulNavigationShell navigation;
   final SessionController session;
+  final CommerceState? commerce;
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: const Text('AISLEY'),
-      actions: [
-        IconButton(
-          tooltip: 'Terms and privacy',
-          icon: const Icon(Icons.policy_outlined),
-          onPressed: () => context.push('/policies/terms_of_service'),
-        ),
-      ],
-    ),
-    body: SafeArea(child: navigation),
-    bottomNavigationBar: NavigationBar(
-      selectedIndex: navigation.currentIndex,
-      onDestinationSelected: (index) => navigation.goBranch(
-        index,
-        initialLocation: index == navigation.currentIndex,
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: commerce?.cart ?? session,
+    builder: (context, _) => Scaffold(
+      appBar: AppBar(
+        title: const Text('AISLEY'),
+        actions: [
+          IconButton(
+            tooltip: 'Terms and privacy',
+            icon: const Icon(Icons.policy_outlined),
+            onPressed: () => context.push('/policies/terms_of_service'),
+          ),
+        ],
       ),
-      destinations: const [
-        NavigationDestination(icon: Icon(Icons.home_outlined), label: 'Home'),
-        NavigationDestination(
-          icon: Icon(Icons.storefront_outlined),
-          label: 'Shops',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.shopping_cart_outlined),
-          label: 'Cart',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.person_outline),
-          label: 'Account',
-        ),
-      ],
+      body: SafeArea(child: navigation),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: navigation.currentIndex,
+        onDestinationSelected: (index) {
+          if (index == 2) commerce?.cart.load();
+          navigation.goBranch(
+            index,
+            initialLocation: index == navigation.currentIndex,
+          );
+        },
+        destinations: [
+          const NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            label: 'Home',
+          ),
+          const NavigationDestination(
+            icon: Icon(Icons.storefront_outlined),
+            label: 'Shops',
+          ),
+          NavigationDestination(
+            icon: Badge(
+              isLabelVisible:
+                  commerce?.cart.badge != null && commerce!.cart.badge! > 0,
+              label: Text('${commerce?.cart.badge ?? 0}'),
+              child: const Icon(Icons.shopping_cart_outlined),
+            ),
+            label: 'Cart',
+          ),
+          const NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            label: 'Account',
+          ),
+        ],
+      ),
     ),
   );
 }

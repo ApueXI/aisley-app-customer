@@ -1,6 +1,6 @@
 # Buyer feature index
 
-Phase 1 authentication, navigation and policy implementation is complete; target acceptance and later Flutter features remain pending. See [Phase 1 evidence](../references/phase-1-verification.md). Backend status describes inspected Laravel availability; upstream checkboxes are not imported as mobile completion. Read shared API/design/security guides first.
+Phases 1–3 are implemented; live/device acceptance and Phase 4 remain pending. See [Phase 3 evidence](../references/phase-3-verification.md) and [Phase 2 evidence](../references/phase-2-verification.md). Backend status describes inspected Laravel availability; upstream checkboxes are not imported as mobile completion. Read shared API/design/security guides first.
 
 Before creating, revising or implementing a Customer feature, read [Customer specification rules](customer/rule.md) and [agent instructions](../AGENTS.md). New or revised Customer specs use WHAT/MUST/HOW and 200–230 physical lines, overriding the feature-spec skill's shorter preference. All 22 Customer specs now meet that rule; shared policy consent has its own complete contract outside the Customer length range.
 
@@ -8,19 +8,19 @@ Before creating, revising or implementing a Customer feature, read [Customer spe
 | --- | --- | --- | --- |
 | [Customer authentication](customer/customer-auth/spec.md) | 1 | Auth/approval-aware registration, login and recovery implemented; address/ID registration and native reset links deferred. | Implemented; target acceptance pending |
 | [Auth-aware navigation](customer/customer_verify_auth/spec.md) | 1 | /me role/status and policy guards implemented; storefront session UX has its own separate implementation. | Implemented; target acceptance pending |
-| [Homepage and discovery](customer/customer-homepage/spec.md) | 2 | Public aggregation, optional personalization and cursor discovery implemented; shortcut/error/cache gaps remain. | Pending |
-| [Products and Shops search](customer/search/spec.md) | 2 | Separate public Product/Shop search endpoints and ranked result modes implemented. | Pending |
-| [Shop directory and storefront](customer/browse-shop/spec.md) | 2 | Directory/detail, category filtering and optional Shop-scoped q search implemented. | Pending |
-| [Product Detail and configuration](customer/view-product/spec.md) | 2 | Product Detail Resource, media/valid variants and current purchase handoffs implemented; canonical checklist retains historical foundation wording. | Pending |
-| [Profile, password, photo and preference](customer/account-management/spec.md) | 2 | Owned account/profile/password/private-photo and promotional preference APIs implemented. | Pending |
-| [Address Book and defaults](customer/address-book/spec.md) | 2 | Owned CRUD/defaults and checkout snapshots implemented; Dart assets/native pin integration pending. | Pending |
-| [Wishlist](customer/wishlist/spec.md) | 2 | Owned cursor/status list and idempotent PUT/DELETE implemented; alerts/guest merge deferred. | Pending |
-| [Recently Viewed](customer/recently-viewed-items/spec.md) | 2 | Owned record/merge/list/remove/clear and public Product resolver implemented. | Pending |
-| [Cart configuration](customer/view-cart/spec.md) | 3 | Cart routes/tables/service/Resources/tests implemented despite stale Draft spec claiming no API. | Pending |
-| [COD checkout and placement](customer/checkout-order/spec.md) | 3 | Quote/place/batch, per-Shop Orders, shipping/vouchers/reservations/snapshots and UUID replay implemented. | Pending |
-| [Checkout voucher usage](customer/voucher-usage/spec.md) | 3 | Existing quote candidate/eligibility/selection/savings/snapshot/redemption implemented; wallet/claim/authoring deferred. | Pending |
-| [Owned Orders and tracking](customer/order-status/spec.md) | 3 | Owned list/detail/timeline, status mapper, immutable facts and safe assigned-Courier projection implemented; live maps deferred. | Pending |
-| [Order cancellation and address correction](customer/order-modification-cancellation/spec.md) | 3 | Eligible placed COD mutations, locked reservations, new address snapshots and replay implemented; shipping-rate revalidation gap remains. | Pending |
+| [Homepage and discovery](customer/customer-homepage/spec.md) | 2 | Public aggregation, optional personalization and cursor discovery implemented; shortcut/error/cache gaps remain. | Implemented; acceptance partial |
+| [Products and Shops search](customer/search/spec.md) | 2 | Separate public Product/Shop search endpoints and ranked result modes implemented. | Implemented; acceptance partial |
+| [Shop directory and storefront](customer/browse-shop/spec.md) | 2 | Directory/detail, category filtering and optional Shop-scoped q search implemented. | Implemented; acceptance partial |
+| [Product Detail and configuration](customer/view-product/spec.md) | 2 | Product Detail Resource, media/valid variants and current purchase handoffs implemented; canonical checklist retains historical foundation wording. | Implemented; acceptance partial |
+| [Profile, password, photo and preference](customer/account-management/spec.md) | 2 | Owned account/profile/password/private-photo and promotional preference APIs implemented. | Implemented; acceptance partial |
+| [Address Book and defaults](customer/address-book/spec.md) | 2 | Owned CRUD/defaults and checkout snapshots implemented; location-changing Order shipping revalidation remains a gap. | Implemented; acceptance partial |
+| [Wishlist](customer/wishlist/spec.md) | 2 | Owned cursor/status list and idempotent PUT/DELETE implemented; alerts/guest merge deferred. | Implemented; acceptance partial |
+| [Recently Viewed](customer/recently-viewed-items/spec.md) | 2 | Owned record/merge/list/remove/clear and public Product resolver implemented. | Implemented; acceptance partial |
+| [Cart configuration](customer/view-cart/spec.md) | 3 | Cart routes/tables/service/Resources/tests implemented despite stale Draft spec claiming no API. | Implemented; acceptance partial |
+| [COD checkout and placement](customer/checkout-order/spec.md) | 3 | Quote/place/batch, per-Shop Orders, shipping/vouchers/reservations/snapshots and UUID replay implemented. | Implemented; acceptance partial |
+| [Checkout voucher usage](customer/voucher-usage/spec.md) | 3 | Existing quote candidate/eligibility/selection/savings/snapshot/redemption implemented; wallet/claim/authoring deferred. | Implemented; acceptance partial |
+| [Owned Orders and tracking](customer/order-status/spec.md) | 3 | Owned list/detail/timeline, status mapper, immutable facts and safe assigned-Courier projection implemented; live maps deferred. | Implemented; acceptance partial |
+| [Order cancellation and address correction](customer/order-modification-cancellation/spec.md) | 3 | Eligible placed COD mutations, locked reservations, new address snapshots and replay implemented; shipping-rate revalidation gap remains. | Implemented; acceptance partial |
 | [Shop messages](customer/chat-messaging/spec.md) | 4 | Shared Customer–Shop thread APIs, Seller replies and Shop unread-count implemented; retention/release gates remain. | Pending |
 | [Public Product questions](customer/product-qa/spec.md) | 4 | Public Product Q&A, active-Customer ask, owning Seller official answer and after-commit alerts implemented. | Pending |
 | [Verified reviews and ratings](customer/product-review-ratings/spec.md) | 4 | Delivered own-item Review create/public list/photos and read-only official Seller response implemented; release/media concurrency checks incomplete. | Pending |

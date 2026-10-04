@@ -22,6 +22,12 @@ import '../features/discovery/presentation/shop_directory_screen.dart';
 import '../features/discovery/presentation/product_detail_screen.dart';
 import '../features/saved/presentation/saved_products_screen.dart';
 import '../features/saved/presentation/saved_products_controller.dart';
+import '../core/commerce/commerce_value.dart';
+import '../features/cart/presentation/cart_screen.dart';
+import '../features/checkout/presentation/checkout_screen.dart';
+import '../features/checkout/presentation/batch_result_screen.dart';
+import '../features/orders/presentation/orders_screen.dart';
+import '../features/orders/presentation/order_detail_screen.dart';
 import 'discovery_route_query.dart';
 import 'app_dependencies.dart';
 import 'router_guard.dart';
@@ -54,7 +60,11 @@ GoRouter buyerRouter(AppDependencies dependencies) {
       StatefulShellRoute.indexedStack(
         pageBuilder: (_, state, navigation) => NoTransitionPage(
           key: state.pageKey,
-          child: BuyerShell(navigation: navigation, session: session),
+          child: BuyerShell(
+            navigation: navigation,
+            session: session,
+            commerce: dependencies.commerce,
+          ),
         ),
         branches: [
           for (final entry in {
@@ -87,6 +97,9 @@ GoRouter buyerRouter(AppDependencies dependencies) {
                             )
                           : const _Unavailable();
                     }
+                    if (entry.key == '/cart' && dependencies.commerce != null) {
+                      return CartScreen(dependencies: dependencies);
+                    }
                     if (entry.key == '/account') {
                       return AccountHomeScreen(session: session);
                     }
@@ -96,6 +109,50 @@ GoRouter buyerRouter(AppDependencies dependencies) {
               ],
             ),
         ],
+      ),
+      GoRoute(
+        path: '/checkout',
+        builder: (_, state) =>
+            dependencies.commerce != null && !state.uri.hasQuery
+            ? CheckoutScreen(dependencies: dependencies)
+            : const _Unavailable(),
+      ),
+      GoRoute(
+        path: '/checkout/result/:batch',
+        builder: (_, state) {
+          final id = state.pathParameters['batch']!;
+          return dependencies.commerce != null &&
+                  validUuid(id) &&
+                  !state.uri.hasQuery
+              ? BatchResultScreen(
+                  key: ValueKey(id),
+                  dependencies: dependencies,
+                  id: id,
+                )
+              : const _Unavailable();
+        },
+      ),
+      GoRoute(
+        path: '/orders',
+        builder: (_, state) =>
+            dependencies.commerce != null && !state.uri.hasQuery
+            ? OrdersScreen(dependencies: dependencies)
+            : const _Unavailable(),
+      ),
+      GoRoute(
+        path: '/orders/:order',
+        builder: (_, state) {
+          final id = state.pathParameters['order']!;
+          return dependencies.commerce != null &&
+                  validUuid(id) &&
+                  !state.uri.hasQuery
+              ? OrderDetailScreen(
+                  key: ValueKey(id),
+                  dependencies: dependencies,
+                  id: id,
+                )
+              : const _Unavailable();
+        },
       ),
       GoRoute(
         path: '/search',

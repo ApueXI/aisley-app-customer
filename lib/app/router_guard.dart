@@ -19,10 +19,12 @@ String safeReturn(String? value) {
       DiscoveryRouteQuery.parse(uri, kind: 'shop').valid) {
     return uri.toString();
   }
+  if (uri.path == '/checkout' && !uri.hasQuery) return '/cart';
   if (uri.hasQuery) return '/account';
   if (const [
         '/',
         '/cart',
+        '/orders',
         '/account',
         '/account/profile',
         '/account/password',
@@ -34,6 +36,9 @@ String safeReturn(String? value) {
       ].contains(uri.path) ||
       RegExp(
         r'^/products/[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$',
+      ).hasMatch(uri.path) ||
+      RegExp(
+        r'^/(?:orders|checkout/result)/[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$',
       ).hasMatch(uri.path)) {
     return uri.path;
   }
@@ -45,6 +50,10 @@ String? guardRoute(SessionController session, Uri uri) {
   final encoded = Uri.encodeComponent(target);
   final private =
       uri.path == '/cart' ||
+      uri.path == '/orders' ||
+      uri.path.startsWith('/orders/') ||
+      uri.path == '/checkout' ||
+      uri.path.startsWith('/checkout/') ||
       uri.path == '/account' ||
       uri.path.startsWith('/account/');
   if (private && !session.active) {
