@@ -66,7 +66,8 @@ def main():
           window.buyerFetchCalls = [];
           const originalFetch = window.fetch;
           window.fetch = function(url, options) {
-            if (String(url).startsWith('http://localhost:8000/api/v1/')) {
+            if (['http://localhost:8000/api/v1/', 'http://127.0.0.1:8000/api/v1/']
+                .some(base => String(url).startsWith(base))) {
               window.buyerFetchCalls.push({credentials: options?.credentials, redirect: options?.redirect});
             }
             return originalFetch.apply(this, arguments);

@@ -13,9 +13,13 @@ on ports 8000/3000. Only localhost, 127.0.0.1 and 10.0.2.2 may use debug HTTP;
 release configuration requires explicit HTTPS origins. Do not substitute a phone's own
 localhost for the development computer; installed-device connectivity remains unverified.
 
+`API_BASE_URL` accepts either an origin such as `http://127.0.0.1:8000` or the full
+`http://127.0.0.1:8000/api/v1` base. The app normalizes both to `/api/v1`, including
+an optional trailing slash. Open Buyer at `http://localhost:8766` for its CORS origin.
+
 ```sh
 flutter pub get --enforce-lockfile
-flutter run -d web-server --web-hostname localhost --web-port 8766
+flutter run -d web-server --web-port 8766 --dart-define=API_BASE_URL=http://127.0.0.1:8000
 flutter build apk --debug
 flutter test
 BUYER_LIVE_API=1 flutter test test/live/public_api_test.dart

@@ -5,7 +5,7 @@ class AppConfig {
     required String apiBaseUrl,
     required String storefrontOrigin,
     this.allowLocalHttp = false,
-  }) : apiBase = Uri.parse(apiBaseUrl),
+  }) : apiBase = _normalizeApiBase(apiBaseUrl),
        storefront = Uri.parse(storefrontOrigin) {
     if (!_validOrigin(apiBase) ||
         apiBase.path != '/api/v1' ||
@@ -15,6 +15,14 @@ class AppConfig {
         'Provide trusted API and storefront origins.',
       );
     }
+  }
+
+  static Uri _normalizeApiBase(String value) {
+    final uri = Uri.parse(value);
+    if (uri.path.isEmpty || uri.path == '/' || uri.path == '/api/v1/') {
+      return uri.replace(path: '/api/v1');
+    }
+    return uri;
   }
 
   factory AppConfig.environment() {

@@ -43,6 +43,9 @@ void main() {
         'https://u:p@example.invalid/api/v1',
         'https://api.example.invalid/api/v1?token=x',
         'https://api.example.invalid/api',
+        'https://api.example.invalid/api/v2',
+        'https://api.example.invalid?token=x',
+        'https://api.example.invalid/#fragment',
       ]) {
         expect(
           () => AppConfig(
@@ -70,6 +73,52 @@ void main() {
       expect(
         testConfig.trustedLink('/reset-password')?.origin,
         'http://localhost:3000',
+      );
+    },
+  );
+  test(
+    'API origin and versioned base resolve to the same trusted endpoints',
+    () {
+      for (final origin in [
+        'http://127.0.0.1:8000',
+        'http://localhost:8000',
+        'http://10.0.2.2:8000',
+        'https://api.example.invalid',
+      ]) {
+        for (final suffix in ['', '/', '/api/v1', '/api/v1/']) {
+          final config = AppConfig(
+            apiBaseUrl: '$origin$suffix',
+            storefrontOrigin: 'https://shop.example.invalid',
+            allowLocalHttp: origin.startsWith('http:'),
+          );
+          expect(config.apiBase.toString(), '$origin/api/v1');
+          expect(config.apiBase.origin, origin);
+          expect(
+            config.apiUri('customer/auth/me').toString(),
+            '$origin/api/v1/customer/auth/me',
+          );
+          expect(
+            config.apiUri('/api/v1/customer/auth/me').toString(),
+            '$origin/api/v1/customer/auth/me',
+          );
+          expect(
+            config.trustsApi(Uri.parse('$origin/api/v1/customer/auth/me')),
+            true,
+          );
+          expect(
+            config.trustsApi(
+              Uri.parse('https://untrusted.invalid/api/v1/customer/auth/me'),
+            ),
+            false,
+          );
+        }
+      }
+      expect(
+        () => AppConfig(
+          apiBaseUrl: 'http://127.0.0.1:8000',
+          storefrontOrigin: 'https://shop.example.invalid',
+        ),
+        throwsFormatException,
       );
     },
   );

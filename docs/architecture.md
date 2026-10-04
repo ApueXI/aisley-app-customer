@@ -34,7 +34,7 @@ Repository methods return typed successes or failures; widgets never index raw J
 
 ## HTTP and credential boundary
 
-`API_BASE_URL` includes `/api/v1`; `API_ORIGIN` is derived and validated. A relative returned `/api/v1/...` URL resolves against the origin, never against the already-prefixed base. Use a credential-free Dio client for public catalog/provider reads and a trusted-origin client for private calls. Both set `Accept: application/json`; JSON mutations set JSON Content-Type and multipart owns its boundary.
+`API_BASE_URL` accepts an origin or a full `/api/v1` base, with an optional trailing slash; AppConfig normalizes the base to `/api/v1` and validates the derived API origin. Other paths, user information, queries and fragments are rejected. A relative returned `/api/v1/...` URL resolves against the origin, never against the already-prefixed base. Use a credential-free Dio client for public catalog/provider reads and a trusted-origin client for private calls. Both set `Accept: application/json`; JSON mutations set JSON Content-Type and multipart owns its boundary.
 
 Configure 15-second overall JSON deadlines as well as Dio connect/send/receive timeouts. An overall deadline includes the entire exchange. Uploads use a separate bounded deadline and progress state. A timeout cancels the transport but does not prove rollback. Disable credentialed redirect following and authorize only exact API-origin requests; public storage/provider origins receive no bearer. Phase 1 web uses a Dio JSON Fetch adapter with credentials omitted and redirect:error, because the pinned XHR BrowserHttpClientAdapter cannot disable redirects. No CookieJar is used; multipart adapters remain later-phase work.
 
