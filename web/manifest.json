@@ -1,11 +1,11 @@
 {
-    "name": "aisley_mobile_buyer",
-    "short_name": "aisley_mobile_buyer",
+    "name": "AISLEY Buyer",
+    "short_name": "AISLEY",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#FFFFFF",
+    "theme_color": "#FFFFFF",
+    "description": "AISLEY Buyer application.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

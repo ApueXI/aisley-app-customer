@@ -21,3 +21,29 @@ No Flutter repository/scaffold was created, and no application/API tests, builds
 - Confirmed relocation/tracking at `docs/docs-mobile-buyer/`, preserved original progress history and the existing docs/cabigan ignore policy, and checked the documentation diff for whitespace/conflict markers and unrelated changes.
 
 These revision checks do not rerun the original route enumeration or source-hash audit. Existing Customer auth routes/controller were inspected to cross-check bearer login and revocation wording; no application tests, Flutter builds, device/browser acceptance or live API checks ran.
+
+## Standalone handoff revision — 2026-10-03
+
+New inspection checkout: `57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50`, captured before editing. The original baseline and its provenance manifest remain unchanged; [current inspection hashes](source-inspection.json) record 131 separately inspected source files.
+
+- All 22 Customer specs contain WHAT/MUST/HOW and 210–217 physical lines. The validator preserved each pre-existing unchecked acceptance requirement and verified canonical feature coverage; shared consent has equivalent contract detail without the line limit.
+- Copied the complete bundle into an isolated repository-local Flutter-style docs/ layout and copied its agent instructions to root. Checked local Markdown destinations/anchors and every concrete root-instruction docs path with no monorepo files in the simulated destination.
+- Validated 95 distinct operation methods/paths against the captured 95-route inventory, with no other-role route consumption. Parsed all JSON documents; checked 107 named model references and nested successful response fixtures, and ensured each operation's fixture agrees with the machine-readable inventory.
+- Compared all 19 bundled PSGC files byte for byte with their source and checked SHA-256/size manifests, eighteen index targets, ten-digit string codes and recursively nested children. All assets resolve after standalone copying.
+- Reviewed exact request casing, ownership/consent, status/envelopes, nullable/omitted fields, channel-specific paging/read fields and replay boundaries against current Laravel source. Support cursor traversal uses the framework request resolver; no unavailable-cursor API claim remains.
+- Inspected official Flutter release/package metadata for the concrete SDK and ten package pins; recorded constraints and checksums in [package baseline](package-baseline.json). Direct constraints accept the selected SDK; transitive resolution and target builds were not executed.
+- Preserved historical provenance, documentation-validation and progress prefixes and all existing archive bytes. Reviewed synthetic fixture identifiers/contact/text/secret placeholders, conflict markers, completion states and documentation-only scope; whitespace checks passed.
+
+The final machine-readable [check summary](standalone-validation.json) records the actual link/file counts and zero validation errors. These checks cover document portability and fixture consistency, not executable Dart DTOs or a live API. No Flutter scaffold, dependency installation/resolution, analyzer, unit/widget/integration tests, Android/web builds, backend tests, migrations, seeds, live exchange or installed-device acceptance ran. Open integration gates and all Flutter completion criteria remain pending.
+
+## Registration fixture and project SDK correction — 2026-10-04
+
+The backend contract baseline remains `57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50`; no backend source or live exchange was revalidated. Historical validation entries above are unchanged.
+
+- Corrected both synthetic registration operation copies to HTTP 201, pending Customer and no token. Returned profile values match the synthetic request; nullable middle name/photo path remain null. JSON/semantic checks confirm duplicate agreement and unchanged non-registration operations, including active successful login.
+- Verified the installed Flutter 3.47.2 stable / Dart 3.13.2 and revision `d3b14c876900e553bc736ca19295fc09e3853e8e` with `flutter --version --machine`. Setup now preserves the existing `^3.13.2` constraint. The old SDK metadata and unchanged ten package metadata records remain historical evidence in [package baseline](package-baseline.json).
+- Executed `flutter pub get --enforce-lockfile` in this repository: exit 0; existing dependencies resolved without tracked manifest/lockfile changes. Executed `flutter analyze --no-pub`: exit 0, no issues found in the existing counter scaffold.
+- Executed `flutter pub get` in an isolated temporary manifest with the project SDK constraint, all ten documented exact pins, scaffold Cupertino icons and Flutter test/lint dependencies: exit 0; 126 packages resolved. Checked all ten locked pin versions. The manifest and lockfile hash are recorded in [package baseline](package-baseline.json); no feature packages were added to this application.
+- The initial sandboxed Flutter command could not write its SDK cache; subsequent commands passed with approved cache access. Parsed all documentation JSON and checked whitespace, duplicated fixtures, SDK agreement and unchanged tracked application files.
+
+No feature-code analysis, Flutter tests, Android/web builds, installed-device/browser checks or live API acceptance ran. These dependency/scaffold checks do not complete any Buyer feature or resolve remaining storage, plugin runtime, deployment or release gates.

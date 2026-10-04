@@ -20,7 +20,7 @@ Invalid/unknown/other-role-only credentials share `422 INVALID_CREDENTIALS`. Cre
 
 ## Restoration, consent and cleanup
 
-Secure read → token present → `GET /api/v1/customer/auth/me` with bearer → validate `customer.role = customer` and active status → `GET /api/v1/policy-consent/status` → enter private routes only when `all_required_accepted` is true. Deduplicate bootstrap and use identity/session generation to reject late responses. Public browsing stays available during recoverable failures.
+Secure read → token present → `GET /api/v1/customer/auth/me` with bearer → validate `customer.role = customer` and active status → `GET /api/v1/policy-consent/status` → enter private routes only when `all_required_accepted` is true. Deduplicate bootstrap and use identity/session generation to reject late responses. The Buyer app keeps all shopping screens blocked during recoverable verification failures; authentication/recovery and public Terms/Privacy remain reachable. Backend public read contracts are unchanged.
 
 Required policies use current `terms_of_service` and `privacy_policy`. Read public content and require explicit `POST /api/v1/policy-consent/{type}/versions/{version}/accept` with `{"confirmation":true}`. There is no acceptance idempotency header requirement: the User/version uniqueness makes exact acceptance replay safe. A stale version returns `409 POLICY_VERSION_STALE`; refresh content/status before renewed confirmation. Initial/re-consent enforcement follows the Admin platform control; `required`, exact `accepted` and `all_required_accepted` are distinct server fields.
 
@@ -40,6 +40,10 @@ Mail URL uses `CUSTOMER_PASSWORD_RESET_URL`, default `http://localhost:3000/rese
 
 Use the destination project's approved platform secure-storage implementation. Android credentials must use protected platform storage; restoration/write/delete failure must show a retryable state and fail closed for private routes. No token in ordinary preferences, guest history, URLs or logs. Do not enable a plaintext fallback. Sanctum currently has `expiration = null`; there is no refresh-token endpoint or promised automatic rotation. Revalidate through `/me` and sign in again after actual revocation.
 
-The Courier project's secure-storage package is a reuse reference, not an approved Buyer dependency. Its documented web support is experimental and browser-origin bound, using WebCrypto and HTTPS or localhost; it is not equivalent to Android storage. Review the selected package/version and run secure-origin restoration/deletion/failure checks before use. Any internal browser persistence is allowed only through that reviewed secure-storage implementation for the local test target. [flutter_secure_storage documentation](https://pub.dev/packages/flutter_secure_storage)
+The fresh-project choice is flutter_secure_storage10.0.0, with Android platform storage and origin-bound WebCrypto on HTTPS/localhost. Metadata was inspected; run restoration/deletion/failure checks before claiming either target accepted. See [selected baseline](../setup.md). Any internal browser persistence is allowed only through that reviewed secure-storage implementation for the local test target. [flutter_secure_storage documentation](https://pub.dev/packages/flutter_secure_storage)
 
 Buyer runs at `http://localhost:8766`, independent of Courier `8765`. See [architecture](../architecture.md) for exact-origin CORS, non-stateful token configuration, exposed headers and cookie contamination checks. A production browser delivery requires a separate security/deployment decision.
+
+## Standalone contract record
+
+New source inspection at57e9eb2 confirmed these auth/session/consent/token effects. [Exact operations](operations.md), [wire types](field-index.md) and [synthetic auth fixtures](examples/customer-auth.json) supply all requests/responses locally; upstream source is optional provenance. Registration profile_photo_path is normally null but is currently serialized; discard it, never construct a storage URL, and retain G24. Login token/storage failure and offline logout remain explicit retry/uncertainty states.
