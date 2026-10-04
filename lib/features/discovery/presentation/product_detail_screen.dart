@@ -191,6 +191,29 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ),
                 const SizedBox(height: 20),
                 _shopCard(context, product),
+                if (widget.dependencies.communication != null)
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      TextButton(
+                        onPressed: () =>
+                            context.push('/products/${product.id}/questions'),
+                        child: const Text('Questions & answers'),
+                      ),
+                      TextButton(
+                        onPressed: () =>
+                            context.push('/products/${product.id}/reviews'),
+                        child: const Text('Reviews'),
+                      ),
+                      TextButton(
+                        onPressed: () => context.push(
+                          '/messages/shops/new/${product.shop.id}?context_type=product&context_id=${product.id}',
+                        ),
+                        child: const Text('Message Shop'),
+                      ),
+                    ],
+                  ),
                 ProductInformation(
                   dependencies: widget.dependencies,
                   product: product,

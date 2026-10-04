@@ -29,6 +29,7 @@ import '../features/checkout/presentation/batch_result_screen.dart';
 import '../features/orders/presentation/orders_screen.dart';
 import '../features/orders/presentation/order_detail_screen.dart';
 import 'discovery_route_query.dart';
+import 'communication_routes.dart';
 import 'app_dependencies.dart';
 import 'router_guard.dart';
 import 'shell_screen.dart';
@@ -57,6 +58,7 @@ GoRouter buyerRouter(AppDependencies dependencies) {
     redirect: (_, state) => guardRoute(session, state.uri),
     errorBuilder: (_, _) => const _Unavailable(),
     routes: [
+      ...communicationRoutes(dependencies),
       StatefulShellRoute.indexedStack(
         pageBuilder: (_, state, navigation) => NoTransitionPage(
           key: state.pageKey,

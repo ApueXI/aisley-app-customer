@@ -1,6 +1,6 @@
 # Buyer feature index
 
-Phases 1–3 are implemented; live/device acceptance and Phase 4 remain pending. See [Phase 3 evidence](../references/phase-3-verification.md) and [Phase 2 evidence](../references/phase-2-verification.md). Backend status describes inspected Laravel availability; upstream checkboxes are not imported as mobile completion. Read shared API/design/security guides first.
+Phases 1–4 are implemented; live/device acceptance remains partial. See [Phase 4 evidence](../references/phase-4-verification.md), [Phase 3 evidence](../references/phase-3-verification.md) and [Phase 2 evidence](../references/phase-2-verification.md). Backend status describes inspected Laravel availability; upstream checkboxes are not imported as mobile completion. Read shared API/design/security guides first.
 
 Before creating, revising or implementing a Customer feature, read [Customer specification rules](customer/rule.md) and [agent instructions](../AGENTS.md). New or revised Customer specs use WHAT/MUST/HOW and 200–230 physical lines, overriding the feature-spec skill's shorter preference. All 22 Customer specs now meet that rule; shared policy consent has its own complete contract outside the Customer length range.
 
@@ -21,13 +21,13 @@ Before creating, revising or implementing a Customer feature, read [Customer spe
 | [Checkout voucher usage](customer/voucher-usage/spec.md) | 3 | Existing quote candidate/eligibility/selection/savings/snapshot/redemption implemented; wallet/claim/authoring deferred. | Implemented; acceptance partial |
 | [Owned Orders and tracking](customer/order-status/spec.md) | 3 | Owned list/detail/timeline, status mapper, immutable facts and safe assigned-Courier projection implemented; live maps deferred. | Implemented; acceptance partial |
 | [Order cancellation and address correction](customer/order-modification-cancellation/spec.md) | 3 | Eligible placed COD mutations, locked reservations, new address snapshots and replay implemented; shipping-rate revalidation gap remains. | Implemented; acceptance partial |
-| [Shop messages](customer/chat-messaging/spec.md) | 4 | Shared Customer–Shop thread APIs, Seller replies and Shop unread-count implemented; retention/release gates remain. | Pending |
-| [Public Product questions](customer/product-qa/spec.md) | 4 | Public Product Q&A, active-Customer ask, owning Seller official answer and after-commit alerts implemented. | Pending |
-| [Verified reviews and ratings](customer/product-review-ratings/spec.md) | 4 | Delivered own-item Review create/public list/photos and read-only official Seller response implemented; release/media concurrency checks incomplete. | Pending |
-| [Admin support tickets](customer/support-tickets/spec.md) | 4 | Own-ticket APIs and Admin triage/status lifecycle implemented; linked records/attachments/notification fanout deferred. | Pending |
-| [Inbox notifications and preference](customer/notifications/spec.md) | 4 | Allow-listed own list/detail/read and in-app promotion preference implemented; unread-count/read-all/native push absent. | Pending |
-| [Logistics delivery messages](customer/logistics-messaging/spec.md) | 4 | Separate owned active-Order/current-handler text/history/send/read APIs implemented. | Pending |
-| [Delivery Courier messages](customer/courier-messaging/spec.md) | 4 | Accepted-final-mile counterpart APIs and private Customer Order-context read implemented; live/race release gates open. | Pending |
+| [Shop messages](customer/chat-messaging/spec.md) | 4 | Shared Customer–Shop thread APIs, Seller replies and Shop unread-count implemented; retention/release gates remain. | Implemented; acceptance partial |
+| [Public Product questions](customer/product-qa/spec.md) | 4 | Public Product Q&A, active-Customer ask, owning Seller official answer and after-commit alerts implemented. | Implemented; acceptance partial |
+| [Verified reviews and ratings](customer/product-review-ratings/spec.md) | 4 | Delivered own-item Review create/public list/photos and read-only official Seller response implemented; release/media concurrency checks incomplete. | Implemented; acceptance partial |
+| [Admin support tickets](customer/support-tickets/spec.md) | 4 | Own-ticket APIs and Admin triage/status lifecycle implemented; linked records/attachments/notification fanout deferred. | Implemented; acceptance partial |
+| [Inbox notifications and preference](customer/notifications/spec.md) | 4 | Allow-listed own list/detail/read and in-app promotion preference implemented; unread-count/read-all/native push absent. | Implemented; acceptance partial |
+| [Logistics delivery messages](customer/logistics-messaging/spec.md) | 4 | Separate owned active-Order/current-handler text/history/send/read APIs implemented. | Implemented; acceptance partial |
+| [Delivery Courier messages](customer/courier-messaging/spec.md) | 4 | Accepted-final-mile counterpart APIs and private Customer Order-context read implemented; live/race release gates open. | Implemented; acceptance partial |
 | [Policies and consent](shared/policy-viewing-consent/spec.md) | 1 | Public versions/status/acceptance/enforcement implemented | Implemented; target acceptance pending |
 
 The first 19 entries cover all canonical Customer areas. Notifications, separate Logistics/Courier messaging and shared consent add four explicit contracts. No dedicated canonical Customer notification spec exists; its portable spec records actual API behavior and the source gap.

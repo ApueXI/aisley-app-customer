@@ -1,6 +1,6 @@
 # Buyer requirements
 
-Status: Phases 1–3 implemented; live/device acceptance and Phase 4 remain pending. See [Phase 3 evidence](references/phase-3-verification.md). Backend availability is recorded in [feature specs](features/README.md) and [API inventory](api/endpoints.md).
+Status: Phases 1–4 implemented; live/device acceptance remains partial. See [Phase 4 evidence](references/phase-4-verification.md), [Phase 3 evidence](references/phase-3-verification.md). Backend availability is recorded in [feature specs](features/README.md) and [API inventory](api/endpoints.md).
 
 Guests can discover visible Products/Shops, search, inspect Product media and valid variants, read public Q&A/reviews, read Terms/Privacy, and keep bounded local Recently Viewed hints. Private actions require an active Admin-approved Customer and required server policy consent.
 
@@ -45,7 +45,7 @@ Quote/batch/Order totals are PHP money strings; Product/Cart numeric prices are 
 
 Every supported screen must distinguish loading, empty, validation, forbidden, consent-required, stale, offline, unavailable, throttled, conflict and uncertain mutation. Preserve safe input across recoverable failure, prevent duplicate submits and honor only supported replay. Browser file paths, cookies and server map keys must never be substituted for approved native/web adapters.
 
-Phases 1–3 Customer features and shared consent have implementation evidence; Phase 4 and live/device acceptance remain pending. Execute parser/repository/view-model/widget tests, analyzer, Android/web builds, installed-device and fixed-origin browser checks, followed by controlled live exchanges. Record the backend checkout/SDK/packages/configuration with results. [Verification](verification.md) separates completed documentation checks from these unexecuted application gates.
+Phases 1–4 Customer features and shared consent have implementation evidence; live/device acceptance remains partial. Execute parser/repository/view-model/widget tests, analyzer, Android/web builds, installed-device and fixed-origin browser checks, followed by controlled live exchanges. Record the backend checkout/SDK/packages/configuration with results. [Verification](verification.md) separates completed documentation checks from these unexecuted application gates.
 
 ## Explicit deferred inventory
 

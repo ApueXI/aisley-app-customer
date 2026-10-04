@@ -6,6 +6,7 @@ import '../features/cart/data/cart_repository.dart';
 import '../features/checkout/data/checkout_repository.dart';
 import '../features/orders/data/order_repository.dart';
 import 'commerce_state.dart';
+import 'communication_state.dart';
 import '../core/networking/api_client.dart';
 import '../core/platform/http_adapter.dart';
 import '../core/platform/trusted_launcher.dart';
@@ -43,6 +44,7 @@ class AppDependencies {
     DateTime Function()? clock,
     this.client,
     this.commerce,
+    this.communication,
   }) : clock = clock ?? DateTime.now;
   factory AppDependencies.production(AppConfig config) {
     final client = ApiClient(config);
@@ -91,6 +93,7 @@ class AppDependencies {
       mapLocations: mapLocations,
       photoPicker: PhotoPickerAdapter(),
       providerClient: mapDio,
+      communication: CommunicationState(session, client),
       commerce: CommerceState(
         session: session,
         carts: CartRepository(client),
@@ -101,6 +104,7 @@ class AppDependencies {
     );
   }
   final CommerceState? commerce;
+  final CommunicationState? communication;
   final AppConfig config;
   final AuthRepository auth;
   final PolicyRepository policies;
@@ -120,6 +124,7 @@ class AppDependencies {
   final DateTime Function() clock;
   final ApiClient? client;
   void dispose() {
+    communication?.dispose();
     commerce?.dispose();
     recentMerge?.dispose();
     savedStatus?.dispose();

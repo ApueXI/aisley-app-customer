@@ -1,6 +1,6 @@
 # Buyer communication API contracts
 
-Backend implemented; all Buyer Flutter inboxes/composers pending. Each route uses Sanctum, active Customer and consent; Laravel derives participants. Plain-text bodies are trimmed, nonempty and at most 2,000 characters. Starts/sends require UUID `Idempotency-Key`. Foreign IDs are scoped not-found; resource denial clears the affected history. No role's operational workflow becomes available through a conversation.
+Backend and Buyer Flutter inboxes/composers implemented; [Phase 4 evidence](../references/phase-4-verification.md) records partial acceptance. Each route uses Sanctum, active Customer and consent; Laravel derives participants. Plain-text bodies are trimmed, nonempty and at most 2,000 characters. Starts/sends require UUID `Idempotency-Key`. Foreign IDs are scoped not-found; resource denial clears the affected history. No role's operational workflow becomes available through a conversation.
 
 ## Separate channels
 

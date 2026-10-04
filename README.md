@@ -5,9 +5,11 @@ authentication, secure session restoration, policy reading/consent and protected
 Phase 2 adds Home, Products/Shops search, Shop browsing, Product detail, account
 workflows, addresses, Wishlist and Recently Viewed. Phase 3 adds Cart, COD checkout,
 vouchers, Orders/tracking, cancellation and same-location recipient/contact correction.
+Phase 4 adds separate Shop/Logistics/Courier messages, notifications, public Q&A,
+verified reviews/photos and support tickets.
 
 See [local setup](docs/setup.md), [delivery phases](docs/README.md), and
-[verification evidence and remaining gates](docs/references/phase-3-verification.md).
+[verification evidence and remaining gates](docs/references/phase-4-verification.md).
 
 ```sh
 flutter pub get --enforce-lockfile

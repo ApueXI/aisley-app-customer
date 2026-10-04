@@ -1,6 +1,6 @@
 # Backend and Buyer integration gaps
 
-Baseline reviewed 2026-10-03. Phases 1–3 are implemented with verification recorded separately; Phase 4 and unverified live/device gates remain pending. This register identifies unavailable platform behavior, source contradictions and integration/release decisions; it does not authorize backend changes.
+Baseline reviewed 2026-10-03. Phases 1–4 are implemented with verification recorded separately; unverified live/device gates remain open. This register identifies unavailable platform behavior, source contradictions and integration/release decisions; it does not authorize backend changes.
 
 | ID | Gap and evidence | Buyer delivery treatment | Owner / phase |
 | --- | --- | --- | --- |
@@ -46,3 +46,7 @@ Local contract baseline remains `57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50`; runn
 ## Phase 3 runtime checks — 2026-10-04
 
 Cart/Orders/detail/tracking/Batch unauthenticated denial and exact localhost:8766 POST/PATCH Idempotency-Key preflights pass. Running backend revision remains unidentified; no authenticated commerce or transactional behavior was verified. G04/G11/G12/G21 remain open. [Phase 3 evidence](phase-3-verification.md) records synthetic replay, lifecycle and G21 restriction checks separately.
+
+## Phase 4 runtime checks — 2026-10-04
+
+Public questions/reviews and private conversation/context/notification/ticket unauthenticated or invalid-bearer denial checks pass, together with exact localhost:8766 preflights. No contract conflict was observed in this limited runtime scope; running backend revision remains unidentified. Controlled counterpart exchanges, real uploads and server concurrency remain unverified. G04 header exposure, G12 memory-only recovery, G15 upload hardening, G16 communication retention/abuse and G22 controlled live ticket-cursor gates remain open. See [Phase 4 evidence](phase-4-verification.md) for synthetic recovery and browser coverage.

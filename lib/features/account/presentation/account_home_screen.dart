@@ -68,6 +68,19 @@ class AccountHomeScreen extends StatelessWidget {
           subtitle: 'Products in your account history',
           route: '/account/recently-viewed',
         ),
+        for (final entry in {
+          '/notifications': 'Notifications',
+          '/messages/shops': 'Shop messages',
+          '/messages/logistics': 'Logistics messages',
+          '/messages/courier': 'Courier messages',
+          '/support-tickets': 'Support tickets',
+        }.entries)
+          _AccountDestination(
+            icon: Icons.chat_bubble_outline,
+            title: entry.value,
+            subtitle: 'Open ${entry.value.toLowerCase()}',
+            route: entry.key,
+          ),
         const SizedBox(height: 20),
         OutlinedButton.icon(
           onPressed: session.signingOut

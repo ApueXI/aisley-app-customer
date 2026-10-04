@@ -95,6 +95,68 @@ void main() {
     );
     lease.cancellation.cancel();
   });
+  test('communication JSON headers and review image bytes cross Fetch exactly once', () async {
+    _evaluate(
+      r"""
+      globalThis.phase4Requests=[];
+      globalThis.fetch=async(url,options)=>{
+        if(options.credentials!=='omit' || options.redirect!=='error')throw new Error('Unsafe transport');
+        const record={url:String(url),headers:options.headers,body:options.body};
+        if(String(url).endsWith('/images')){
+          const form=await new Request(url,{method:'POST',headers:options.headers,body:options.body}).formData();
+          const image=form.get('image');
+          record.valid=!!image && !form.has('photo') && image.name==='synthetic.png' && image.type==='image/png' && (await image.arrayBuffer()).byteLength===3;
+        }
+        phase4Requests.push(record);
+        return new Response(JSON.stringify({data:{}}),{status:201,headers:{'Content-Type':'application/json'}});
+      };
+    """
+          .toJS,
+    );
+    final lease = SessionLease('synthetic-token', () => true, (_) {});
+    const id = '11111111-1111-4111-8111-111111111111';
+    await client.request(
+      'POST',
+      'customer/conversations',
+      lease: lease,
+      body: {'shop_id': id, 'body': 'Synthetic'},
+      idempotencyKey: id,
+    );
+    await client.request(
+      'POST',
+      'customer/conversations/$id/read',
+      lease: lease,
+      body: {'sequence': 2},
+    );
+    await client.request(
+      'POST',
+      'customer/logistics-conversations/$id/read',
+      lease: lease,
+      body: {'last_read_sequence': 3},
+    );
+    await client.request(
+      'POST',
+      'customer/order-items/$id/review',
+      lease: lease,
+      body: {'rating': 5, 'body': 'Synthetic review'},
+    );
+    await client.uploadBytes(
+      'customer/reviews/$id/images',
+      fieldName: 'image',
+      bytes: Uint8List.fromList([1, 2, 3]),
+      filename: 'synthetic.png',
+      mimeType: 'image/png',
+      lease: lease,
+    );
+    expect(
+      (_evaluate(
+        "phase4Requests.length===5 && phase4Requests[0].headers['Idempotency-Key']==='$id' && JSON.parse(phase4Requests[1].body).sequence===2 && JSON.parse(phase4Requests[2].body).last_read_sequence===3 && !phase4Requests[3].headers['Idempotency-Key'] && phase4Requests[4].valid && !phase4Requests[4].headers['Idempotency-Key']"
+            .toJS,
+      ) as JSBoolean).toDart,
+      true,
+    );
+    lease.cancellation.cancel();
+  });
   test('redirect failure does not retry a password mutation', () async {
     _evaluate(
       '''

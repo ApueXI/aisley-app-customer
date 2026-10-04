@@ -245,6 +245,12 @@ class _ShopScreenState extends State<ShopScreen> {
         Text(shop.name, style: Theme.of(context).textTheme.headlineSmall),
         if (shop.category != null) Text(shop.category!.name),
         if (shop.description != null) Text(shop.description!),
+        if (widget.dependencies.communication != null)
+          TextButton.icon(
+            onPressed: () => context.push('/messages/shops/new/${shop.id}'),
+            icon: const Icon(Icons.chat_bubble_outline),
+            label: const Text('Message Shop'),
+          ),
       ],
     ),
   );

@@ -110,6 +110,52 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                   ],
                   if (_controller.order != null) ...[
                     OrderFacts(_controller.order!),
+                    if (widget.dependencies.communication != null) ...[
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          TextButton(
+                            onPressed: () => context.push(
+                              '/messages/shops/new/${_controller.order!.shop.id}?context_type=order&context_id=${widget.id}',
+                            ),
+                            child: const Text('Message Shop'),
+                          ),
+                          TextButton(
+                            onPressed: () => context.push(
+                              '/messages/logistics/order/${widget.id}',
+                            ),
+                            child: const Text('Message Logistics'),
+                          ),
+                          TextButton(
+                            onPressed: () => context.push(
+                              '/messages/courier/order/${widget.id}',
+                            ),
+                            child: const Text('Delivery Courier contact'),
+                          ),
+                        ],
+                      ),
+                      for (final item in _controller.order!.items)
+                        if (item.productId != null &&
+                            (item.canReview || item.reviewId != null))
+                          TextButton(
+                            onPressed: () {
+                              if (item.reviewId != null) {
+                                widget.dependencies.communication!.review(
+                                  item.id,
+                                  item.productId!,
+                                  reviewId: item.reviewId,
+                                );
+                              }
+                              context.push(
+                                '/order-items/${item.id}/review/${item.productId}',
+                              );
+                            },
+                            child: Text(
+                              '${item.reviewId != null ? 'View Review / add photos' : 'Review'}: ${item.name}',
+                            ),
+                          ),
+                    ],
                     const SizedBox(height: 16),
                     Wrap(
                       spacing: 8,

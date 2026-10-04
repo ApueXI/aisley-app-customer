@@ -86,6 +86,11 @@ def main():
                                 ('/cart', 'Sign in with your approved Buyer account.'),
                                 ('/checkout', 'Sign in with your approved Buyer account.'),
                                 ('/orders', 'Sign in with your approved Buyer account.'),
+                                ('/messages/shops', 'Sign in with your approved Buyer account.'),
+                                ('/messages/logistics', 'Sign in with your approved Buyer account.'),
+                                ('/messages/courier', 'Sign in with your approved Buyer account.'),
+                                ('/notifications', 'Sign in with your approved Buyer account.'),
+                                ('/support-tickets', 'Sign in with your approved Buyer account.'),
                                 ('/orders/11111111-1111-4111-8111-111111111111', 'Sign in with your approved Buyer account.'),
                                 ('/checkout/result/11111111-1111-4111-8111-111111111111', 'Sign in with your approved Buyer account.')]:
             script('window.location.hash = ' + json.dumps(route) + ';')
@@ -102,6 +107,12 @@ def main():
         script('window.location.hash = ' + json.dumps('/products/' + discovery['id']) + ';')
         wait_text(discovery['title'])
         wait_text('Add to Cart')
+        script('window.location.hash = ' + json.dumps('/products/' + discovery['id'] + '/questions') + ';')
+        wait_text('Product questions')
+        wait_text('Sign in to ask a question')
+        script('window.location.hash = ' + json.dumps('/products/' + discovery['id'] + '/reviews') + ';')
+        wait_text('Product reviews')
+        wait_text('Reviews can be submitted from an eligible delivered Order item.')
         script('window.location.hash = ' + json.dumps('/shops/' + discovery['shop']['slug']) + ';')
         wait_text(discovery['shop']['name'])
         assert 'This Shop is unavailable.' not in script('return document.body.innerText;')
@@ -148,7 +159,7 @@ def main():
         if screenshot:
             with open(screenshot, 'wb') as output:
                 output.write(base64.b64decode(call(prefix + '/screenshot')))
-        print('PASS: Home, Products/Shops search, public Product/Shop detail, protected account/Cart/checkout/Order guards, idempotency preflights, live policies, cookie/redirect isolation, CORS and invalid-bearer denial.')
+        print('PASS: Home, Products/Shops search, public Product/Shop detail, public Q&A/reviews, protected account/Cart/checkout/Order/communication guards, idempotency preflights, live policies, cookie/redirect isolation, CORS and invalid-bearer denial.')
     finally:
         if session:
             try:

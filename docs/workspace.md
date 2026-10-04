@@ -1,6 +1,6 @@
 # Buyer shopping workflows
 
-Phases 1–3 Flutter flows are implemented with partial acceptance; communication/reviews/support and live/device gates remain pending. See [Phase 3 evidence](references/phase-3-verification.md). [API guides](api/endpoints.md) define existing backend calls; [feature index](features/README.md) assigns ownership.
+Phases 1–4 Flutter flows are implemented with partial acceptance; controlled authenticated and installed-device gates remain open. See [Phase 4 evidence](references/phase-4-verification.md), [Phase 3 evidence](references/phase-3-verification.md). [API guides](api/endpoints.md) define existing backend calls; [feature index](features/README.md) assigns ownership.
 
 ## Navigation
 

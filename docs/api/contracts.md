@@ -1,6 +1,6 @@
 # Typed API requests and DTOs
 
-Backend inspected at the [recorded baseline](../references/source-provenance.md); all Dart models/parsers pending. [Endpoint inventory](endpoints.md) defines methods and gates; [typed wire tables](field-index.md) define fields, nesting, nullability and omission. [Exact operations](operations.md) and [synthetic examples](examples/README.md) supply request/response fixtures.
+Backend inspected at the [recorded baseline](../references/source-provenance.md); Phases 1–4 Dart models/parsers are implemented with synthetic coverage; [live/device acceptance remains partial](../references/phase-4-verification.md). [Endpoint inventory](endpoints.md) defines methods and gates; [typed wire tables](field-index.md) define fields, nesting, nullability and omission. [Exact operations](operations.md) and [synthetic examples](examples/README.md) supply request/response fixtures.
 
 Use immutable typed models with explicit JSON-key mapping. UUIDs and opaque cursors are strings; timestamps are ISO-8601 parsed as UTC then displayed locally; birth dates are date-only. Distinguish absent, null, empty and false. Validate required structures and tolerate additive optional fields; unknown statuses render safe text and disable unsupported actions. A malformed success body is a decode failure, never an empty success.
 

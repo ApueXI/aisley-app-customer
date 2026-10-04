@@ -1,6 +1,6 @@
 # Buyer Flutter architecture
 
-Phases 1–3 implement this blueprint; communication/reviews/support remain planned. See [Phase 3 evidence](references/phase-3-verification.md). Android is the delivery target; browser support is for local testing at localhost:8766. Existing repositories must merge these choices with their own instructions and record material differences before implementation. Backend contracts were inspected at checkout `57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50`; the historical baseline remains in provenance.
+Phases 1–4 implement this blueprint with partial acceptance. See [Phase 4 evidence](references/phase-4-verification.md) and [Phase 3 evidence](references/phase-3-verification.md). Android is the delivery target; browser support is for local testing at localhost:8766. Existing repositories must merge these choices with their own instructions and record material differences before implementation. Backend contracts were inspected at checkout `57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50`; the historical baseline remains in provenance.
 
 ## Composition and dependencies
 
@@ -62,7 +62,7 @@ Pagination state stores query signature, cursor/page, deduplicated items, loadin
 
 Catalog/Cart numeric prices are display hints. Quote/Order monetary strings are authoritative, parsed to integer minor units without floating-point totals. Quote ID/expiry and exact intent determine placement. Changing address, quantities, variant or vouchers invalidates quote. Display new prices and require deliberate review/Place; never silently repeat a blocked/expired write.
 
-Store uncertain supported operations as immutable `PendingMutation(key, payload, sessionGeneration, context)`. Disable competing edits until exact retry or authoritative reconciliation. Checkout has no GET-by-key endpoint and keys are memory-only: process-death recovery remains G12. Cart add and image uploads have no durable replay guarantee. No offline write queue. Phase 3 session composition owns Cart/checkout/Order mutation records across navigation; G21 limits correction to contact changes at an identical verified location.
+Store uncertain supported operations as immutable `PendingMutation(key, payload, sessionGeneration, context)`. Disable competing edits until exact retry or authoritative reconciliation. Checkout has no GET-by-key endpoint and keys are memory-only: process-death recovery remains G12. Cart add and image uploads have no durable replay guarantee. No offline write queue. Session composition owns Cart/checkout/Order and separate communication/contribution/support records across navigation; G21 limits correction to contact changes at an identical verified location.
 
 ## Native, web and provider adapters
 

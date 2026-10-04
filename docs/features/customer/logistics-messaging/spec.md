@@ -3,7 +3,7 @@ feature: logistics-messaging
 role: Customer
 platform: Flutter / Dart
 phase: 4
-flutter_status: Pending
+flutter_status: Implemented; acceptance partial
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 ---
@@ -14,7 +14,8 @@ contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 
 Backend: Separate owned active-Order/current-handler text/history/send/read APIs implemented.
 
-Flutter: **pending**. These are implementation requirements, not completed screens or tests.
+Flutter: **implemented; acceptance partial**. See [Phase 4 evidence](../../../references/phase-4-verification.md).
+Broad counterpart/device and concurrency criteria remain open.
 
 Active owned Order → Order-context first message → current Logistics thread → scoped reply/history/read.
 

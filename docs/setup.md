@@ -1,10 +1,10 @@
 # Fresh Customer Flutter project setup
 
-## Current Phases 1–3 local development
+## Current Phases 1–4 local development
 
-The ten approved package pins support implemented auth, discovery/account and commerce.
-Maps/uploads/PSGC/preferences are implemented; no dependency was added for Phase 3. Preserve
-historical SDK/package checks; current results are in [Phase 3 evidence](references/phase-3-verification.md).
+The ten approved package pins support implemented auth, discovery/account, commerce and communication.
+Maps/uploads/PSGC/preferences are implemented; no dependency was added for Phases 3–4. Preserve
+historical SDK/package checks; current results are in [Phase 4 evidence](references/phase-4-verification.md).
 
 The authorized API is `http://localhost:8000/api/v1`. Buyer browser testing stays at
 `http://localhost:8766`; the documented recovery storefront default is `http://localhost:3000`.

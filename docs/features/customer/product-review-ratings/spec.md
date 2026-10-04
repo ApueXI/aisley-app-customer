@@ -3,7 +3,7 @@ feature: product-review-ratings
 role: Customer
 platform: Flutter / Dart
 phase: 4
-flutter_status: Pending
+flutter_status: Implemented; acceptance partial
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 ---
@@ -15,7 +15,8 @@ contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 Backend: Delivered own-item Review create/public list/photos and read-only official Seller response
 implemented; release/media concurrency checks incomplete.
 
-Flutter: **pending**. These are implementation requirements, not completed screens or tests.
+Flutter: **implemented; acceptance partial**. See [Phase 4 evidence](../../../references/phase-4-verification.md).
+Broad counterpart/device and concurrency criteria remain open.
 
 Delivered owned Order Item → rating/body → canonical Review → independent photo uploads → public list/response.
 

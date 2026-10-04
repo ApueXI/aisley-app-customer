@@ -3,7 +3,7 @@ feature: product-qa
 role: Customer
 platform: Flutter / Dart
 phase: 4
-flutter_status: Pending
+flutter_status: Implemented; acceptance partial
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 ---
@@ -15,7 +15,8 @@ contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 Backend: Public Product Q&A, active-Customer ask, owning Seller official answer and
 after-commit alerts implemented.
 
-Flutter: **pending**. These are implementation requirements, not completed screens or tests.
+Flutter: **implemented; acceptance partial**. See [Phase 4 evidence](../../../references/phase-4-verification.md).
+Broad counterpart/device and concurrency criteria remain open.
 
 Visible Product questions → ask after auth/consent → committed question → official answer/allowed notification.
 

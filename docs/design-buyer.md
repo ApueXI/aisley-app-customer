@@ -1,6 +1,6 @@
 # Buyer native mobile design
 
-Status: shared light Flutter design applied to Phases 1–3; remaining features and live/device accessibility acceptance remain pending. Adapted from Aisley's Customer branding and interaction contract at `docs/design.md`; the existing web guide governs the storefront, while this document governs the standalone Buyer app.
+Status: shared light Flutter design applied to Phases 1–4; installed-device accessibility acceptance remains pending. Adapted from Aisley's Customer branding and interaction contract at `docs/design.md`; the existing web guide governs the storefront, while this document governs the standalone Buyer app.
 
 Use a light-only Material theme with primary `#E6007A`, secondary `#4C1268`, error `#FF3B30`, and warning `#FF8800`. Neutral surfaces dominate; supporting typography/borders and restrained primary accents follow the brand's 60/30/10 balance. Verify foreground/background contrast and adjust text/surface use where a brand accent is insufficient. Do not rely on color alone for status, selected variants, unread or validation.
 
