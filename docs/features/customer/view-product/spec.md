@@ -3,7 +3,7 @@ feature: view-product
 role: Customer
 platform: Flutter / Dart
 phase: 2
-flutter_status: Pending
+flutter_status: Implemented; acceptance partial
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 ---
@@ -15,7 +15,7 @@ contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 Backend: Product Detail Resource, media/valid variants and current purchase handoffs implemented;
 canonical checklist retains historical foundation wording.
 
-Flutter: **pending**. These are implementation requirements, not completed screens or tests.
+Flutter: **implemented; acceptance partial**. See [Phase 2 evidence](../../../references/phase-2-verification.md); live-account/device gates remain open.
 
 Visible Product → gallery/description → complete valid variant + quantity → Cart or Buy Now.
 

@@ -3,7 +3,7 @@ feature: address-book
 role: Customer
 platform: Flutter / Dart
 phase: 2
-flutter_status: Pending
+flutter_status: Implemented; acceptance partial
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 ---
@@ -15,7 +15,7 @@ contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 Backend: Owned CRUD/defaults and checkout snapshots implemented; Dart assets/native pin integration
 pending.
 
-Flutter: **pending**. These are implementation requirements, not completed screens or tests.
+Flutter: **implemented; acceptance partial**. See [Phase 2 evidence](../../../references/phase-2-verification.md); live-account/device gates remain open.
 
 Addresses → cascading/manual form → optional pin → save/default → owned shipping selection.
 

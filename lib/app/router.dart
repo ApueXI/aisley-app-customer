@@ -7,6 +7,22 @@ import '../features/auth/presentation/registration_screen.dart';
 import '../features/policies/data/policy_models.dart';
 import '../features/policies/presentation/consent_screen.dart';
 import '../features/policies/presentation/policy_reader_screen.dart';
+import '../features/account/presentation/account_home_screen.dart';
+import '../features/account/presentation/profile_screen.dart';
+import '../features/account/presentation/password_screen.dart';
+import '../features/account/presentation/photo_screen.dart';
+import '../features/account/presentation/preferences_screen.dart';
+import '../features/addresses/presentation/address_book_screen.dart';
+import '../features/addresses/presentation/address_form_screen.dart';
+import '../features/discovery/presentation/home_screen.dart';
+import '../features/discovery/presentation/search_screen.dart';
+import '../features/discovery/presentation/search_controller.dart';
+import '../features/discovery/presentation/shop_screen.dart';
+import '../features/discovery/presentation/shop_directory_screen.dart';
+import '../features/discovery/presentation/product_detail_screen.dart';
+import '../features/saved/presentation/saved_products_screen.dart';
+import '../features/saved/presentation/saved_products_controller.dart';
+import 'discovery_route_query.dart';
 import 'app_dependencies.dart';
 import 'router_guard.dart';
 import 'shell_screen.dart';
@@ -51,12 +67,132 @@ GoRouter buyerRouter(AppDependencies dependencies) {
               routes: [
                 GoRoute(
                   path: entry.key,
-                  builder: (_, _) =>
-                      ShellScreen(section: entry.value, session: session),
+                  builder: (_, state) {
+                    if (entry.key == '/' && dependencies.discovery != null) {
+                      return HomeScreen(dependencies: dependencies);
+                    }
+                    if (entry.key == '/shops' &&
+                        dependencies.discovery != null) {
+                      final query = DiscoveryRouteQuery.parse(
+                        state.uri,
+                        kind: 'directory',
+                      );
+                      return query.valid
+                          ? ShopDirectoryScreen(
+                              key: ValueKey(state.uri.toString()),
+                              dependencies: dependencies,
+                              category: query.category,
+                              page: query.page,
+                              limit: query.limit,
+                            )
+                          : const _Unavailable();
+                    }
+                    if (entry.key == '/account') {
+                      return AccountHomeScreen(session: session);
+                    }
+                    return ShellScreen(section: entry.value, session: session);
+                  },
                 ),
               ],
             ),
         ],
+      ),
+      GoRoute(
+        path: '/search',
+        builder: (_, state) {
+          final query = DiscoveryRouteQuery.parse(state.uri, kind: 'search');
+          return SearchScreen(
+            key: ValueKey(state.uri.toString()),
+            dependencies: dependencies,
+            mode: query.mode == 'shops'
+                ? SearchMode.shops
+                : SearchMode.products,
+            query: query.query,
+            page: query.page,
+            limit: query.limit,
+            validRoute: query.valid,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/products/:id',
+        builder: (_, state) {
+          final id = state.pathParameters['id']!;
+          if (!RegExp(r'^[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$')
+              .hasMatch(id)) {
+            return const _Unavailable();
+          }
+          return ProductDetailScreen(
+            key: ValueKey(id),
+            dependencies: dependencies,
+            productId: id,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/shops/:slug',
+        builder: (_, state) {
+          final query = DiscoveryRouteQuery.parse(state.uri, kind: 'shop');
+          if (!query.valid ||
+              !RegExp(r'^[A-Za-z0-9][A-Za-z0-9_-]{0,254}$')
+                  .hasMatch(state.pathParameters['slug']!)) {
+            return const _Unavailable();
+          }
+          return ShopScreen(
+            key: ValueKey(state.uri.toString()),
+            dependencies: dependencies,
+            slug: state.pathParameters['slug']!,
+            query: query.query,
+            category: query.category,
+            page: query.page,
+            limit: query.limit,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/account/profile',
+        builder: (_, _) => ProfileScreen(dependencies: dependencies),
+      ),
+      GoRoute(
+        path: '/account/password',
+        builder: (_, _) => PasswordScreen(dependencies: dependencies),
+      ),
+      GoRoute(
+        path: '/account/photo',
+        builder: (_, _) => PhotoScreen(dependencies: dependencies),
+      ),
+      GoRoute(
+        path: '/account/preferences',
+        builder: (_, _) => PreferencesScreen(dependencies: dependencies),
+      ),
+      GoRoute(
+        path: '/account/addresses',
+        builder: (_, _) => AddressBookScreen(dependencies: dependencies),
+      ),
+      GoRoute(
+        path: '/account/addresses/new',
+        builder: (_, _) => AddressFormScreen(dependencies: dependencies),
+      ),
+      GoRoute(
+        path: '/account/addresses/:id',
+        builder: (_, state) => AddressFormScreen(
+          dependencies: dependencies,
+          addressId: state.pathParameters['id'],
+        ),
+      ),
+      GoRoute(
+        path: '/account/wishlist',
+        builder: (_, _) => SavedProductsScreen(
+          dependencies: dependencies,
+          collection: SavedCollection.wishlist,
+        ),
+      ),
+      GoRoute(
+        path: '/account/recently-viewed',
+        builder: (_, _) => SavedProductsScreen(
+          dependencies: dependencies,
+          collection: SavedCollection.recentlyViewed,
+        ),
       ),
       GoRoute(
         path: '/login',

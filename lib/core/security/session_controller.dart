@@ -91,8 +91,30 @@ class SessionController extends ChangeNotifier {
     customer = null;
     consent = null;
     _refreshFlight = null;
+    _clearPrivateState();
+  }
+
+  void _clearPrivateState() {
     for (final cleanup in List<VoidCallback>.of(_privateCleanup)) {
       cleanup();
+    }
+  }
+
+  Future<void> refreshNavigation() async {
+    final lease = active ? verifiedLease : null;
+    if (lease == null) return;
+    final epoch = generation;
+    try {
+      final identity = await auth.me(lease);
+      if (!_current(epoch) || !active) return;
+      if (!identity.isActiveCustomer || identity.id != customer?.id) {
+        await _loseIdentity(_denial(identity));
+        return;
+      }
+      customer = identity;
+      _emit();
+    } on ApiFailure catch (error) {
+      if (_current(epoch) && error.identityLost) await _loseIdentity(error);
     }
   }
 
@@ -185,6 +207,7 @@ class SessionController extends ChangeNotifier {
       phase = status.allRequiredAccepted
           ? SessionPhase.active
           : SessionPhase.consentRequired;
+      if (!status.allRequiredAccepted) _clearPrivateState();
       _emit();
     } on ApiFailure catch (error) {
       if (!_current(epoch) || query != _consentQuery) return;
@@ -194,6 +217,7 @@ class SessionController extends ChangeNotifier {
       }
       failure = error;
       phase = SessionPhase.consentUnavailable;
+      _clearPrivateState();
       _emit();
     }
   }
@@ -294,6 +318,7 @@ class SessionController extends ChangeNotifier {
       consent = null;
       phase = SessionPhase.consentRequired;
       failure = error;
+      _clearPrivateState();
       _emit();
       unawaited(refreshConsent());
     }

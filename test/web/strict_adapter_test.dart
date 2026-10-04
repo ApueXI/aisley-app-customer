@@ -2,6 +2,7 @@
 library;
 
 import 'dart:js_interop';
+import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -106,4 +107,95 @@ void main() {
     await Future<void>.delayed(const Duration(milliseconds: 1));
     expect((_evaluate('buyerAborted'.toJS) as JSBoolean).toDart, true);
   });
+  test('authenticated binary bytes and multipart content survive browser Fetch without false progress', () async {
+    _evaluate(
+      '''globalThis.buyerRequests = [];
+      globalThis.fetch = async (url, options) => {
+        buyerRequests.push(options);
+        if (options.method === 'GET') return new Response(new Uint8Array([0, 128, 255]), {status: 200, headers: {'Content-Type': 'image/png'}});
+        if (!(options.body instanceof Uint8Array)) throw new Error('Multipart must use bytes');
+        const request = new Request(url, {method: 'POST', headers: options.headers, body: options.body});
+        const form = await request.formData();
+        const photo = form.get('photo');
+        const bytes = new Uint8Array(await photo.arrayBuffer());
+        globalThis.buyerMultipartValid = photo.name === 'synthetic.png' && photo.type === 'image/png' && bytes.length === 3 && bytes[0] === 0 && bytes[1] === 128 && bytes[2] === 255;
+        return new Response(JSON.stringify({message:'OK'}), {status: 200, headers:{'Content-Type':'application/json'}});
+      };'''
+          .toJS,
+    );
+    final lease = SessionLease('synthetic-token', () => true, (_) {});
+    expect(
+      await client.requestBytes('customer/account/profile-photo', lease: lease),
+      [0, 128, 255],
+    );
+    await client.uploadBytes(
+      'customer/account/profile-photo',
+      fieldName: 'photo',
+      bytes: Uint8List.fromList([0, 128, 255]),
+      filename: 'synthetic.png',
+      mimeType: 'image/png',
+      lease: lease,
+    );
+    expect(
+      (_evaluate(
+        'buyerMultipartValid && buyerRequests.every(o => o.credentials === "omit" && o.redirect === "error" && o.referrerPolicy === "no-referrer" && o.headers.Authorization === "Bearer synthetic-token")'
+            .toJS,
+      ) as JSBoolean).toDart,
+      true,
+    );
+    lease.cancellation.cancel();
+  });
+  test(
+    'empty 204 and binary account denial use the same session rules',
+    () async {
+      _evaluate(
+        '''globalThis.fetch = async (url, options) => options.method === 'DELETE' ? new Response(null, {status:204}) : new Response(JSON.stringify({message:'Denied', code:'CUSTOMER_INACTIVE'}), {status:403,headers:{'Content-Type':'application/json'}});'''
+            .toJS,
+      );
+      ApiFailure? denial;
+      final lease = SessionLease(
+        'synthetic-token',
+        () => true,
+        (failure) => denial = failure,
+      );
+      expect(
+        await client.request(
+          'DELETE',
+          'customer/addresses/11111111-1111-4111-8111-111111111111',
+          lease: lease,
+        ),
+        isEmpty,
+      );
+      await expectLater(
+        client.requestBytes('customer/account/profile-photo', lease: lease),
+        throwsA(isA<ApiFailure>().having((f) => f.status, 'status', 403)),
+      );
+      expect(denial?.code, 'CUSTOMER_INACTIVE');
+      lease.cancellation.cancel();
+    },
+  );
+  test(
+    'only the isolated public map provider sends an origin referrer',
+    () async {
+      _evaluate(
+        '''globalThis.fetch = async (url, options) => {globalThis.buyerReferrer = options.referrerPolicy; return new Response(JSON.stringify({results:[]}),{status:200,headers:{'Content-Type':'application/json'}});};'''
+            .toJS,
+      );
+      final provider = Dio()
+        ..httpClientAdapter = StrictJsonBrowserAdapter(publicMapProvider: true);
+      await provider.get('https://api.geoapify.com/v1/geocode/search');
+      expect(
+        (_evaluate(
+          'buyerReferrer === "strict-origin-when-cross-origin"'.toJS,
+        ) as JSBoolean).toDart,
+        true,
+      );
+      await provider.get('https://api.example.invalid/api/v1/public');
+      expect(
+        (_evaluate('buyerReferrer === "no-referrer"'.toJS) as JSBoolean).toDart,
+        true,
+      );
+      provider.close(force: true);
+    },
+  );
 }

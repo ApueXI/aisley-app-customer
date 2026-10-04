@@ -23,6 +23,58 @@ class Wire {
     return value as String?;
   }
 
+  String? optionalString(String key) {
+    if (!data.containsKey(key)) return null;
+    return nullableString(key);
+  }
+
+  int integer(String key) {
+    final value = field(key);
+    if (value is! int) _bad();
+    return value;
+  }
+
+  int? nullableInt(String key) {
+    final value = field(key);
+    if (value != null && value is! int) _bad();
+    return value as int?;
+  }
+
+  double number(String key) {
+    final value = field(key);
+    if (value is! num || !value.isFinite) _bad();
+    return value.toDouble();
+  }
+
+  double? nullableNumber(String key) {
+    final value = field(key);
+    if (value == null) return null;
+    if (value is num && value.isFinite) return value.toDouble();
+    _bad();
+  }
+
+  double? nullableCoordinate(String key) {
+    final value = field(key);
+    if (value == null) return null;
+    if (value is num && value.isFinite) return value.toDouble();
+    if (value is String) {
+      final parsed = double.tryParse(value);
+      if (parsed != null && parsed.isFinite) return parsed;
+    }
+    _bad();
+  }
+
+  Map<String, dynamic> object(String key) {
+    final value = field(key);
+    if (value is! Map<String, dynamic>) _bad();
+    return value;
+  }
+
+  List<String> strings(String key) => list(key, (value) {
+    if (value is! String) _bad();
+    return value;
+  });
+
   String uuid(String key) {
     final value = string(key);
     if (!RegExp(r'^[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$')

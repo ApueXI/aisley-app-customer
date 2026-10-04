@@ -18,6 +18,8 @@ class ApiFailure implements Exception {
   bool get uncertain =>
       kind == FailureKind.timeout ||
       kind == FailureKind.offline ||
+      kind == FailureKind.decode ||
+      kind == FailureKind.cancelled ||
       status != null && status! >= 500;
 
   bool get identityLost =>

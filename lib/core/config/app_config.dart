@@ -5,6 +5,8 @@ class AppConfig {
     required String apiBaseUrl,
     required String storefrontOrigin,
     this.allowLocalHttp = false,
+    this.mapsRequested = false,
+    this.geoapifyPublicApiKey = '',
   }) : apiBase = _normalizeApiBase(apiBaseUrl),
        storefront = Uri.parse(storefrontOrigin) {
     if (!_validOrigin(apiBase) ||
@@ -40,12 +42,21 @@ class AppConfig {
                 : '')
           : const String.fromEnvironment('STOREFRONT_ORIGIN'),
       allowLocalHttp: kDebugMode,
+      mapsRequested: const bool.fromEnvironment('MAPS_ENABLED'),
+      geoapifyPublicApiKey: const String.fromEnvironment(
+        'GEOAPIFY_PUBLIC_API_KEY',
+      ),
     );
   }
 
   final Uri apiBase;
   final Uri storefront;
   final bool allowLocalHttp;
+  final bool mapsRequested;
+  final String geoapifyPublicApiKey;
+
+  bool get mapsEnabled =>
+      mapsRequested && geoapifyPublicApiKey.trim().isNotEmpty;
 
   bool _validOrigin(Uri uri) =>
       uri.hasAuthority &&

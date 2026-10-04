@@ -14,19 +14,29 @@ extension type _AbortController._(JSObject _) implements JSObject {
   external void abort();
 }
 
+@JS('Uint8Array')
+extension type _JsUint8Array._(JSObject _) implements JSObject {
+  external factory _JsUint8Array(JSAny? source);
+  external int get length;
+  external int operator [](int index);
+  external void operator []=(int index, int value);
+}
+
 extension type _FetchResponse(JSObject _) implements JSObject {
   external int get status;
   external _FetchHeaders get headers;
   external JSPromise<JSString> text();
+  external JSPromise<JSObject> arrayBuffer();
 }
 
 extension type _FetchHeaders(JSObject _) implements JSObject {
   external void forEach(JSFunction callback);
 }
 
-/// Phase 1 authenticated transport: JSON only, no cookies or redirects.
-/// Upload transport belongs to its later-phase platform adapters.
+/// Browser Fetch transport with omitted cookies, rejected redirects and bytes.
 class StrictJsonBrowserAdapter implements HttpClientAdapter {
+  StrictJsonBrowserAdapter({this.publicMapProvider = false});
+  final bool publicMapProvider;
   final _controllers = <_AbortController>{};
   bool _closed = false;
 
@@ -50,16 +60,27 @@ class StrictJsonBrowserAdapter implements HttpClientAdapter {
       controller.abort();
     });
     try {
-      if (requestStream != null &&
-          options.contentType != Headers.jsonContentType) {
-        throw DioException(
-          requestOptions: options,
-          error: const FormatException('Unsupported browser payload.'),
-        );
+      final contentType = options.contentType ?? '';
+      Object? body;
+      if (requestStream != null) {
+        if (contentType == Headers.jsonContentType) {
+          body = await utf8.decoder.bind(requestStream).join();
+        } else if (contentType.toLowerCase().startsWith(
+          'multipart/form-data;',
+        )) {
+          final bytes = await _collect(requestStream);
+          final jsBytes = _JsUint8Array(bytes.length.toJS);
+          for (var index = 0; index < bytes.length; index++) {
+            jsBytes[index] = bytes[index];
+          }
+          body = jsBytes;
+        } else {
+          throw DioException(
+            requestOptions: options,
+            error: const FormatException('Unsupported browser payload.'),
+          );
+        }
       }
-      final body = requestStream == null
-          ? null
-          : await utf8.decoder.bind(requestStream).join();
       if (cancelled) {
         throw DioException(
           requestOptions: options,
@@ -76,20 +97,33 @@ class StrictJsonBrowserAdapter implements HttpClientAdapter {
               },
               'credentials': 'omit',
               'cache': 'no-store',
-              'referrerPolicy': 'no-referrer',
+              'referrerPolicy':
+                  publicMapProvider &&
+                      options.uri.origin == 'https://api.geoapify.com'
+                  ? 'strict-origin-when-cross-origin'
+                  : 'no-referrer',
               'redirect': 'error',
               'signal': controller.signal,
               'body': ?body,
             }.jsify()
             as JSObject,
       ).toDart;
-      final text = (await response.text().toDart).toDart;
       final headers = <String, List<String>>{};
       response.headers.forEach(
         ((JSString value, JSString name) {
           headers[name.toDart.toLowerCase()] = [value.toDart];
         }).toJS,
       );
+      if (options.responseType == ResponseType.bytes) {
+        final buffer = await response.arrayBuffer().toDart;
+        final view = _JsUint8Array(buffer);
+        final bytes = Uint8List(view.length);
+        for (var index = 0; index < view.length; index++) {
+          bytes[index] = view[index];
+        }
+        return ResponseBody.fromBytes(bytes, response.status, headers: headers);
+      }
+      final text = (await response.text().toDart).toDart;
       return ResponseBody.fromString(text, response.status, headers: headers);
     } on DioException {
       rethrow;
@@ -103,6 +137,14 @@ class StrictJsonBrowserAdapter implements HttpClientAdapter {
     } finally {
       _controllers.remove(controller);
     }
+  }
+
+  Future<Uint8List> _collect(Stream<Uint8List> stream) async {
+    final builder = BytesBuilder(copy: false);
+    await for (final chunk in stream) {
+      builder.add(chunk);
+    }
+    return builder.takeBytes();
   }
 
   @override

@@ -3,7 +3,7 @@ feature: account-management
 role: Customer
 platform: Flutter / Dart
 phase: 2
-flutter_status: Pending
+flutter_status: Implemented; acceptance partial
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 ---
@@ -14,7 +14,7 @@ contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 
 Backend: Owned account/profile/password/private-photo and promotional preference APIs implemented.
 
-Flutter: **pending**. These are implementation requirements, not completed screens or tests.
+Flutter: **implemented; acceptance partial**. See [Phase 2 evidence](../../../references/phase-2-verification.md); live-account/device gates remain open.
 
 Account → independent profile/photo/password form → confirmed change → refresh navigation; settings shows promotional preference.
 
