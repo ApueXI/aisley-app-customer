@@ -237,3 +237,7 @@ for controlled authenticated and installed-device verification.
 - [Verification and remaining acceptance gates](docs/verification.md)
 - [Integration gaps](docs/references/integration-gaps.md)
 - [Progress history](docs/PROGRESS.md)
+
+
+The Buyer marketplace now adapts to Android phones/tablets and desktop browsers in the
+same Flutter app. See [design](docs/design-buyer.md) and [marketplace evidence](docs/references/marketplace-verification.md).

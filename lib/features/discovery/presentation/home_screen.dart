@@ -23,6 +23,8 @@ class _HomeScreenState extends State<HomeScreen> {
     recentlyViewed: widget.dependencies.recentlyViewed!,
   );
 
+  final _search = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -31,6 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    _search.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -47,11 +50,12 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: pagePadding(context),
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1120),
+              constraints: const BoxConstraints(maxWidth: 1200),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _searchBar(context),
+                  if (MarketplaceScope.maybeOf(context)?.active != true)
+                    _searchBar(context),
                   if (_controller.loading && home == null)
                     const Padding(
                       padding: EdgeInsets.only(top: 56),
@@ -132,29 +136,32 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
   );
 
-  Widget _searchBar(BuildContext context) => Semantics(
-    button: true,
-    label: 'Search Products or Shops',
-    child: InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: () => context.push('/search'),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          border: Border.all(color: const Color(0xFFD9D1D8)),
-          borderRadius: BorderRadius.circular(12),
-          color: const Color(0xFFFFFBFD),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.search, color: Theme.of(context).colorScheme.secondary),
-            const SizedBox(width: 12),
-            const Expanded(child: Text('Search Products and Shops')),
-            const Icon(Icons.arrow_forward, size: 18),
-          ],
-        ),
+  Widget _searchBar(BuildContext context) => TextField(
+    controller: _search,
+    maxLength: 100,
+    textInputAction: TextInputAction.search,
+    onSubmitted: _submitSearch,
+    decoration: InputDecoration(
+      counterText: '',
+      labelText: 'Search Products or Shops',
+      hintText: 'Search Products and Shops',
+      prefixIcon: const Icon(Icons.search),
+      suffixIcon: IconButton(
+        tooltip: 'Search',
+        icon: const Icon(Icons.arrow_forward),
+        onPressed: () => _submitSearch(_search.text),
       ),
     ),
+  );
+
+  void _submitSearch(String value) => context.push(
+    Uri(
+      path: '/search',
+      queryParameters: {
+        'mode': 'products',
+        if (value.trim().isNotEmpty) 'q': value.trim(),
+      },
+    ).toString(),
   );
 
   HomeCampaign? _campaign(BuyerHome home) {
@@ -180,7 +187,9 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (campaign.imageMobileUrl ?? campaign.imageDesktopUrl
+          if ((MediaQuery.sizeOf(context).width >= 600
+                  ? campaign.imageDesktopUrl ?? campaign.imageMobileUrl
+                  : campaign.imageMobileUrl ?? campaign.imageDesktopUrl)
               case final url?)
             AspectRatio(
               aspectRatio: 2.4,
@@ -216,11 +225,34 @@ class _HomeScreenState extends State<HomeScreen> {
         runSpacing: 8,
         children: [
           for (final category in categories)
-            OutlinedButton(
-              onPressed: () => context.push(
-                '/search?mode=products&q=${Uri.encodeQueryComponent(category.name)}',
+            SizedBox(
+              width: 104 * catalogTextScale(context),
+              child: Card(
+                child: InkWell(
+                  onTap: () => context.push(
+                    '/search?mode=products&q=${Uri.encodeQueryComponent(category.name)}',
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      children: [
+                        if (category.imageUrl != null)
+                          CatalogImage(
+                            url: category.imageUrl,
+                            discovery: widget.dependencies.discovery!,
+                            width: 48,
+                            height: 48,
+                            label: category.name,
+                          )
+                        else
+                          const Icon(Icons.category_outlined, size: 32),
+                        const SizedBox(height: 8),
+                        Text(category.name, textAlign: TextAlign.center),
+                      ],
+                    ),
+                  ),
+                ),
               ),
-              child: Text(category.name),
             ),
         ],
       ),
@@ -257,7 +289,7 @@ class _HomeScreenState extends State<HomeScreen> {
           title: title,
           action: TextButton(
             onPressed: () => context.push('/search'),
-            child: const Text('See more'),
+            child: const Text('See all'),
           ),
         ),
         const SizedBox(height: 8),

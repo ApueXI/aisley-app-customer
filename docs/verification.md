@@ -50,3 +50,8 @@ Use the pinned SDK/packages and target commands in [setup](setup.md). The local 
 Completed documentation-only checks are recorded in [documentation validation](references/documentation-validation.md).
 Phase-specific application evidence is linked above; broad criteria that combine
 synthetic and live/device acceptance remain unchecked until the whole criterion passes.
+
+
+Responsive marketplace implementation and exact-viewport synthetic browser evidence are
+recorded in [marketplace verification](references/marketplace-verification.md), including
+mobile/desktop screenshots. Broad live/device/production criteria above remain open.

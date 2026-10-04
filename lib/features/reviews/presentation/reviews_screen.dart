@@ -52,49 +52,45 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
           ),
         ],
       ),
-      body: SafeArea(
-        child: ListView(
-          padding: pagePadding(context),
-          children: [
-            if (controller.loading)
-              const LinearProgressIndicator(semanticsLabel: 'Loading reviews'),
-            if (controller.error != null) ...[
-              Text(controller.error!),
-              TextButton(
-                onPressed: controller.coolingDown ? null : controller.load,
-                child: const Text('Retry'),
-              ),
-            ],
-            if (controller.summary != null) ...[
-              Text(
-                '${controller.summary!.average?.toStringAsFixed(1) ?? 'No rating'} · ${controller.summary!.count} reviews',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              for (final entry in controller.summary!.distribution.entries)
-                Text('${entry.key} stars: ${entry.value}'),
-            ],
-            const Text(
-              'Reviews can be submitted from an eligible delivered Order item.',
+      body: ListView(
+        padding: pagePadding(context),
+        children: [
+          if (controller.loading)
+            const LinearProgressIndicator(semanticsLabel: 'Loading reviews'),
+          if (controller.error != null) ...[
+            Text(controller.error!),
+            TextButton(
+              onPressed: controller.coolingDown ? null : controller.load,
+              child: const Text('Retry'),
             ),
-            if (controller.loaded && controller.items.isEmpty)
-              const Text('No reviews yet.'),
-            for (final item in controller.items)
-              ReviewView(review: item, dependencies: widget.dependencies),
-            if (controller.pageError != null) Text(controller.pageError!),
-            if (controller.hasMore)
-              TextButton(
-                onPressed:
-                    controller.loading ||
-                        controller.paging ||
-                        controller.coolingDown
-                    ? null
-                    : () => controller.load(more: true),
-                child: Text(
-                  controller.paging ? 'Loading…' : 'Load more reviews',
-                ),
-              ),
           ],
-        ),
+          if (controller.summary != null) ...[
+            Text(
+              '${controller.summary!.average?.toStringAsFixed(1) ?? 'No rating'} · ${controller.summary!.count} reviews',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            for (final entry in controller.summary!.distribution.entries)
+              Text('${entry.key} stars: ${entry.value}'),
+          ],
+          const Text(
+            'Reviews can be submitted from an eligible delivered Order item.',
+          ),
+          if (controller.loaded && controller.items.isEmpty)
+            const Text('No reviews yet.'),
+          for (final item in controller.items)
+            ReviewView(review: item, dependencies: widget.dependencies),
+          if (controller.pageError != null) Text(controller.pageError!),
+          if (controller.hasMore)
+            TextButton(
+              onPressed:
+                  controller.loading ||
+                      controller.paging ||
+                      controller.coolingDown
+                  ? null
+                  : () => controller.load(more: true),
+              child: Text(controller.paging ? 'Loading…' : 'Load more reviews'),
+            ),
+        ],
       ),
     ),
   );
@@ -113,36 +109,40 @@ class ReviewView extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 16),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '${review.rating} of 5 stars · ${review.author}',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        if (review.verified) const Text('Verified purchase'),
-        SelectableText(review.body),
-        if (review.at != null) Text(review.at!.toLocal().toString()),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
+    child: Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            for (final photo in photos ?? review.photos)
-              CatalogImage(
-                url: photo.url,
-                discovery: dependencies.discovery!,
-                height: 120,
-                width: 120,
-                label: 'Review photo',
-              ),
+            Text(
+              '${review.rating} of 5 stars · ${review.author}',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            if (review.verified) const Text('Verified purchase'),
+            SelectableText(review.body),
+            if (review.at != null) Text(review.at!.toLocal().toString()),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                for (final photo in photos ?? review.photos)
+                  CatalogImage(
+                    url: photo.url,
+                    discovery: dependencies.discovery!,
+                    height: 120,
+                    width: 120,
+                    label: 'Review photo',
+                  ),
+              ],
+            ),
+            if (review.response != null) ...[
+              Text('Official response · ${review.response!.shopName}'),
+              SelectableText(review.response!.body),
+            ],
           ],
         ),
-        if (review.response != null) ...[
-          Text('Official response · ${review.response!.shopName}'),
-          SelectableText(review.response!.body),
-        ],
-        const Divider(),
-      ],
+      ),
     ),
   );
 }

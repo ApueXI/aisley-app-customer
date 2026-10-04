@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+
+import 'message_row.dart';
+import 'message_bubble.dart';
+export 'message_row.dart';
+
 import 'package:go_router/go_router.dart';
 
 import '../../../core/ui/responsive_layout.dart';
@@ -7,23 +12,6 @@ import '../../../core/ui/form_page.dart';
 import '../../../core/communication/text_rules.dart';
 
 export 'inbox_view.dart';
-
-class MessageRow {
-  const MessageRow(
-    this.id,
-    this.sequence,
-    this.body,
-    this.mine,
-    this.label,
-    this.at, {
-    this.context,
-  });
-  final String id, body, label;
-  final int sequence;
-  final bool mine;
-  final DateTime? at;
-  final String? context;
-}
 
 class MessageThreadView extends StatefulWidget {
   const MessageThreadView({
@@ -56,6 +44,7 @@ class MessageThreadView extends StatefulWidget {
     this.readError,
     this.fieldError,
     this.coolingDown = false,
+    this.inbox,
   });
   final String title, draft;
   final List<MessageRow> rows;
@@ -68,7 +57,7 @@ class MessageThreadView extends StatefulWidget {
       more,
       coolingDown;
   final int arrivals;
-  final Widget? contextAction;
+  final Widget? contextAction, inbox;
   final String? subtitle;
   final String? reason, error, pageError, readError, fieldError;
   final void Function(String) changed;
@@ -85,6 +74,8 @@ class MessageThreadView extends StatefulWidget {
 }
 
 class _MessageThreadViewState extends State<MessageThreadView> {
+  bool _inboxMounted = false;
+
   late final _text = TextEditingController(text: widget.draft);
   final _focus = FocusNode();
   final _scroll = ScrollController();
@@ -205,174 +196,193 @@ class _MessageThreadViewState extends State<MessageThreadView> {
   }
 
   @override
-  Widget build(BuildContext context) => PopScope(
-    canPop: _allowPop || _text.text.isEmpty && !widget.sending,
-    onPopInvokedWithResult: (didPop, _) {
-      if (!didPop) _leave();
-    },
-    child: ShoppingPage(
-      appBar: AppBar(
-        title: Text(widget.title),
-        leading: IconButton(
-          tooltip: 'Back',
-          onPressed: _leave,
-          icon: const Icon(Icons.arrow_back),
-        ),
-        actions: [
-          if (widget.arrivals > 0)
-            IconButton(
-              tooltip: 'View ${widget.arrivals} new messages',
-              onPressed: _viewArrivals,
-              icon: const Icon(Icons.mark_chat_unread_outlined),
-            ),
-          IconButton(
-            tooltip: 'Refresh conversation',
-            onPressed: widget.loading || widget.sending || widget.coolingDown
-                ? null
-                : widget.refresh,
-            icon: const Icon(Icons.refresh),
+  Widget build(BuildContext context) {
+    if (marketplaceDesktop(context)) _inboxMounted = true;
+    return PopScope(
+      canPop: _allowPop || _text.text.isEmpty && !widget.sending,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _leave();
+      },
+      child: ShoppingPage(
+        appBar: AppBar(
+          title: Text(widget.title),
+          leading: IconButton(
+            tooltip: 'Back',
+            onPressed: _leave,
+            icon: const Icon(Icons.arrow_back),
           ),
-        ],
-      ),
-      body: ListView(
-        controller: _scroll,
-        padding: pagePadding(context),
-        children: [
-          if (widget.subtitle != null) Text(widget.subtitle!),
-          if (widget.contextAction != null) widget.contextAction!,
-          if (widget.loading || widget.sending)
-            const LinearProgressIndicator(
-              semanticsLabel: 'Updating conversation',
-            ),
-          if (widget.error != null)
-            Semantics(liveRegion: true, child: Text(widget.error!)),
-          if (widget.arrivals > 0)
-            TextButton(
-              onPressed: _viewArrivals,
-              child: Text('${widget.arrivals} new messages · View'),
-            ),
-          if (widget.more)
-            TextButton(
-              onPressed:
-                  widget.loading ||
-                      widget.paging ||
-                      widget.sending ||
-                      widget.coolingDown
+          actions: [
+            if (widget.arrivals > 0)
+              IconButton(
+                tooltip: 'View ${widget.arrivals} new messages',
+                onPressed: _viewArrivals,
+                icon: const Icon(Icons.mark_chat_unread_outlined),
+              ),
+            IconButton(
+              tooltip: 'Refresh conversation',
+              onPressed: widget.loading || widget.sending || widget.coolingDown
                   ? null
-                  : widget.loadMore,
-              child: Text(widget.paging ? 'Loading…' : 'Load older messages'),
+                  : widget.refresh,
+              icon: const Icon(Icons.refresh),
             ),
-          if (widget.pageError != null) Text(widget.pageError!),
-          if (widget.rows.isEmpty && !widget.loading && widget.error == null)
-            const Text('Your first sent message starts the conversation.'),
-          for (final row in widget.rows)
-            Padding(
-              key: _rows.putIfAbsent(row.id, () => GlobalKey()),
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          ],
+        ),
+        body: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: marketplaceDesktop(context) && widget.inbox != null
+                  ? 320
+                  : 0,
+              child: Visibility(
+                visible: marketplaceDesktop(context),
+                maintainState: true,
+                child: _inboxMounted
+                    ? widget.inbox ?? const SizedBox.shrink()
+                    : const SizedBox.shrink(),
+              ),
+            ),
+            Expanded(
+              key: const ValueKey('message-detail'),
+              child: ListView(
+                controller: _scroll,
+                padding: pagePadding(context),
                 children: [
-                  Text(
-                    row.mine ? 'You' : row.label,
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  SelectableText(row.body),
-                  if (row.context != null) Text(row.context!),
-                  if (row.at != null)
-                    Text(
-                      row.at!.toLocal().toString(),
-                      style: Theme.of(context).textTheme.bodySmall,
+                  if (widget.subtitle != null) Text(widget.subtitle!),
+                  if (widget.contextAction != null) widget.contextAction!,
+                  if (widget.loading || widget.sending)
+                    const LinearProgressIndicator(
+                      semanticsLabel: 'Updating conversation',
                     ),
+                  if (widget.error != null)
+                    Semantics(liveRegion: true, child: Text(widget.error!)),
+                  if (widget.arrivals > 0)
+                    TextButton(
+                      onPressed: _viewArrivals,
+                      child: Text('${widget.arrivals} new messages · View'),
+                    ),
+                  if (widget.more)
+                    TextButton(
+                      onPressed:
+                          widget.loading ||
+                              widget.paging ||
+                              widget.sending ||
+                              widget.coolingDown
+                          ? null
+                          : widget.loadMore,
+                      child: Text(
+                        widget.paging ? 'Loading…' : 'Load older messages',
+                      ),
+                    ),
+                  if (widget.pageError != null) Text(widget.pageError!),
+                  if (widget.rows.isEmpty &&
+                      !widget.loading &&
+                      widget.error == null)
+                    const Text(
+                      'Your first sent message starts the conversation.',
+                    ),
+                  for (final row in widget.rows)
+                    Padding(
+                      key: _rows.putIfAbsent(row.id, () => GlobalKey()),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: MessageBubble(row: row),
+                    ),
+                  if (widget.readError != null) ...[
+                    Text(widget.readError!),
+                    TextButton(
+                      onPressed: widget.coolingDown || widget.rows.isEmpty
+                          ? null
+                          : () => _displayed(retry: true),
+                      child: const Text('Retry read marker'),
+                    ),
+                  ],
+                  if (!widget.allowed)
+                    Text(
+                      'Read only. ${widget.reason ?? 'Sending is currently unavailable.'}',
+                    ),
+                  if (widget.pending) ...[
+                    const Text(
+                      'Your message is unconfirmed. Retry the original message to check whether it was sent.',
+                    ),
+                    TextButton(
+                      onPressed:
+                          widget.sending ||
+                              widget.loading ||
+                              widget.coolingDown ||
+                              widget.conflict
+                          ? null
+                          : widget.retry,
+                      child: const Text('Retry exact message'),
+                    ),
+                  ],
+                  if (widget.conflict)
+                    TextButton(
+                      onPressed:
+                          widget.loading || widget.sending || !widget.allowed
+                          ? null
+                          : () async {
+                              if (await confirmAction(
+                                context,
+                                title: 'Review changed conversation',
+                                message: 'The previous request was rejected. Review current permissions and send the draft as a new attempt?',
+                                action: 'Review draft',
+                              )) {
+                                widget.reviewConflict();
+                              }
+                            },
+                      child: const Text('Review conflict'),
+                    ),
+                  Form(
+                    key: _form,
+                    child: TextFormField(
+                      controller: _text,
+                      focusNode: _focus,
+                      enabled:
+                          widget.allowed && !widget.pending && !widget.sending,
+                      minLines: 2,
+                      maxLines: 6,
+                      decoration: InputDecoration(
+                        labelText: 'Message',
+                        helperText: 'Plain text, up to 2,000 characters',
+                        errorText: widget.fieldError,
+                      ),
+                      validator: (v) => plainTextError(v, 2000),
+                      onChanged: (v) {
+                        widget.changed(v);
+                        setState(() {});
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton(
+                    onPressed:
+                        !widget.allowed ||
+                            widget.pending ||
+                            widget.conflict ||
+                            widget.sending ||
+                            widget.loading ||
+                            widget.coolingDown
+                        ? null
+                        : () {
+                            if (validateForm(_form.currentState!)) {
+                              widget.send();
+                            }
+                          },
+                    child: Text(widget.sending ? 'Sending…' : 'Send message'),
+                  ),
+                  TextButton(
+                    onPressed:
+                        widget.loading || widget.sending || widget.coolingDown
+                        ? null
+                        : widget.refresh,
+                    child: const Text('Retry / refresh'),
+                  ),
                 ],
               ),
             ),
-          if (widget.readError != null) ...[
-            Text(widget.readError!),
-            TextButton(
-              onPressed: widget.coolingDown || widget.rows.isEmpty
-                  ? null
-                  : () => _displayed(retry: true),
-              child: const Text('Retry read marker'),
-            ),
           ],
-          if (!widget.allowed)
-            Text(
-              'Read only. ${widget.reason ?? 'Sending is currently unavailable.'}',
-            ),
-          if (widget.pending) ...[
-            const Text(
-              'A send is unresolved. The original text and key are kept for exact retry.',
-            ),
-            TextButton(
-              onPressed:
-                  widget.sending ||
-                      widget.loading ||
-                      widget.coolingDown ||
-                      widget.conflict
-                  ? null
-                  : widget.retry,
-              child: const Text('Retry exact message'),
-            ),
-          ],
-          if (widget.conflict)
-            TextButton(
-              onPressed: widget.loading || widget.sending || !widget.allowed
-                  ? null
-                  : () async {
-                      if (await confirmAction(
-                        context,
-                        title: 'Review changed conversation',
-                        message: 'The previous request was rejected. Review current permissions and send the draft as a new attempt?',
-                        action: 'Review draft',
-                      )) {
-                        widget.reviewConflict();
-                      }
-                    },
-              child: const Text('Review conflict'),
-            ),
-          Form(
-            key: _form,
-            child: TextFormField(
-              controller: _text,
-              focusNode: _focus,
-              enabled: widget.allowed && !widget.pending && !widget.sending,
-              minLines: 2,
-              maxLines: 6,
-              decoration: InputDecoration(
-                labelText: 'Message',
-                helperText: 'Plain text, up to 2,000 characters',
-                errorText: widget.fieldError,
-              ),
-              validator: (v) => plainTextError(v, 2000),
-              onChanged: (v) {
-                widget.changed(v);
-                setState(() {});
-              },
-            ),
-          ),
-          const SizedBox(height: 12),
-          FilledButton(
-            onPressed:
-                !widget.allowed ||
-                    widget.pending ||
-                    widget.conflict ||
-                    widget.sending ||
-                    widget.loading ||
-                    widget.coolingDown
-                ? null
-                : () {
-                    if (validateForm(_form.currentState!)) widget.send();
-                  },
-            child: Text(widget.sending ? 'Sending…' : 'Send message'),
-          ),
-          TextButton(
-            onPressed: widget.loading || widget.sending || widget.coolingDown
-                ? null
-                : widget.refresh,
-            child: const Text('Retry / refresh'),
-          ),
-        ],
+        ),
       ),
-    ),
-  );
+    );
+  }
 }

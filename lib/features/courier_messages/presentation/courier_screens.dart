@@ -3,13 +3,19 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
 import '../../../core/ui/foreground_poll.dart';
+import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/form_page.dart';
 import '../../messaging/presentation/message_views.dart';
 import 'courier_thread_controller.dart';
 
 class CourierInboxScreen extends StatefulWidget {
-  const CourierInboxScreen({super.key, required this.dependencies});
+  const CourierInboxScreen({
+    super.key,
+    required this.dependencies,
+    this.embedded = false,
+  });
   final AppDependencies dependencies;
+  final bool embedded;
   @override
   State<CourierInboxScreen> createState() => _CourierInboxScreenState();
 }
@@ -25,13 +31,18 @@ class _CourierInboxScreenState extends State<CourierInboxScreen> {
   @override
   Widget build(BuildContext context) => ForegroundPoll(
     refresh: controller.load,
-    paused: () => controller.offline || !widget.dependencies.session.active,
+    visible: () => !widget.embedded || marketplaceDesktop(context),
+    paused: () =>
+        controller.offline ||
+        !widget.dependencies.session.active ||
+        widget.embedded && !marketplaceDesktop(context),
     child: ListenableBuilder(
       listenable: Listenable.merge([controller, widget.dependencies.session]),
       builder: (context, _) => !widget.dependencies.session.active
           ? const SizedBox.shrink()
           : MessageInboxView(
               title: 'Courier messages',
+              embedded: widget.embedded,
               rows: [
                 for (final e in controller.items)
                   InboxRow(e.id, e.label, e.preview, e.unread, !e.sendAllowed),
@@ -85,6 +96,12 @@ class _CourierThreadScreenState extends State<CourierThreadScreen> {
         builder: (context, _) => !widget.dependencies.session.active
             ? const SizedBox.shrink()
             : MessageThreadView(
+                inbox: widget.dependencies.communication == null
+                    ? null
+                    : CourierInboxScreen(
+                        dependencies: widget.dependencies,
+                        embedded: true,
+                      ),
                 title: c.conversation?.label ?? 'Courier message',
                 rows: [
                   for (final e in c.messages)

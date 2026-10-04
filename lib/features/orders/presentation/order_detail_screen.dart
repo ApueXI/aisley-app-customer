@@ -6,6 +6,7 @@ import '../../../core/ui/responsive_layout.dart';
 import 'order_action_dialogs.dart';
 import 'order_detail_controller.dart';
 import 'order_facts.dart';
+import 'order_timeline.dart';
 
 class OrderDetailScreen extends StatefulWidget {
   const OrderDetailScreen({
@@ -194,25 +195,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                     if (!_controller.order!.canCancel &&
                         !_controller.order!.canCorrect)
                       const Text(
-                        'The server does not currently permit cancellation or correction.',
+                        'Cancellation and contact changes are unavailable at this stage.',
                       ),
                     const SizedBox(height: 20),
-                    Text(
-                      'Tracking',
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    for (final event in _controller.timeline)
-                      ListTile(
-                        leading: const Icon(Icons.local_shipping_outlined),
-                        title: Text(event.label),
-                        subtitle: Text(
-                          [
-                            event.occurredAt.toLocal().toString(),
-                            if (event.hub != null) event.hub!,
-                            if (event.city != null) event.city!,
-                          ].join('\n'),
-                        ),
-                      ),
+                    OrderTimeline(events: _controller.timeline),
                     if (_controller.pageError != null)
                       Text(_controller.pageError!),
                     if (_controller.hasMore)

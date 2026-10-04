@@ -161,7 +161,7 @@ class _ShopScreenState extends State<ShopScreen> {
       children: [
         if (shop.bannerUrl != null)
           ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(8),
             child: CatalogImage(
               url: shop.bannerUrl,
               discovery: widget.dependencies.discovery!,

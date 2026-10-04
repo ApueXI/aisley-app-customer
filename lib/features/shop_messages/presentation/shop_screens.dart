@@ -3,12 +3,18 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
 import '../../../core/ui/foreground_poll.dart';
+import '../../../core/ui/responsive_layout.dart';
 import '../../messaging/presentation/message_views.dart';
 import 'shop_thread_controller.dart';
 
 class ShopInboxScreen extends StatefulWidget {
-  const ShopInboxScreen({super.key, required this.dependencies});
+  const ShopInboxScreen({
+    super.key,
+    required this.dependencies,
+    this.embedded = false,
+  });
   final AppDependencies dependencies;
+  final bool embedded;
   @override
   State<ShopInboxScreen> createState() => _ShopInboxScreenState();
 }
@@ -24,13 +30,18 @@ class _ShopInboxScreenState extends State<ShopInboxScreen> {
   @override
   Widget build(BuildContext context) => ForegroundPoll(
     refresh: controller.load,
-    paused: () => controller.offline || !widget.dependencies.session.active,
+    visible: () => !widget.embedded || marketplaceDesktop(context),
+    paused: () =>
+        controller.offline ||
+        !widget.dependencies.session.active ||
+        widget.embedded && !marketplaceDesktop(context),
     child: ListenableBuilder(
       listenable: Listenable.merge([controller, widget.dependencies.session]),
       builder: (context, _) => !widget.dependencies.session.active
           ? const SizedBox.shrink()
           : MessageInboxView(
               title: 'Shop messages',
+              embedded: widget.embedded,
               rows: [
                 for (final e in controller.items)
                   InboxRow(e.id, e.label, e.preview, e.unread, !e.sendAllowed),
@@ -84,6 +95,12 @@ class _ShopThreadScreenState extends State<ShopThreadScreen> {
         builder: (context, _) => !widget.dependencies.session.active
             ? const SizedBox.shrink()
             : MessageThreadView(
+                inbox: widget.dependencies.communication == null
+                    ? null
+                    : ShopInboxScreen(
+                        dependencies: widget.dependencies,
+                        embedded: true,
+                      ),
                 title: c.conversation?.label ?? 'Shop message',
                 rows: [
                   for (final e in c.messages)

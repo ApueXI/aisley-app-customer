@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../features/saved/data/legacy_recent_cleanup.dart';
+import '../core/ui/marketplace_chrome.dart';
 import 'app_dependencies.dart';
 import 'router.dart';
 import 'theme.dart';
@@ -45,6 +46,18 @@ class _BuyerAppState extends State<BuyerApp> with WidgetsBindingObserver {
     debugShowCheckedModeBanner: false,
     theme: buyerTheme(),
     themeMode: ThemeMode.light,
+    builder: (context, child) => ListenableBuilder(
+      listenable: Listenable.merge([
+        widget.dependencies.session,
+        if (widget.dependencies.commerce != null)
+          widget.dependencies.commerce!.cart,
+      ]),
+      builder: (context, _) => MarketplaceScope(
+        active: widget.dependencies.session.active,
+        cartCount: widget.dependencies.commerce?.cart.badge,
+        child: child!,
+      ),
+    ),
     routerConfig: _router,
   );
 }

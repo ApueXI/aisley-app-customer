@@ -46,3 +46,7 @@ location remain historical provenance. Copy the complete bundle when handing it 
 ## Customer specification maintenance
 
 Read [Customer rules](features/customer/rule.md) before creating or revising a Customer spec, including authentication. New or revised specs use WHAT/MUST/HOW and contain 200–230 physical lines; this local rule overrides the feature-spec skill's shorter length preference. All 22 Customer specs now meet the length requirement and define requests, types, states, replay and tests. Shared consent is also complete. Phases 1–4 implementation evidence is recorded separately; controlled authenticated and installed-device acceptance gates stay open.
+
+
+The Buyer marketplace now adapts to Android phones/tablets and desktop browsers in the
+same Flutter app. See [design](design-buyer.md) and [marketplace evidence](references/marketplace-verification.md).

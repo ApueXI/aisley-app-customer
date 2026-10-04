@@ -46,13 +46,15 @@ import '../support/communication_harness.dart';
 import '../support/account_fake.dart';
 import '../support/fakes.dart';
 
-const phoneTabletSizes = [
+const marketplaceSizes = [
   Size(320, 640),
   Size(360, 800),
   Size(390, 844),
   Size(412, 915),
   Size(600, 960),
   Size(800, 1280),
+  Size(1024, 768),
+  Size(1440, 900),
 ];
 
 Map<String, dynamic> longFixture(String feature, String operation) {
@@ -123,7 +125,7 @@ void main() {
     'ticket',
   ]) {
     testWidgets(
-      '$feature survives mounted phone/tablet, landscape, keyboard and text resizing',
+      '$feature survives mounted phone/tablet/desktop, landscape, keyboard and text resizing',
       (tester) async {
         SharedPreferences.setMockInitialValues({});
         final h = CommerceHarness();
@@ -300,12 +302,22 @@ void main() {
           builder: (context, child) => MediaQuery(
             data: MediaQuery.of(context)
                 .copyWith(textScaler: TextScaler.linear(scale)),
-            child: child!,
+            child: MarketplaceScope(
+              active: ![
+                'login',
+                'register',
+                'recovery',
+                'consent',
+                'policy',
+              ].contains(feature),
+              cartCount: h.commerce.cart.badge,
+              child: child!,
+            ),
           ),
           home: screen,
         );
         tester.view.devicePixelRatio = 1;
-        tester.view.physicalSize = phoneTabletSizes.first;
+        tester.view.physicalSize = marketplaceSizes.first;
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
         addTearDown(tester.view.resetViewInsets);
@@ -330,8 +342,11 @@ void main() {
             find.descendant(of: field, matching: find.byType(TextField)).first,
           );
         }
+        // The desktop message pane is loaded once when first opened, then retained.
+        tester.view.physicalSize = const Size(1440, 900);
+        await tester.pumpAndSettle();
         final requests = h.adapter.requests.length;
-        for (final size in phoneTabletSizes) {
+        for (final size in marketplaceSizes) {
           for (final actual in [size, Size(size.height, size.width)]) {
             for (final textScale in [1.0, 1.5, 2.0]) {
               scale = textScale;
@@ -350,7 +365,16 @@ void main() {
           }
         }
         // Cross both breakpoints repeatedly while retaining the mounted screen.
-        for (final width in [599.0, 600.0, 839.0, 840.0, 900.0, 400.0]) {
+        for (final width in [
+          599.0,
+          600.0,
+          839.0,
+          840.0,
+          1023.0,
+          1024.0,
+          1440.0,
+          400.0,
+        ]) {
           tester.view.physicalSize = Size(width, 700);
           await tester.pumpAndSettle();
           expect(tester.takeException(), isNull);

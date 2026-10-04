@@ -26,10 +26,10 @@ class ProductCardTile extends StatelessWidget {
     child: Card(
       clipBehavior: Clip.antiAlias,
       elevation: 0,
-      color: const Color(0xFFFFFBFD),
+      color: Colors.white,
       shape: RoundedRectangleBorder(
         side: const BorderSide(color: Color(0xFFE8E1E6)),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: InkWell(
         onTap: onTap,
@@ -39,7 +39,7 @@ class ProductCardTile extends StatelessWidget {
             Stack(
               children: [
                 AspectRatio(
-                  aspectRatio: 1.25,
+                  aspectRatio: 1,
                   child: CatalogImage(
                     url: product.thumbnailUrl,
                     discovery: discovery,
@@ -71,12 +71,31 @@ class ProductCardTile extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
+                  if (product.discountPercent != null &&
+                      product.discountPercent! > 0)
+                    Text(
+                      '${product.discountPercent}% off',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  if (product.originalPrice != null &&
+                      product.originalPrice! > product.price)
+                    Text(
+                      '₱${product.originalPrice!.toStringAsFixed(2)}',
+                      style: Theme.of(context).textTheme.bodySmall
+                          ?.copyWith(decoration: TextDecoration.lineThrough),
+                    ),
+                  const SizedBox(height: 4),
                   Text(
                     product.shop.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
+                  if (product.soldCount > 0)
+                    Text(
+                      '${product.soldCount} sold',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                   if (product.averageRating != null)
                     Row(
                       children: [
@@ -121,7 +140,7 @@ class ShopCardTile extends StatelessWidget {
     elevation: 0,
     shape: RoundedRectangleBorder(
       side: const BorderSide(color: Color(0xFFE8E1E6)),
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(8),
     ),
     child: InkWell(
       onTap: onTap,
@@ -130,7 +149,7 @@ class ShopCardTile extends StatelessWidget {
         child: Row(
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(8),
               child: CatalogImage(
                 url: shop.logoUrl,
                 discovery: discovery,
@@ -172,11 +191,27 @@ class SectionHeading extends StatelessWidget {
   final String title;
   final Widget? action;
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(title, style: Theme.of(context).textTheme.titleLarge),
-      ?action,
-    ],
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final heading = Text(
+        title,
+        style: Theme.of(context).textTheme.titleLarge,
+      );
+      if (action == null) return heading;
+      if (constraints.maxWidth < 360 ||
+          MediaQuery.textScalerOf(context).scale(16) > 24) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [heading, action!],
+        );
+      }
+      return Row(
+        children: [
+          Expanded(child: heading),
+          const SizedBox(width: 16),
+          action!,
+        ],
+      );
+    },
   );
 }

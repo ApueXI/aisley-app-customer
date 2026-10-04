@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../networking/api_failure.dart';
 import 'responsive_layout.dart';
+import 'marketplace_widgets.dart';
 
 class FormPage extends StatefulWidget {
   const FormPage({
@@ -13,11 +14,17 @@ class FormPage extends StatefulWidget {
     this.busy = false,
     this.onCancel,
     this.canLeave = true,
+    this.maxWidth = 560,
+    this.bottomBar,
+    this.compact = false,
   });
   final String title;
   final List<Widget> children;
   final bool dirty, busy, canLeave;
   final VoidCallback? onCancel;
+  final double maxWidth;
+  final Widget? bottomBar;
+  final bool compact;
   @override
   State<FormPage> createState() => _FormPageState();
 }
@@ -60,38 +67,71 @@ class _FormPageState extends State<FormPage> {
       if (!didPop) _leave();
     },
     child: Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-        automaticallyImplyLeading: false,
-        leading: widget.canLeave
-            ? IconButton(
-                tooltip: 'Cancel',
-                icon: const Icon(Icons.arrow_back),
-                onPressed: _leave,
-              )
-            : null,
+      appBar: marketplaceAppBar(
+        context,
+        AppBar(
+          title: Text(widget.title),
+          automaticallyImplyLeading: false,
+          leading: widget.canLeave
+              ? IconButton(
+                  tooltip: 'Cancel',
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: _leave,
+                )
+              : null,
+        ),
+        compact: widget.compact,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: pagePadding(context),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 560),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: widget.children
-                    .map(
-                      (child) => Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: child,
-                      ),
-                    )
-                    .toList(),
+        child: AccountContext(
+          child: SingleChildScrollView(
+            padding: pagePadding(context),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: widget.maxWidth),
+                child: Material(
+                  color: widget.maxWidth <= 560
+                      ? Colors.white
+                      : Colors.transparent,
+                  shape: widget.maxWidth <= 560
+                      ? RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(
+                            color: Theme.of(context).colorScheme.outlineVariant,
+                          ),
+                        )
+                      : null,
+                  child: Padding(
+                    padding: widget.maxWidth <= 560
+                        ? const EdgeInsets.all(24)
+                        : EdgeInsets.zero,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: widget.children
+                          .map(
+                            (child) => Padding(
+                              padding: const EdgeInsets.only(bottom: 16),
+                              child: child,
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
         ),
       ),
+      bottomNavigationBar: widget.bottomBar == null
+          ? null
+          : SafeArea(
+              top: false,
+              child: ContentViewport(
+                shrinkWrap: true,
+                child: widget.bottomBar!,
+              ),
+            ),
     ),
   );
 }

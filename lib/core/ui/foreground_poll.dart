@@ -9,10 +9,12 @@ class ForegroundPoll extends StatefulWidget {
     super.key,
     required this.refresh,
     required this.paused,
+    this.visible,
     required this.child,
   });
   final Future<void> Function() refresh;
   final bool Function() paused;
+  final bool Function()? visible;
   final Widget child;
   @override
   State<ForegroundPoll> createState() => _ForegroundPollState();
@@ -23,7 +25,10 @@ class _ForegroundPollState extends State<ForegroundPoll>
   Timer? _timer;
   bool _foreground = true;
   bool get _visible =>
-      mounted && _foreground && ModalRoute.of(context)?.isCurrent == true;
+      mounted &&
+      _foreground &&
+      (widget.visible?.call() ?? true) &&
+      ModalRoute.of(context)?.isCurrent == true;
   @override
   void initState() {
     super.initState();
