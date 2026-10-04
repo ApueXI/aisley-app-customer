@@ -1,5 +1,13 @@
 # Backend and Buyer integration gaps
 
+Phase 5 local readiness adds [repeatable checks and the acceptance runbook](phase-5-verification.md).
+The 2026-10-04 API probe was initially unreachable, then the API recovered without
+Buyer starting/modifying Laravel. All 42 public/denial/preflight tests and extended
+localhost:8766 browser smoke passed. ADB reported no attached devices; CORS exposed
+headers remain absent. No new backend conflict was established.
+Controlled authentication/device gates, deployed revision, Retry-After exposure,
+production application ID/signing and unresolved owner decisions remain open.
+
 Baseline reviewed 2026-10-03. Phases 1–4 are implemented with verification recorded separately; unverified live/device gates remain open. This register identifies unavailable platform behavior, source contradictions and integration/release decisions; it does not authorize backend changes.
 
 | ID | Gap and evidence | Buyer delivery treatment | Owner / phase |

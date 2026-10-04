@@ -62,6 +62,17 @@ def main():
 
         call(prefix + '/url', {'url': 'http://localhost:8766'})
         wait_text('Search Products and Shops')
+        # Reload a real page and navigate browser history before instrumenting Fetch.
+        call(prefix + '/refresh', {})
+        wait_text('Search Products and Shops')
+        script("window.location.hash = '/login';")
+        wait_text('Sign in with your approved Buyer account.')
+        call(prefix + '/back', {})
+        wait_text('Search Products and Shops')
+        for width, height in [(320, 640), (1024, 768), (640, 320), (390, 844)]:
+            call(prefix + '/window/rect', {'width': width, 'height': height})
+            wait_text('Search Products and Shops')
+            assert script('return document.documentElement.scrollWidth <= window.innerWidth;'), 'Public page must fit browser width.'
         script("""
           window.buyerFetchCalls = [];
           const originalFetch = window.fetch;
@@ -159,7 +170,7 @@ def main():
         if screenshot:
             with open(screenshot, 'wb') as output:
                 output.write(base64.b64decode(call(prefix + '/screenshot')))
-        print('PASS: Home, Products/Shops search, public Product/Shop detail, public Q&A/reviews, protected account/Cart/checkout/Order/communication guards, idempotency preflights, live policies, cookie/redirect isolation, CORS and invalid-bearer denial.')
+        print('PASS: reload, browser Back, narrow/wide/landscape Home, Products/Shops search, public Product/Shop detail, public Q&A/reviews, protected account/Cart/checkout/Order/communication guards, idempotency preflights, live policies, cookie/redirect isolation, CORS and invalid-bearer denial.')
     finally:
         if session:
             try:

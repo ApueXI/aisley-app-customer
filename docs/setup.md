@@ -1,5 +1,15 @@
 # Fresh Customer Flutter project setup
 
+## Phase 5 local readiness
+
+Run `python3 tool/verify_release.py` for locked dependencies, formatting, analysis,
+unit/widget/Chromium/tooling checks, portable documentation/assets/Android validation
+and placeholder web/release APK builds. Use `--live --browser` only with the authorized
+API and an already running Buyer at localhost:8766. Missing requested prerequisites
+are reported as blocked with a nonzero exit. Focused reruns use `--checks`.
+See [Phase 5 evidence and acceptance runbook](references/phase-5-verification.md)
+for report format, commands, signing limitations and remaining owner/device gates.
+
 ## Current Phases 1–4 local development
 
 The ten approved package pins support implemented auth, discovery/account, commerce and communication.

@@ -7,14 +7,17 @@ workflows, addresses, Wishlist and Recently Viewed. Phase 3 adds Cart, COD check
 vouchers, Orders/tracking, cancellation and same-location recipient/contact correction.
 Phase 4 adds separate Shop/Logistics/Courier messages, notifications, public Q&A,
 verified reviews/photos and support tickets.
+Phase 5 adds repeatable local integration/release checks and an acceptance runbook;
+authenticated live, installed-device and distribution gates remain open.
 
 See [local setup](docs/setup.md), [delivery phases](docs/README.md), and
-[verification evidence and remaining gates](docs/references/phase-4-verification.md).
+[verification evidence and remaining gates](docs/references/phase-5-verification.md).
 
 ```sh
 flutter pub get --enforce-lockfile
 flutter run -d web-server --web-port 8766 --dart-define=API_BASE_URL=http://127.0.0.1:8000
 flutter build apk --debug
+python3 tool/verify_release.py
 ```
 
 Debug web uses `http://localhost:8000/api/v1`; Android emulator debug uses

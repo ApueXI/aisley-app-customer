@@ -15,6 +15,10 @@ Read in this order:
 
 ## Delivery phases
 
+Phase 5 local-readiness tooling and the acceptance runbook are implemented. See
+[Phase 5 evidence and retained gates](references/phase-5-verification.md). Controlled
+authenticated, installed-device and distribution acceptance remains open.
+
 | Phase | Deliverables | Exit boundary |
 | --- | --- | --- |
 | 1 — Foundation/authentication | App composition, typed network client, configuration, secure token storage, login/register/recovery, session restoration, policy reading/consent, protected navigation | Android and fixed-origin local web compile; active Customer restoration and denial/consent cleanup verified |
@@ -31,11 +35,13 @@ Copy **this directory's complete contents** into the standalone repository's `do
 
 The [documentation validation record](references/documentation-validation.md) records completed checks and their limits.
 
-The handoff includes complete feature contracts, a concrete stable SDK/package blueprint, synthetic examples and all nineteen unchanged PSGC reference assets with attribution/checksums. The original documentation handoff included no Flutter implementation, credentials or server configuration; this repository now implements Phases 1–3 separately under lib/. Copy the assets using [setup](setup.md). Local documents supply implementation authority; upstream source paths/hashes are optional audit provenance. A missing monorepo checkout is not an implementation dependency.
+The handoff includes complete feature contracts, a concrete stable SDK/package blueprint, synthetic examples and all nineteen unchanged PSGC reference assets with attribution/checksums. The original documentation handoff included no Flutter implementation, credentials or server configuration; this repository now implements Phases 1–4 under lib/ and Phase 5 local verification tooling. Copy the assets using [setup](setup.md). Local documents supply implementation authority; upstream source paths/hashes are optional audit provenance. A missing monorepo checkout is not an implementation dependency.
 
 Configured backend origins, approved test accounts, localhost CORS/header visibility and suitable public map credentials remain external deployment inputs. Validate live integration against the deployed backend; record material differences and actual Flutter results in Progress without rewriting the historical baseline.
 
-The bundle is now tracked at `docs/docs-mobile-buyer/`, following its relocation in commit `c5ce0cc`. Its original location under `docs/cabigan/` was ignored; that directory's existing ignore policy remains unchanged. Copy the complete tracked bundle when handing it off.
+This standalone repository tracks the bundle at `docs/`. Upstream relocation to
+`docs/docs-mobile-buyer/` in `c5ce0cc` and the original ignored `docs/cabigan/`
+location remain historical provenance. Copy the complete bundle when handing it off.
 
 ## Customer specification maintenance
 

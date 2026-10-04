@@ -1,10 +1,15 @@
 # Buyer Flutter acceptance and release checks
 
+Phase 5 adds repeatable local checks and a controlled-authenticated/device runbook.
+See [Phase 5 evidence and gate matrix](references/phase-5-verification.md).
+Run `python3 tool/verify_release.py`; `--live --browser` opts into public target
+checks only. A passing local report leaves external release gates open.
+
 The broad release checks below remain open where they include unimplemented features or live/device acceptance. Executed Phase 4 checks are in [Phase 4 evidence](references/phase-4-verification.md); Phase 3 checks are in [Phase 3 evidence](references/phase-3-verification.md); Phase 2 checks are recorded in [Phase 2 evidence](references/phase-2-verification.md); Phase 1 checks are recorded in [Phase 1 evidence](references/phase-1-verification.md) and [Progress](PROGRESS.md). Source-test inspection proves existing test definitions, not a newly executed test or device result.
 
 For each phase record backend commit/configuration, target/origin, Flutter SDK/approved package versions, commands run, actual results and unresolved gates. Use controlled development accounts; never log credentials, evidence or private transcripts.
 
-- [ ] Formatting, analyzer and focused DTO/repository/controller/widget tests pass; web and Android release builds pass using the destination's configured tools.
+- [x] Formatting, analyzer and focused DTO/repository/controller/widget tests pass; web and Android release builds pass using the destination's configured tools. See Phase 5 evidence; HTTPS placeholders/debug signing establish compilation only.
 - [ ] Installed Android and actual browser at `http://localhost:8766` reach the development API; exact CORS/preflight, bearer-only authentication, cookie isolation, exposed Retry-After and private-image bytes work. A mocked HTTP browser run is reported separately.
 - [ ] Cold start restores the token through `/me`; no private flash; absent/revoked token, pending/rejected/suspended/wrong-role identity, offline startup and secure-storage read/write/delete failure produce distinct states.
 - [ ] Logout/relogin/A→B→A account switching clears all private caches/drafts/quotes/uploads/read markers; late successes/errors/page requests cannot update the new account. Offline sign-out does not claim remote revocation.
@@ -41,4 +46,6 @@ Use the pinned SDK/packages and target commands in [setup](setup.md). The local 
 - [ ] Exercise optional intentional geocoding, reviewed pin edits, foreground GPS denial/permanent denial, attribution and text-only fallback with deployment-approved public credentials.
 - [ ] Verify nullable Home flashDeals, arbitrary nullable Product specifications, legacy nullable checkoutBatchId and tracking's empty-array location compatibility with typed fixture tests.
 
-Completed documentation-only checks are recorded in [documentation validation](references/documentation-validation.md); all application criteria above remain unchecked until actual evidence is recorded.
+Completed documentation-only checks are recorded in [documentation validation](references/documentation-validation.md).
+Phase-specific application evidence is linked above; broad criteria that combine
+synthetic and live/device acceptance remain unchecked until the whole criterion passes.
