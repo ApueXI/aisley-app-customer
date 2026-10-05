@@ -136,3 +136,10 @@ Format:
 ## 2026-10-05
 
 - Updated the checkout gap after user reports the storefront now also fails with “No shipping provider can quote this Shop order right now.” This supersedes the earlier report of storefront success; recorded both client-path failures over time, the distinct observed responses, and backend checks still needed. No live request or backend operation was performed.
+
+## 2026-10-05
+
+- Added shared grey outlined Product cards to Checkout quote lines, Wishlist and Recently Viewed so item details and item-specific controls have a clear boundary; Shop totals and voucher controls remain outside individual quote cards. No endpoint, backend or dependency changes.
+- Updated Buyer presentation guidance and the three affected Customer specs; revised specs are 226, 226 and 225 physical lines. Added assertions for border color and Product/action containment in the responsive widget cases.
+- `dart format` reports all four changed Dart files formatted; `flutter analyze --no-pub` reports no issues; focused Checkout/Wishlist/Recently Viewed responsive widget tests pass (3 cases). `python3 tool/verify_bundle.py` passes 685 links, all 22 spec lengths, PSGC checksums/registrations and Android boundaries; `git diff --check` passes.
+- Adopted Laravel baseline remains `57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50`. Live API and installed Android/TalkBack visual acceptance remain open; unrelated existing `pubspec.yaml` and `pubspec.lock` edits are preserved outside this change.

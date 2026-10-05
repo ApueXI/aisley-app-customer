@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/app_dependencies.dart';
 import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/form_page.dart';
+import '../../../core/ui/marketplace_widgets.dart';
 import '../../discovery/presentation/catalog_widgets.dart';
 import 'saved_products_controller.dart';
 
@@ -85,15 +86,7 @@ class _SavedProductsScreenState extends State<SavedProductsScreen> {
               ),
             ),
           for (final item in _controller.items)
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
-                ),
-              ),
+            ProductBoundaryCard(
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final scale = MediaQuery.textScalerOf(context).scale(1);

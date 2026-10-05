@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/ui/marketplace_widgets.dart';
 import '../data/quote_models.dart';
 import 'checkout_controller.dart';
 import 'commerce_widgets.dart';
@@ -34,9 +35,9 @@ class QuoteReview extends StatelessWidget {
                   group.shop.name,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
+                const SizedBox(height: 12),
                 for (final item in group.items)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
+                  ProductBoundaryCard(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

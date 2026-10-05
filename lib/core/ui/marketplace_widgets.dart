@@ -3,6 +3,25 @@ import 'package:go_router/go_router.dart';
 
 import 'marketplace_chrome.dart';
 
+/// A clearly outlined surface for one Product and its related controls.
+class ProductBoundaryCard extends StatelessWidget {
+  const ProductBoundaryCard({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => Card(
+    semanticContainer: false,
+    color: Theme.of(context).colorScheme.surface,
+    margin: const EdgeInsets.only(bottom: 12),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(8),
+      side: const BorderSide(color: Color(0xFF8B8188)),
+    ),
+    child: Padding(padding: const EdgeInsets.all(12), child: child),
+  );
+}
+
 /// A section surface with one clear heading and optional next action.
 class MarketSection extends StatelessWidget {
   const MarketSection({

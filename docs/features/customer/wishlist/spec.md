@@ -142,7 +142,8 @@ Never write or merge guest hints; legacy-key cleanup must not delay authenticati
 Local [failure contracts](../../../api/errors.md) define concrete codes and examples; do not
 require a universal error envelope.
 
-Each complete Product row ends with a full-width divider below its actions.
+Surround each complete Product entry and its item-specific actions with a white card and visible grey
+outline; wrapped actions remain inside the card.
 
 ## HOW
 

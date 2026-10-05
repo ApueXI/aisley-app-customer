@@ -49,5 +49,6 @@ Account groups shopping, details, communication/help and settings. Desktop accou
 Verify 320, 390, 600, 800, 1024 and 1440-pixel widths, landscape, keyboard insets and doubled text. Check 48-pixel targets, labels, contrast, visible keyboard focus, Enter/search, Back/history and reachable purchase/composer actions. Mounted resizing must preserve inputs, focus, gallery, selection and scroll without duplicate requests. Synthetic screenshots and local evidence do not close controlled live, installed Android/TalkBack, permission or signing gates.
 
 Category cards share width and measured height, including a uniform 48px image/icon slot.
-Cart, Wishlist and Recently Viewed separate complete product entries with full-width
-neutral bottom borders below all actions, including wrapped actions.
+Cart entries retain full-width neutral dividers below all actions. Wishlist and Recently Viewed
+use grey outlined cards around each Product and its actions. Checkout quote lines use matching
+cards inside Shop groups; Shop totals and voucher controls stay outside the item cards.

@@ -8,6 +8,7 @@ import 'package:aisley_mobile_buyer/app/app_dependencies.dart';
 import 'package:aisley_mobile_buyer/app/communication_state.dart';
 import 'package:aisley_mobile_buyer/app/theme.dart';
 import 'package:aisley_mobile_buyer/core/ui/responsive_layout.dart';
+import 'package:aisley_mobile_buyer/core/ui/marketplace_widgets.dart';
 import 'package:aisley_mobile_buyer/features/account/presentation/account_home_screen.dart';
 import 'package:aisley_mobile_buyer/features/account/presentation/profile_screen.dart';
 import 'package:aisley_mobile_buyer/features/account/presentation/photo_screen.dart';
@@ -221,10 +222,6 @@ void main() {
           h.commerce.checkout.begin(
             CheckoutIntent.buyNow(BuyNowItem(customerId, null, 1)),
           );
-          await tester.runAsync(() async {
-            await h.commerce.checkout.loadAddresses();
-            await h.commerce.checkout.getQuote();
-          });
         }
         final screen = switch (feature) {
           'login' => LoginScreen(session: h.session),
@@ -338,6 +335,59 @@ void main() {
         await tester.pumpWidget(app());
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
+        if (feature == 'checkout') {
+          await tester.ensureVisible(find.text('Review order'));
+          await tester.tap(find.text('Review order'));
+          await tester.pumpAndSettle();
+          expect(h.commerce.checkout.quote, isNotNull);
+        }
+        if (feature == 'checkout' ||
+            feature == 'wishlist' ||
+            feature == 'history') {
+          final productCards = find.byType(ProductBoundaryCard);
+          expect(productCards, findsWidgets);
+          final outlinedCard = tester.widget<Card>(
+            find
+                .descendant(of: productCards.first, matching: find.byType(Card))
+                .first,
+          );
+          expect(
+            (outlinedCard.shape! as RoundedRectangleBorder).side.color,
+            const Color(0xFF8B8188),
+          );
+          if (feature == 'checkout') {
+            final firstItem =
+                h.commerce.checkout.quote!.groups.first.items.first;
+            expect(
+              find.descendant(
+                of: productCards.first,
+                matching: find.text(
+                  '${firstItem.name} × ${firstItem.quantity}',
+                ),
+              ),
+              findsOneWidget,
+            );
+          } else {
+            expect(
+              find.descendant(
+                of: productCards.first,
+                matching: find.text('View product'),
+              ),
+              findsOneWidget,
+            );
+            expect(
+              find.descendant(
+                of: productCards.first,
+                matching: find.text(
+                  feature == 'wishlist'
+                      ? 'Remove from wishlist'
+                      : 'Remove from history',
+                ),
+              ),
+              findsOneWidget,
+            );
+          }
+        }
         if (feature == 'home') {
           if (find.text('Show all').evaluate().isNotEmpty) {
             await tester.ensureVisible(find.text('Show all'));
@@ -461,6 +511,13 @@ void main() {
                 isNull,
                 reason: '$feature $actual text $scale',
               );
+              if (feature == 'checkout') {
+                expect(
+                  find.byType(ProductBoundaryCard),
+                  findsWidgets,
+                  reason: '$feature $actual text $scale',
+                );
+              }
               if (feature == 'home') {
                 if (find.text('Show all').evaluate().isNotEmpty) {
                   await tester.ensureVisible(find.text('Show all'));
@@ -506,6 +563,7 @@ void main() {
           requests,
           reason: 'Resizing must not refetch or write.',
         );
+        if (feature == 'checkout') h.commerce.checkout.invalidateQuote();
         await tester.pumpWidget(const SizedBox());
       },
     );

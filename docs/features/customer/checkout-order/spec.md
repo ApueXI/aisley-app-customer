@@ -44,7 +44,8 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 - Quote computes fresh Product/variant stock, shipping serviceability/rate and voucher effects; no
   local payable authority.
 - Quote groups are one per Shop; show each subtotal/shipping/discount/payable and the overall
-  orderCount summary.
+  orderCount summary. Keep each Product's name, quantity, options and line total inside its own
+  outlined card; Shop totals and voucher controls remain outside the Product cards.
 - Quote shippingQuote is always serviceable true for successful groups; unserviceable intent fails
   rather than returning invented serviceable false group.
 - No Customer Logistics/provider/Courier selector exists; eligibleLogisticsCount is informative only.
