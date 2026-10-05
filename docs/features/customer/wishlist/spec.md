@@ -57,6 +57,8 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 - Missing thumbnail/ratings/discount renders safe Product card fallback with no invented sale.
 - Product purchase/add Cart eligibility is rechecked separately from saved status.
 - Empty list offers discovery; failed list keeps explicit retry and never calls it empty.
+- Place removal at the right edge of each row with a red outlined/tinted 48px control, accessible
+  label and the existing confirmation.
 - Logout/account change clears hearts, loaded cursor pages and all account-keyed saved hints.
 - Notification alerts for wishlist price/stock and voucher/Shop-follow capabilities remain
   deferred.

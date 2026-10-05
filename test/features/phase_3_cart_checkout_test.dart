@@ -60,6 +60,69 @@ void main() {
     expect(c.selection, isEmpty);
     expect(c.badge, 1);
   });
+  test('bulk Cart selection fills a partial eligible set, clears a full set, and reconciles server changes', () async {
+    final c = h.commerce.cart;
+    const thirdId = '00000003-1111-4111-8111-111111111111';
+    final multi = clone(h.cartJson);
+    final base = clone(multi['data']['items'][0] as Map<String, dynamic>);
+    final second = clone(base)
+      ..['id'] = otherId
+      ..['product'] = {
+        ...(base['product'] as Map<String, dynamic>),
+        'id': otherId,
+      };
+    final unavailable = clone(base)
+      ..['id'] = thirdId
+      ..['product'] = {
+        ...(base['product'] as Map<String, dynamic>),
+        'id': thirdId,
+      }
+      ..['availability'] = {
+        'isAvailable': false,
+        'reason': 'out_of_stock',
+        'availableQuantity': 0,
+      };
+    multi['data']['items'] = [base, second, unavailable];
+    multi['data']['distinctItemCount'] = 3;
+    multi['data']['itemCount'] = 3;
+    h.cartJson = multi;
+    await c.load();
+    expect(c.selectAllValue, false);
+    expect(
+      h.commerce.checkout.begin(CheckoutIntent.cart([customerId])),
+      isTrue,
+    );
+    var changes = 0;
+    final notifyCheckout = c.onChanged;
+    c.onChanged = () {
+      changes++;
+      notifyCheckout?.call();
+    };
+
+    c.select(customerId, true);
+    expect(c.selectAllValue, isNull);
+    expect(h.commerce.checkout.cartChanged, isTrue);
+    c.toggleSelectAllEligible();
+    expect(c.selection, {customerId, otherId});
+    expect(c.selectAllValue, true);
+    c.toggleSelectAllEligible();
+    expect(c.selection, isEmpty);
+    expect(c.selectAllValue, false);
+    expect(changes, 3);
+    c.select(thirdId, true);
+    expect(c.selection, isEmpty);
+
+    final changed = clone(multi);
+    changed['data']['items'] = [second, unavailable];
+    changed['data']['distinctItemCount'] = 2;
+    changed['data']['itemCount'] = 2;
+    h.cartJson = changed;
+    c.select(otherId, true);
+    expect(c.selection, {otherId});
+    await c.load();
+    expect(c.selection, {otherId});
+    expect(c.selectAllValue, true);
+  });
   test('Cart additive timeout is never repeated and refetch is deliberate reconciliation', () async {
     final c = h.commerce.cart;
     var additions = 0;

@@ -20,7 +20,9 @@ Flutter: **implemented; acceptance partial**. See [Phase 2 evidence](../../../re
 Addresses → cascading/manual form → optional pin → save/default → owned shipping selection.
 
 - Requests use snake_case recipient/contact/address/locality/postal/country/type and optional label/line2/pair/is_default; DTO fields are camelCase. Type is shipping,billing,both and overlapping defaults clear transactionally through create/update, with no separate default route.
-- Use the bundled unchanged PSGC JSON, Region→Province→City/Municipality→Barangay and manual fallback; npm packages are not Dart dependencies. Preserve supplied NCR/independent-city hierarchy.
+- Use the bundled unchanged PSGC JSON for editable Region→Province→City/Municipality→Barangay
+  autocomplete suggestions, filtered by selected parents. Preserve manual entry, hydrated saved
+  values and supplied NCR/direct-city hierarchy; npm packages are not Dart dependencies.
 - Intentional Geoapify pin clears stale pairs when text changes and never decides deliverability. Use optional flutter_map/latlong2/geolocator; suitable mobile public credentials remain a deployment gate; manual save stays usable. Confirm deletion. Address CRUD never reroutes a placed Order.
 
 The local bundle supplies the implementation contract. Upstream paths are optional provenance only.
@@ -47,9 +49,10 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 - Nodes preserve code strings and geographic_level; provinces and direct city/municipality children are
   both real structures.
 - Parent changes clear invalid descendants; Barangay list belongs only to the selected city/municipality.
-- NCR contains direct cities and no Province node: keep required reviewed Province text and offer National Capital Region (NCR) as a compatibility suggestion.
-- For direct cities elsewhere follow the reviewed source selector convention and preserve required manual
-  Province entry when no real province exists.
+- NCR contains direct cities and no Province node: keep one editable Province field and offer
+  National Capital Region (NCR) as a compatibility suggestion. Do not duplicate locality fields.
+- For direct cities elsewhere preserve required manual Province entry when no matching province
+  exists; parent edits clear dependent locality selections and stale coordinates.
 - Codes remain local lookup state; saved API fields contain reviewed names. Postal code/street are
   manual.
 - Unavailable/incomplete dataset keeps every text field editable and clearly offers manual fallback.

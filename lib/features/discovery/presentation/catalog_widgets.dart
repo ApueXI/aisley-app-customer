@@ -12,11 +12,13 @@ class ProductCardTile extends StatelessWidget {
     required this.discovery,
     required this.onTap,
     this.trailing,
+    this.onAddToCart,
     this.width = 184,
   });
   final ProductCard product;
   final DiscoveryRepository discovery;
   final VoidCallback onTap;
+  final VoidCallback? onAddToCart;
   final Widget? trailing;
   final double width;
 
@@ -31,96 +33,148 @@ class ProductCardTile extends StatelessWidget {
         side: const BorderSide(color: Color(0xFFE8E1E6)),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: InkWell(
-        onTap: onTap,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          InkWell(
+            onTap: onTap,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                AspectRatio(
-                  aspectRatio: 1,
-                  child: CatalogImage(
-                    url: product.thumbnailUrl,
-                    discovery: discovery,
-                    width: double.infinity,
-                    label: product.title,
-                  ),
+                Stack(
+                  children: [
+                    AspectRatio(
+                      aspectRatio: 1,
+                      child: CatalogImage(
+                        url: product.thumbnailUrl,
+                        discovery: discovery,
+                        width: double.infinity,
+                        label: product.title,
+                      ),
+                    ),
+                    if (trailing != null)
+                      Positioned(top: 4, right: 4, child: trailing!),
+                  ],
                 ),
-                if (trailing != null)
-                  Positioned(top: 4, right: 4, child: trailing!),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+                  child: _ProductCardInformation(product: product),
+                ),
               ],
             ),
+          ),
+          if (onAddToCart != null)
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    product.title,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium
-                        ?.copyWith(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '₱${product.price.toStringAsFixed(2)}',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  if (product.discountPercent != null &&
-                      product.discountPercent! > 0)
-                    Text(
-                      '${product.discountPercent}% off',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  if (product.originalPrice != null &&
-                      product.originalPrice! > product.price)
-                    Text(
-                      '₱${product.originalPrice!.toStringAsFixed(2)}',
-                      style: Theme.of(context).textTheme.bodySmall
-                          ?.copyWith(decoration: TextDecoration.lineThrough),
-                    ),
-                  const SizedBox(height: 4),
-                  Text(
-                    product.shop.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  if (product.soldCount > 0)
-                    Text(
-                      '${product.soldCount} sold',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  if (product.averageRating != null)
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.star,
-                          size: 14,
-                          color: Color(0xFFB86B00),
-                        ),
-                        const SizedBox(width: 3),
-                        Flexible(
-                          child: Text(
-                            '${product.averageRating!.toStringAsFixed(1)} · ${product.reviewCount}',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ),
-                      ],
-                    ),
-                ],
+              padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+              child: FilledButton.tonalIcon(
+                onPressed: onAddToCart,
+                icon: const Icon(Icons.add_shopping_cart),
+                label: const Text('Add to Cart'),
               ),
             ),
-          ],
-        ),
+        ],
       ),
     ),
   );
+}
+
+class _ProductCardInformation extends StatelessWidget {
+  const _ProductCardInformation({required this.product});
+  final ProductCard product;
+
+  @override
+  Widget build(BuildContext context) {
+    final body = Theme.of(context).textTheme.bodySmall;
+    final titleStyle = Theme.of(context).textTheme.bodyMedium
+        ?.copyWith(fontWeight: FontWeight.w600);
+    final titleLine = _lineHeight(context, titleStyle);
+    final metadataLine = _lineHeight(context, body);
+    final shownPrice = product.minPrice ?? product.price;
+    final ranged =
+        product.minPrice != null &&
+        product.maxPrice != null &&
+        product.minPrice != product.maxPrice;
+    final promotion =
+        product.discountPercent != null && product.discountPercent! > 0
+        ? '${product.discountPercent}% off'
+        : product.originalPrice != null && product.originalPrice! > shownPrice
+        ? 'Was ₱${product.originalPrice!.toStringAsFixed(2)}'
+        : '';
+    final metadata = [
+      if (product.averageRating != null)
+        '★ ${product.averageRating!.toStringAsFixed(1)} · ${product.reviewCount}',
+      if (product.soldCount > 0) '${product.soldCount} sold',
+    ].join('  ·  ');
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          height: titleLine * 2,
+          child: Text(
+            product.title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: titleStyle,
+          ),
+        ),
+        const SizedBox(height: 6),
+        SizedBox(
+          height: metadataLine,
+          child: Text(
+            '${ranged ? 'From ' : ''}₱${shownPrice.toStringAsFixed(2)}',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+        SizedBox(
+          height: metadataLine,
+          child: Text(
+            promotion,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: body?.copyWith(
+              decoration: promotion.startsWith('Was ')
+                  ? TextDecoration.lineThrough
+                  : null,
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        SizedBox(
+          height: metadataLine,
+          child: Text(
+            product.shop.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: body,
+          ),
+        ),
+        SizedBox(
+          height: metadataLine,
+          child: Text(
+            metadata,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: body,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+double _lineHeight(BuildContext context, TextStyle? style) {
+  final painter = TextPainter(
+    text: TextSpan(text: 'Ag', style: style),
+    textDirection: Directionality.of(context),
+    textScaler: MediaQuery.textScalerOf(context),
+    maxLines: 1,
+  )..layout();
+  return painter.height;
 }
 
 class ShopCardTile extends StatelessWidget {

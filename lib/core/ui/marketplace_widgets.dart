@@ -97,7 +97,6 @@ class AccountContext extends StatelessWidget {
                   '/account/wishlist': 'Wishlist',
                   '/account/recently-viewed': 'Recently viewed',
                   '/account/profile': 'Profile',
-                  '/account/photo': 'Profile photo',
                   '/account/password': 'Password',
                   '/account/addresses': 'Address book',
                   '/account/preferences': 'Promotional messages',

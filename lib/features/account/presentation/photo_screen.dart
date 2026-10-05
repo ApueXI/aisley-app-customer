@@ -5,15 +5,33 @@ import '../../../core/ui/form_page.dart';
 import '../data/photo_picker_adapter.dart';
 import 'account_controllers.dart';
 
-class PhotoScreen extends StatefulWidget {
+class PhotoScreen extends StatelessWidget {
   const PhotoScreen({super.key, required this.dependencies});
   final AppDependencies dependencies;
 
   @override
-  State<PhotoScreen> createState() => _PhotoScreenState();
+  Widget build(BuildContext context) => FormPage(
+    title: 'Profile photo',
+    children: [ProfilePhotoSection(dependencies: dependencies)],
+  );
 }
 
-class _PhotoScreenState extends State<PhotoScreen> {
+/// Profile photo state is independent of the editable profile form.
+class ProfilePhotoSection extends StatefulWidget {
+  const ProfilePhotoSection({
+    super.key,
+    required this.dependencies,
+    this.onStateChanged,
+  });
+  final AppDependencies dependencies;
+  final void Function({required bool dirty, required bool busy})?
+  onStateChanged;
+
+  @override
+  State<ProfilePhotoSection> createState() => _ProfilePhotoSectionState();
+}
+
+class _ProfilePhotoSectionState extends State<ProfilePhotoSection> {
   late final PhotoController _controller = PhotoController(
     widget.dependencies.session,
     widget.dependencies.accounts!,
@@ -21,6 +39,7 @@ class _PhotoScreenState extends State<PhotoScreen> {
   PickedBuyerImage? _selected;
   String? _pickerNotice;
   late int _generation;
+  bool _reportedDirty = false, _reportedBusy = false;
 
   @override
   void initState() {
@@ -28,14 +47,25 @@ class _PhotoScreenState extends State<PhotoScreen> {
     _generation = widget.dependencies.session.generation;
     widget.dependencies.session.addListener(_sessionChanged);
     widget.dependencies.session.registerPrivateCleanup(_clearDraft);
+    _controller.addListener(_controllerChanged);
     _controller.load(widget.dependencies.session.customer?.avatarUrl);
     _checkInterruptedSelection();
+    _reportStateAfterFrame();
+  }
+
+  @override
+  void didUpdateWidget(covariant ProfilePhotoSection oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.onStateChanged != widget.onStateChanged) {
+      _reportStateAfterFrame();
+    }
   }
 
   @override
   void dispose() {
     widget.dependencies.session.removeListener(_sessionChanged);
     widget.dependencies.session.unregisterPrivateCleanup(_clearDraft);
+    _controller.removeListener(_controllerChanged);
     _selected = null;
     _controller.dispose();
     super.dispose();
@@ -45,6 +75,7 @@ class _PhotoScreenState extends State<PhotoScreen> {
     _selected = null;
     _pickerNotice = null;
     if (mounted) setState(() {});
+    _reportStateAfterFrame();
   }
 
   void _sessionChanged() {
@@ -53,13 +84,31 @@ class _PhotoScreenState extends State<PhotoScreen> {
       _generation = current;
       _selected = null;
       if (mounted) setState(() => _pickerNotice = null);
+      _reportStateAfterFrame();
     }
   }
 
+  void _controllerChanged() {
+    if (mounted) setState(() {});
+    _reportStateAfterFrame();
+  }
+
+  void _reportStateAfterFrame() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final dirty = _selected != null;
+      final busy = _controller.uploading || _controller.removing;
+      if (dirty == _reportedDirty && busy == _reportedBusy) return;
+      _reportedDirty = dirty;
+      _reportedBusy = busy;
+      widget.onStateChanged?.call(dirty: dirty, busy: busy);
+    });
+  }
+
   Future<void> _checkInterruptedSelection() async {
-    final lost = await widget.dependencies.photoPicker!
-        .hasInterruptedSelection();
-    if (lost && mounted) {
+    final lost = await widget.dependencies.photoPicker
+        ?.hasInterruptedSelection();
+    if (lost == true && mounted) {
       setState(() {
         _pickerNotice =
             'A photo selection was interrupted. Pick it again to continue.';
@@ -70,12 +119,14 @@ class _PhotoScreenState extends State<PhotoScreen> {
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: _controller,
-    builder: (context, _) => FormPage(
-      title: 'Profile photo',
-      dirty: _selected != null,
-      busy: _controller.uploading || _controller.removing,
+    builder: (context, _) => Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const Text('Photos must be JPEG, PNG or WebP and smaller than 10 MiB.'),
+        if (widget.dependencies.photoPicker == null)
+          const Text(
+            'Profile photo selection is unavailable on this platform.',
+          ),
         if (_pickerNotice != null)
           Semantics(liveRegion: true, child: Text(_pickerNotice!)),
         if (_controller.error != null)
@@ -83,6 +134,11 @@ class _PhotoScreenState extends State<PhotoScreen> {
         if (_controller.loading)
           const LinearProgressIndicator(
             semanticsLabel: 'Loading private profile photo',
+          ),
+        if (_controller.error != null && _selected == null)
+          TextButton(
+            onPressed: _controller.load,
+            child: const Text('Refresh current photo'),
           ),
         if (_controller.requiresReconciliation)
           OutlinedButton(
@@ -92,24 +148,35 @@ class _PhotoScreenState extends State<PhotoScreen> {
         if (_controller.fieldErrors['photo'] != null)
           Text(_controller.fieldErrors['photo']!),
         Center(
-          child: ClipOval(
-            child: SizedBox.square(
-              dimension: 168,
-              child: _selected != null
-                  ? Image.memory(
-                      _selected!.bytes,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => const Center(
-                        child: Text('Photo preview unavailable'),
-                      ),
-                    )
-                  : _controller.bytes != null
-                  ? Image.memory(
-                      _controller.bytes!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => _placeholder(),
-                    )
-                  : _placeholder(),
+          child: Semantics(
+            button: _controller.bytes != null,
+            label: _selected != null
+                ? 'Selected profile photo preview'
+                : 'Current profile photo',
+            child: GestureDetector(
+              onTap: _controller.bytes == null && _selected == null
+                  ? null
+                  : _viewPhoto,
+              child: ClipOval(
+                child: SizedBox.square(
+                  dimension: 168,
+                  child: _selected != null
+                      ? Image.memory(
+                          _selected!.bytes,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => const Center(
+                            child: Text('Photo preview unavailable'),
+                          ),
+                        )
+                      : _controller.bytes != null
+                      ? Image.memory(
+                          _controller.bytes!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => _placeholder(),
+                        )
+                      : _placeholder(),
+                ),
+              ),
             ),
           ),
         ),
@@ -132,7 +199,8 @@ class _PhotoScreenState extends State<PhotoScreen> {
           ),
         OutlinedButton.icon(
           onPressed:
-              _controller.uploading ||
+              widget.dependencies.photoPicker == null ||
+                  _controller.uploading ||
                   _controller.coolingDown ||
                   _controller.requiresReconciliation
               ? null
@@ -179,10 +247,25 @@ class _PhotoScreenState extends State<PhotoScreen> {
     ),
   );
 
+  Future<void> _viewPhoto() async {
+    final bytes = _selected?.bytes ?? _controller.bytes;
+    if (bytes == null) return;
+    await showDialog<void>(
+      context: context,
+      builder: (context) => Dialog(
+        child: InteractiveViewer(
+          child: Image.memory(bytes, fit: BoxFit.contain),
+        ),
+      ),
+    );
+  }
+
   Future<void> _pick() async {
+    final picker = widget.dependencies.photoPicker;
+    if (picker == null) return;
     final generation = _controller.featureGeneration;
     try {
-      final image = await widget.dependencies.photoPicker!.pick();
+      final image = await picker.pick();
       if (!mounted ||
           image == null ||
           generation != _controller.featureGeneration ||
@@ -197,6 +280,7 @@ class _PhotoScreenState extends State<PhotoScreen> {
         _selected = image;
         _pickerNotice = null;
       });
+      _reportStateAfterFrame();
     } catch (_) {
       if (mounted) {
         setState(
@@ -237,11 +321,11 @@ class _PhotoScreenState extends State<PhotoScreen> {
     );
     if (!mounted) return;
     if (ok) {
-      _selected = null;
+      setState(() => _selected = null);
+      _reportStateAfterFrame();
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Profile photo updated.')));
-      setState(() {});
     }
   }
 
@@ -258,5 +342,6 @@ class _PhotoScreenState extends State<PhotoScreen> {
     final ok = await _controller.remove();
     if (!mounted || !ok) return;
     setState(() => _selected = null);
+    _reportStateAfterFrame();
   }
 }

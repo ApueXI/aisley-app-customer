@@ -197,7 +197,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     child: Text(product.shortDescription!),
                   ),
                 const SizedBox(height: 16),
-                ProductChoices(product: product, controller: _controller),
+                ProductChoices(
+                  product: product,
+                  controller: _controller,
+                  showOptions: false,
+                ),
                 const SizedBox(height: 12),
                 ListenableBuilder(
                   listenable: widget.dependencies.savedStatus!,

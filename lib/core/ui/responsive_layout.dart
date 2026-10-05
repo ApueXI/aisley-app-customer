@@ -78,11 +78,29 @@ class CatalogGrid extends StatelessWidget {
           .floor()
           .clamp(1, 6);
       final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
-      return Wrap(
-        spacing: gap,
-        runSpacing: gap,
+      return Column(
         children: [
-          for (final child in children) SizedBox(width: width, child: child),
+          for (var start = 0; start < children.length; start += columns)
+            Padding(
+              padding: EdgeInsets.only(
+                bottom: start + columns < children.length ? gap : 0,
+              ),
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (
+                      var offset = 0;
+                      offset < columns && start + offset < children.length;
+                      offset++
+                    ) ...[
+                      if (offset > 0) const SizedBox(width: gap),
+                      SizedBox(width: width, child: children[start + offset]),
+                    ],
+                  ],
+                ),
+              ),
+            ),
         ],
       );
     },

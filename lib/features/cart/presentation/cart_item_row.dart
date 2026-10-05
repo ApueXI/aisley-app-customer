@@ -18,6 +18,7 @@ class CartItemRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cart = dependencies.commerce!.cart;
+    final imageSize = MediaQuery.sizeOf(context).width < 380 ? 72.0 : 88.0;
     final details = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -36,45 +37,6 @@ class CartItemRow extends StatelessWidget {
           'Quantity ${line.quantity} · ₱${line.subtotal.toStringAsFixed(2)}',
         ),
         if (!line.selectable) Text(line.availabilityLabel),
-        Wrap(
-          spacing: 8,
-          children: [
-            TextButton(
-              onPressed: () async {
-                await context.push('/products/${line.productId}');
-                if (context.mounted) await cart.load();
-              },
-              child: const Text('View Product'),
-            ),
-            TextButton(
-              onPressed: cart.canEdit
-                  ? () => showDialog<void>(
-                      context: context,
-                      builder: (_) => CartLineEditor(
-                        dependencies: dependencies,
-                        line: line,
-                      ),
-                    )
-                  : null,
-              child: const Text('Edit'),
-            ),
-            TextButton(
-              onPressed: cart.canEdit
-                  ? () async {
-                      if (await confirmAction(
-                        context,
-                        title: 'Remove item?',
-                        message: 'Remove ${line.productName} from your Cart?',
-                        action: 'Remove',
-                      )) {
-                        await cart.remove(line.id);
-                      }
-                    }
-                  : null,
-              child: const Text('Remove'),
-            ),
-          ],
-        ),
       ],
     );
     final image = dependencies.discovery == null
@@ -85,39 +47,74 @@ class CartItemRow extends StatelessWidget {
               url: line.mediaUrl,
               label: line.altText.isEmpty ? line.productName : line.altText,
               discovery: dependencies.discovery!,
-              width: 88,
-              height: 88,
+              width: imageSize,
+              height: imageSize,
             ),
           );
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Column(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Semantics(
-                container: true,
-                child: SizedBox(
-                  width: 48,
-                  height: 48,
-                  child: Checkbox(
-                    semanticLabel: 'Select ${line.productName}',
-                    value: cart.selection.contains(line.id),
-                    onChanged: cart.canEdit && line.selectable
-                        ? (v) => cart.select(line.id, v == true)
-                        : null,
-                  ),
+              SizedBox(
+                width: 48,
+                height: 48,
+                child: Checkbox(
+                  semanticLabel: 'Select ${line.productName}',
+                  value: cart.selection.contains(line.id),
+                  onChanged: cart.canEdit && line.selectable
+                      ? (value) => cart.select(line.id, value == true)
+                      : null,
                 ),
               ),
-              image,
-              const SizedBox(width: 12),
-              if (MediaQuery.sizeOf(context).width >= 600)
-                Expanded(child: details),
+              IconButton(
+                tooltip: 'View Product',
+                onPressed: () async {
+                  await context.push('/products/${line.productId}');
+                  if (context.mounted) await cart.load();
+                },
+                icon: const Icon(Icons.open_in_new),
+              ),
+              IconButton(
+                tooltip: 'Edit Cart item',
+                color: Theme.of(context).colorScheme.primary,
+                onPressed: cart.canEdit
+                    ? () => showDialog<void>(
+                        context: context,
+                        builder: (_) => CartLineEditor(
+                          dependencies: dependencies,
+                          line: line,
+                        ),
+                      )
+                    : null,
+                icon: const Icon(Icons.edit_outlined),
+              ),
+              IconButton(
+                tooltip: 'Remove Cart item',
+                color: Theme.of(context).colorScheme.error,
+                onPressed: cart.canEdit
+                    ? () async {
+                        if (await confirmAction(
+                          context,
+                          title: 'Remove item?',
+                          message: 'Remove ${line.productName} from your Cart?',
+                          action: 'Remove',
+                        )) {
+                          await cart.remove(line.id);
+                        }
+                      }
+                    : null,
+                icon: const Icon(Icons.delete_outline),
+              ),
             ],
           ),
-          if (MediaQuery.sizeOf(context).width < 600)
-            Padding(padding: const EdgeInsets.only(top: 12), child: details),
+          const SizedBox(width: 8),
+          image,
+          const SizedBox(width: 12),
+          Expanded(child: details),
         ],
       ),
     );

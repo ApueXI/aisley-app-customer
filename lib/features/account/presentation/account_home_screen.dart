@@ -57,14 +57,8 @@ class AccountHomeScreen extends StatelessWidget {
               _AccountDestination(
                 icon: Icons.person_outline,
                 title: 'Profile',
-                subtitle: 'Name, contact information and birthday',
+                subtitle: 'Name, contact information, birthday and photo',
                 route: '/account/profile',
-              ),
-              _AccountDestination(
-                icon: Icons.photo_camera_back_outlined,
-                title: 'Profile photo',
-                subtitle: 'View or update your account photo',
-                route: '/account/photo',
               ),
               _AccountDestination(
                 icon: Icons.location_on_outlined,

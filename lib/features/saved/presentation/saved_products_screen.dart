@@ -115,19 +115,34 @@ class _SavedProductsScreenState extends State<SavedProductsScreen> {
                         Text(
                           '${_history ? 'Viewed' : 'Saved'} ${item.date.toLocal().toString().split('.').first}',
                         ),
-                        TextButton.icon(
-                          onPressed:
-                              _controller.pending.contains(item.product.id)
-                              ? null
-                              : () => _remove(item),
-                          icon: const Icon(Icons.delete_outline),
-                          label: Text(
-                            _controller.pending.contains(item.product.id)
-                                ? 'Removing…'
-                                : 'Remove',
-                          ),
-                        ),
                       ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                      color: Theme.of(context).colorScheme.errorContainer,
+                    ),
+                    child: IconButton(
+                      tooltip: _controller.pending.contains(item.product.id)
+                          ? 'Removing Product'
+                          : _history
+                          ? 'Remove from Recently Viewed'
+                          : 'Remove from Wishlist',
+                      onPressed: _controller.pending.contains(item.product.id)
+                          ? null
+                          : () => _remove(item),
+                      color: Theme.of(context).colorScheme.error,
+                      icon: _controller.pending.contains(item.product.id)
+                          ? const SizedBox.square(
+                              dimension: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.delete_outline),
                     ),
                   ),
                 ],

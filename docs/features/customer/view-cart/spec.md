@@ -64,6 +64,11 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
   rolled back.
 - Keep selection IDs reconciled against returned Cart after variant merge/delete and clear on
   account loss.
+- Item View Product, Edit and Remove controls occupy an accessible left action rail with outlined,
+  brand-colored and red icons; retain the existing removal confirmation.
+- Tri-state Select all acts once in the Cart controller on eligible lines across Shop groups. A
+  partial selection fills remaining eligible lines; a full selection clears them. Existing edit
+  locks, quote invalidation and server-response reconciliation still apply.
 - Test configuration add/increment, absolute quantity update, variant merge and changed line IDs.
 - Test foreign item404, unavailable/insufficient stock, timeout reread, partial selection and empty
   Cart200.

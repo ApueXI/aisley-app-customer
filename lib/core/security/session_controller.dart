@@ -33,6 +33,7 @@ class SessionController extends ChangeNotifier {
   CustomerIdentity? customer;
   ConsentStatus? consent;
   ApiFailure? failure;
+  ApiFailure? revalidationFailure;
   String? notice;
   int generation = 0;
   int _consentQuery = 0;
@@ -41,7 +42,8 @@ class SessionController extends ChangeNotifier {
       _disposed = false,
       _signingIn = false,
       _signingOut = false;
-  Future<void>? _bootstrap, _refreshFlight;
+  bool revalidating = false;
+  Future<void>? _bootstrap, _refreshFlight, _revalidationFlight;
   Future<void>? _storageTail;
   final List<VoidCallback> _privateCleanup = [];
 
@@ -91,6 +93,9 @@ class SessionController extends ChangeNotifier {
     customer = null;
     consent = null;
     _refreshFlight = null;
+    _revalidationFlight = null;
+    revalidating = false;
+    revalidationFailure = null;
     _clearPrivateState();
   }
 
@@ -100,23 +105,7 @@ class SessionController extends ChangeNotifier {
     }
   }
 
-  Future<void> refreshNavigation() async {
-    final lease = active ? verifiedLease : null;
-    if (lease == null) return;
-    final epoch = generation;
-    try {
-      final identity = await auth.me(lease);
-      if (!_current(epoch) || !active) return;
-      if (!identity.isActiveCustomer || identity.id != customer?.id) {
-        await _loseIdentity(_denial(identity));
-        return;
-      }
-      customer = identity;
-      _emit();
-    } on ApiFailure catch (error) {
-      if (_current(epoch) && error.identityLost) await _loseIdentity(error);
-    }
-  }
+  Future<void> refreshNavigation() => revalidate();
 
   SessionLease _newLease(String token, int epoch) => SessionLease(
     token,
@@ -151,10 +140,72 @@ class SessionController extends ChangeNotifier {
 
   Future<void> refresh() {
     if (_signingOut || _signingIn) return Future.value();
+    if (customer != null && verifiedLease != null) return revalidate();
     final epoch = generation;
     return _refreshFlight ??= _verify().whenComplete(() {
       if (_current(epoch)) _refreshFlight = null;
     });
+  }
+
+  /// Rechecks identity and consent while preserving the current destination.
+  /// Only authoritative identity loss or newly required consent changes access.
+  Future<void> revalidate() {
+    if (_signingOut || _signingIn) return Future.value();
+    final lease = verifiedLease;
+    if (lease == null) return refresh();
+    final epoch = generation;
+    return _revalidationFlight ??= _verifyInBackground(epoch, lease)
+        .whenComplete(() {
+          if (_current(epoch)) _revalidationFlight = null;
+        });
+  }
+
+  Future<void> _verifyInBackground(int epoch, SessionLease lease) async {
+    revalidating = true;
+    revalidationFailure = null;
+    _emit();
+    try {
+      final identity = await auth.me(lease);
+      if (!_current(epoch)) return;
+      if (!identity.isActiveCustomer || identity.id != customer?.id) {
+        await _loseIdentity(_denial(identity));
+        return;
+      }
+      customer = identity;
+
+      final query = ++_consentQuery;
+      final status = await policies.status(lease);
+      if (!_current(epoch) || query != _consentQuery) return;
+      consent = status;
+      revalidationFailure = null;
+      failure = null;
+      if (status.allRequiredAccepted) {
+        phase = SessionPhase.active;
+      } else {
+        phase = SessionPhase.consentRequired;
+        _clearPrivateState();
+      }
+      _emit();
+    } on ApiFailure catch (error) {
+      if (!_current(epoch)) return;
+      if (error.identityLost) {
+        await _loseIdentity(error);
+        return;
+      }
+      revalidationFailure = error;
+      _emit();
+    } finally {
+      if (_current(epoch)) {
+        revalidating = false;
+        _emit();
+      }
+    }
+  }
+
+  void dismissRevalidationFailure() {
+    if (revalidationFailure == null) return;
+    revalidationFailure = null;
+    _emit();
   }
 
   Future<void> _verify() async {

@@ -93,6 +93,19 @@ class _CartScreenState extends State<CartScreen> {
                     ),
                   ],
                   if (cart.cart != null) Text('${cart.cart!.itemCount} items'),
+                  if (cart.cart?.items.any((line) => line.selectable) == true)
+                    Material(
+                      color: Colors.transparent,
+                      child: CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        tristate: true,
+                        value: cart.selectAllValue,
+                        onChanged: cart.canEdit
+                            ? (_) => cart.toggleSelectAllEligible()
+                            : null,
+                        title: const Text('Select all available items'),
+                      ),
+                    ),
                   if (cart.cart?.items.isEmpty == true && !cart.loading) ...[
                     const SizedBox(height: 24),
                     const Text('Your Cart is empty.'),

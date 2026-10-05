@@ -174,7 +174,7 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True):
         resize(width, height)
         script("window.location.hash = '/';")
         wait_text('Search Products or Shops')
-        wait_text('Explore categories')
+        wait_text('Explore Categories')
         capture('home-' + str(width))
         # Web Enter submits the exact search query into route history.
         field = call(prefix + '/elements', {'using':'css selector','value':'input[aria-label="Search Products or Shops"]'})

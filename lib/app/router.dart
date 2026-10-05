@@ -10,7 +10,6 @@ import '../features/policies/presentation/policy_reader_screen.dart';
 import '../features/account/presentation/account_home_screen.dart';
 import '../features/account/presentation/profile_screen.dart';
 import '../features/account/presentation/password_screen.dart';
-import '../features/account/presentation/photo_screen.dart';
 import '../features/account/presentation/preferences_screen.dart';
 import '../features/addresses/presentation/address_book_screen.dart';
 import '../features/addresses/presentation/address_form_screen.dart';
@@ -216,10 +215,7 @@ GoRouter buyerRouter(AppDependencies dependencies) {
         path: '/account/password',
         builder: (_, _) => PasswordScreen(dependencies: dependencies),
       ),
-      GoRoute(
-        path: '/account/photo',
-        builder: (_, _) => PhotoScreen(dependencies: dependencies),
-      ),
+      GoRoute(path: '/account/photo', redirect: (_, _) => '/account/profile'),
       GoRoute(
         path: '/account/preferences',
         builder: (_, _) => PreferencesScreen(dependencies: dependencies),

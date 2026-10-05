@@ -281,11 +281,8 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
-    expect(
-      find.textContaining('Enter the locality fields below manually'),
-      findsOneWidget,
-    );
-    expect(find.text('Retry selectors'), findsOneWidget);
+    expect(find.textContaining('Enter each locality manually'), findsOneWidget);
+    expect(find.text('Retry suggestions'), findsOneWidget);
   });
   testWidgets(
     'numeric coordinates require a valid pair and explicit confirmation',
@@ -324,7 +321,7 @@ void main() {
     },
   );
   testWidgets(
-    'PSGC parent changes reset descendants and NCR keeps reviewed manual Province text',
+    'PSGC suggestions cascade by selected parents and clear descendants on parent edits',
     (tester) async {
       final changes = <Map<String, String>>[];
       await tester.pumpWidget(
@@ -340,34 +337,29 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      final region = tester.widget<DropdownButton<PsgcRegion>>(
-        find.byType(DropdownButton<PsgcRegion>),
+      Finder field(String label) => find.byWidgetPredicate(
+        (widget) =>
+            widget is TextField && widget.decoration?.labelText == label,
       );
-      region.onChanged!(region.items!.first.value);
+
+      await tester.enterText(field('Region'), 'NCR');
       await tester.pumpAndSettle();
-      expect(
-        find.text('Use NCR compatibility text for Province'),
-        findsOneWidget,
-      );
-      await tester.tap(find.text('Use NCR compatibility text for Province'));
+      await tester.tap(find.text('NCR').last);
       await tester.pumpAndSettle();
-      expect(changes.last['province'], 'National Capital Region (NCR)');
-      var descendants = tester
-          .widgetList<DropdownButton<PsgcNode>>(
-            find.byType(DropdownButton<PsgcNode>),
-          )
-          .toList();
-      descendants.first.onChanged!(descendants.first.items!.first.value);
+      await tester.enterText(field('Province'), 'National Capital');
       await tester.pumpAndSettle();
-      descendants = tester
-          .widgetList<DropdownButton<PsgcNode>>(
-            find.byType(DropdownButton<PsgcNode>),
-          )
-          .toList();
-      descendants.last.onChanged!(descendants.last.items!.first.value);
+      await tester.tap(find.text('National Capital Region (NCR)').last);
+      await tester.pumpAndSettle();
+      await tester.enterText(field('City / Municipality'), 'City');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('City').last);
+      await tester.pumpAndSettle();
+      await tester.enterText(field('Barangay'), 'Barangay');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Barangay').last);
       await tester.pumpAndSettle();
       expect(changes.last['barangay'], 'Barangay');
-      region.onChanged!(region.items!.last.value);
+      await tester.enterText(field('Region'), 'Region I');
       await tester.pumpAndSettle();
       expect(changes.last, {
         'region': 'Region I',
@@ -375,14 +367,43 @@ void main() {
         'city_municipality': '',
         'barangay': '',
       });
-      descendants = tester
-          .widgetList<DropdownButton<PsgcNode>>(
-            find.byType(DropdownButton<PsgcNode>),
-          )
-          .toList();
-      expect(descendants.length, 1);
-      expect(descendants.first.value, isNull);
       await tester.pumpWidget(const SizedBox());
     },
   );
+  testWidgets('existing locality text hydrates without being overwritten', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: PsgcFields(
+            loader: PsgcLoader(bundle: SelectorAssets()),
+            initialValues: const {
+              'region': 'NCR',
+              'province': 'National Capital Region (NCR)',
+              'city_municipality': 'City',
+              'barangay': 'Barangay',
+            },
+            onChange: (_) {},
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    for (final entry in const {
+      'Region': 'NCR',
+      'Province': 'National Capital Region (NCR)',
+      'City / Municipality': 'City',
+      'Barangay': 'Barangay',
+    }.entries) {
+      final field = tester.widget<TextField>(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is TextField && widget.decoration?.labelText == entry.key,
+        ),
+      );
+      expect(field.controller?.text, entry.value);
+    }
+    await tester.pumpWidget(const SizedBox());
+  });
 }

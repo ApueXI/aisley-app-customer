@@ -56,22 +56,49 @@ void main() {
       try {
         await show(tester, CartScreen(dependencies: dependencies));
         expect(tester.takeException(), isNull);
+        expect(h.commerce.cart.cart!.items.single.selectable, isTrue);
+        expect(h.commerce.cart.selectAllValue, isFalse);
+        final scrollable = find
+            .descendant(
+              of: find.byType(ListView),
+              matching: find.byType(Scrollable),
+            )
+            .first;
+        final selectAllLabel = find.text('Select all available items');
         await tester.scrollUntilVisible(
-          find.byType(Checkbox),
+          selectAllLabel,
           200,
-          scrollable: find
-              .descendant(
-                of: find.byType(ListView),
-                matching: find.byType(Scrollable),
-              )
-              .first,
+          scrollable: scrollable,
         );
         await tester.pumpAndSettle();
         expect(
-          tester.getSemantics(find.byType(Checkbox)).getSemanticsData().label,
+          find.widgetWithText(CheckboxListTile, 'Select all available items'),
+          findsOneWidget,
+        );
+        expect(
+          tester
+              .getSemantics(find.byType(CheckboxListTile))
+              .getSemanticsData()
+              .label,
+          contains('Select all available items'),
+        );
+        final itemCheckbox = find.byWidgetPredicate(
+          (widget) =>
+              widget is Checkbox &&
+              widget.semanticLabel ==
+                  'Select ${h.commerce.cart.cart!.items.single.productName}',
+        );
+        await tester.scrollUntilVisible(
+          itemCheckbox,
+          200,
+          scrollable: scrollable,
+        );
+        await tester.pumpAndSettle();
+        expect(
+          tester.getSemantics(itemCheckbox).getSemanticsData().label,
           'Select ${h.commerce.cart.cart!.items.single.productName}',
         );
-        await tester.tap(find.byType(Checkbox));
+        await tester.tap(itemCheckbox);
         await tester.pumpAndSettle();
         expect(h.commerce.cart.selection, {customerId});
         await tester.ensureVisible(find.text('Checkout selected (1)'));

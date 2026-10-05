@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -7,6 +9,7 @@ import '../data/catalog_models.dart';
 import '../data/home_models.dart';
 import 'catalog_widgets.dart';
 import 'home_controller.dart';
+import 'product_purchase_flow.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.dependencies});
@@ -24,6 +27,7 @@ class _HomeScreenState extends State<HomeScreen> {
   );
 
   final _search = TextEditingController();
+  bool _showAllCategories = false;
 
   @override
   void initState() {
@@ -175,9 +179,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return null;
   }
 
-  List<QuickAction> _supportedActions(BuyerHome home) => home.quickActions
-      .where((action) => const {'search', 'shops'}.contains(action.key))
-      .toList();
+  List<QuickAction> _supportedActions(BuyerHome home) =>
+      home.quickActions.where((action) => action.key == 'search').toList();
 
   Widget _campaignBanner(BuildContext context, HomeCampaign campaign) => Card(
     clipBehavior: Clip.antiAlias,
@@ -215,49 +218,71 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _categories(
     BuildContext context,
     List<HomeCategory> categories,
-  ) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const SectionHeading(title: 'Explore categories'),
-      const SizedBox(height: 8),
-      Wrap(
-        spacing: 8,
-        runSpacing: 8,
+  ) => LayoutBuilder(
+    builder: (context, constraints) {
+      final tileWidth = 104 * catalogTextScale(context);
+      final capacity = ((constraints.maxWidth + 8) / (tileWidth + 8))
+          .floor()
+          .clamp(1, categories.length);
+      final showToggle = categories.length > capacity;
+      final visible = _showAllCategories
+          ? categories
+          : categories.take(capacity).toList();
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (final category in categories)
-            SizedBox(
-              width: 104 * catalogTextScale(context),
-              child: Card(
-                child: InkWell(
-                  onTap: () => context.push(
-                    '/search?mode=products&q=${Uri.encodeQueryComponent(category.name)}',
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      children: [
-                        if (category.imageUrl != null)
-                          CatalogImage(
-                            url: category.imageUrl,
-                            discovery: widget.dependencies.discovery!,
-                            width: 48,
-                            height: 48,
-                            label: category.name,
-                          )
-                        else
-                          const Icon(Icons.category_outlined, size: 32),
-                        const SizedBox(height: 8),
-                        Text(category.name, textAlign: TextAlign.center),
-                      ],
+          SectionHeading(
+            title: 'Explore Categories',
+            action: showToggle
+                ? TextButton(
+                    onPressed: () => setState(
+                      () => _showAllCategories = !_showAllCategories,
+                    ),
+                    child: Text(_showAllCategories ? 'Show less' : 'Show all'),
+                  )
+                : null,
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final category in visible)
+                SizedBox(
+                  width: tileWidth,
+                  child: Card(
+                    child: InkWell(
+                      onTap: () => context.push(
+                        '/search?mode=products&q=${Uri.encodeQueryComponent(category.name)}',
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          children: [
+                            if (category.imageUrl != null)
+                              CatalogImage(
+                                url: category.imageUrl,
+                                discovery: widget.dependencies.discovery!,
+                                width: 48,
+                                height: 48,
+                                label: category.name,
+                              )
+                            else
+                              const Icon(Icons.category_outlined, size: 32),
+                            const SizedBox(height: 8),
+                            Text(category.name, textAlign: TextAlign.center),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
+            ],
+          ),
+          const SizedBox(height: 18),
         ],
-      ),
-      const SizedBox(height: 18),
-    ],
+      );
+    },
   );
 
   Widget _quickActions(BuildContext context, List<QuickAction> actions) => Wrap(
@@ -306,6 +331,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     product: product,
                     discovery: widget.dependencies.discovery!,
                     onTap: () => context.push('/products/${product.id}'),
+                    onAddToCart: () => unawaited(
+                      beginProductPurchase(
+                        context: context,
+                        dependencies: widget.dependencies,
+                        productId: product.id,
+                        action: ProductPurchaseAction.addToCart,
+                      ),
+                    ),
                   ),
                 ),
             ],
@@ -330,6 +363,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 product: product,
                 discovery: widget.dependencies.discovery!,
                 onTap: () => context.push('/products/${product.id}'),
+                onAddToCart: () => unawaited(
+                  beginProductPurchase(
+                    context: context,
+                    dependencies: widget.dependencies,
+                    productId: product.id,
+                    action: ProductPurchaseAction.addToCart,
+                  ),
+                ),
               ),
           ],
         ),

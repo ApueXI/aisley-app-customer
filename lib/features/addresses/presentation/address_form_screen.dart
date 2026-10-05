@@ -213,25 +213,25 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
                   'Unit or additional address (optional)',
                   optional: true,
                 ),
-                ExpansionTile(
-                  title: const Text('Choose locality from offline PSGC data'),
-                  initiallyExpanded: widget.addressId == null,
-                  children: [
-                    PsgcFields(
-                      onChange: (values) => setState(() {
-                        for (final entry in values.entries) {
-                          _fields[entry.key]!.text = entry.value;
-                        }
-                        _pin = null;
-                        _dirty = true;
-                      }),
-                    ),
-                  ],
+                PsgcFields(
+                  initialValues: {
+                    for (final key in const [
+                      'region',
+                      'province',
+                      'city_municipality',
+                      'barangay',
+                    ])
+                      key: _fields[key]!.text,
+                  },
+                  fieldErrors: _controller.fieldErrors,
+                  onChange: (values) => setState(() {
+                    for (final entry in values.entries) {
+                      _fields[entry.key]!.text = entry.value;
+                    }
+                    _pin = null;
+                    _dirty = true;
+                  }),
                 ),
-                _field('region', 'Reviewed region'),
-                _field('province', 'Reviewed province / compatibility text'),
-                _field('city_municipality', 'Reviewed city / municipality'),
-                _field('barangay', 'Reviewed barangay'),
                 _field('postal_code', 'Postal code', max: 10),
                 _field('country', 'Country'),
               ],

@@ -8,17 +8,21 @@ class ProductChoices extends StatelessWidget {
     super.key,
     required this.product,
     required this.controller,
+    this.showOptions = true,
   });
   final ProductDetail product;
   final ProductDetailController controller;
+  final bool showOptions;
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      if (product.optionGroups.isNotEmpty) _options(product),
-      const SizedBox(height: 12),
+      if (showOptions && product.optionGroups.isNotEmpty) _options(product),
+      if (showOptions || !controller.requiresVariantSelection)
+        const SizedBox(height: 12),
       _availability(product),
-      _quantity(context, product),
+      if (showOptions || !controller.requiresVariantSelection)
+        _quantity(context, product),
     ],
   );
   Widget _options(ProductDetail product) => Column(
@@ -59,7 +63,11 @@ class ProductChoices extends StatelessWidget {
 
   Widget _availability(ProductDetail product) {
     if (controller.requiresVariantSelection && !controller.selectionValid) {
-      return const Text('Choose one available option from each group.');
+      return Text(
+        showOptions
+            ? 'Choose one available option from each group.'
+            : 'Choose Product options when you add this item to your Cart.',
+      );
     }
     final variant = controller.selectedVariant;
     if (variant != null && !variant.inStock ||
