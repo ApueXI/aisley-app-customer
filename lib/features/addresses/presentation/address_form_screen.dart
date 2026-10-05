@@ -224,16 +224,53 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
                       key: _fields[key]!.text,
                   },
                   fieldErrors: _controller.fieldErrors,
+                  onHydrated: (values) {
+                    for (final entry in values.entries) {
+                      _fields[entry.key]!.text = entry.value;
+                    }
+                  },
                   onChange: (values) => setState(() {
                     for (final entry in values.entries) {
                       _fields[entry.key]!.text = entry.value;
+                      _controller.fieldErrors = {..._controller.fieldErrors}
+                        ..remove(entry.key);
                     }
                     _pin = null;
                     _dirty = true;
                   }),
                 ),
                 _field('postal_code', 'Postal code', max: 10),
-                _field('country', 'Country'),
+                DropdownButtonFormField<String>(
+                  isExpanded: true,
+                  initialValue: _fields['country']!.text == 'Philippines'
+                      ? 'Philippines'
+                      : null,
+                  decoration: InputDecoration(
+                    labelText: 'Country',
+                    helperText:
+                        _fields['country']!.text.isNotEmpty &&
+                            _fields['country']!.text != 'Philippines'
+                        ? 'Saved country “${_fields['country']!.text}” is unsupported. Choose Philippines to save.'
+                        : null,
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'Philippines',
+                      child: Text('Philippines'),
+                    ),
+                  ],
+                  validator: (value) => value == null
+                      ? _controller.fieldErrors['country'] ??
+                            'Choose Philippines for this address.'
+                      : _controller.fieldErrors['country'],
+                  onChanged: (value) => setState(() {
+                    _fields['country']!.text = value ?? '';
+                    _pin = null;
+                    _dirty = true;
+                    _controller.fieldErrors = {..._controller.fieldErrors}
+                      ..remove('country');
+                  }),
+                ),
               ],
             ),
           ),

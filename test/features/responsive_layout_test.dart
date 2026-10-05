@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -189,10 +192,10 @@ void main() {
             return jsonReply(longFixture('browse-shop', 'op-023'));
           }
           if (path.endsWith('/wishlist')) {
-            return jsonReply(longFixture('wishlist', 'op-039'));
+            return jsonReply(longFixture('wishlist', 'op-037'));
           }
           if (path.endsWith('/recently-viewed')) {
-            return jsonReply(longFixture('recently-viewed-items', 'op-042'));
+            return jsonReply(longFixture('recently-viewed-items', 'op-041'));
           }
           if (path.contains('conversations') ||
               path.contains('support-tickets') ||
@@ -324,6 +327,85 @@ void main() {
         await tester.pumpWidget(app());
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
+        if (feature == 'cart') {
+          expect(find.text('View product'), findsWidgets);
+          expect(find.text('Edit cart item'), findsWidgets);
+          final removal = find.text('Remove cart item').first;
+          final removeButton = find.ancestor(
+            of: removal,
+            matching: find.byType(TextButton),
+          );
+          expect(
+            tester.getSize(removeButton.first).height,
+            greaterThanOrEqualTo(48),
+          );
+          await tester.ensureVisible(removal);
+          await tester.pumpAndSettle();
+          final pending = Completer<ResponseBody>();
+          final previousReply = h.reply!;
+          h.reply = (request) =>
+              request.method == 'DELETE' &&
+                  request.uri.path.contains('/customer/cart/items/')
+              ? pending.future
+              : previousReply(request);
+          await tester.tap(removal);
+          await tester.pumpAndSettle();
+          expect(find.text('Remove item?'), findsOneWidget);
+          await tester.tap(find.text('Remove'));
+          await tester.pump();
+          expect(find.text('Removing…'), findsOneWidget);
+          pending.complete(jsonReply(h.cartJson));
+          await tester.pumpAndSettle();
+        } else if (feature == 'wishlist' || feature == 'history') {
+          final removeLabel = feature == 'wishlist'
+              ? 'Remove from wishlist'
+              : 'Remove from history';
+          expect(find.text('View product'), findsWidgets);
+          final removal = find.text(removeLabel).first;
+          final removeButton = find.ancestor(
+            of: removal,
+            matching: find.byType(TextButton),
+          );
+          expect(
+            tester.getSize(removeButton.first).height,
+            greaterThanOrEqualTo(48),
+          );
+          await tester.ensureVisible(removal);
+          await tester.pumpAndSettle();
+          final pending = Completer<ResponseBody>();
+          final previousReply = h.reply!;
+          h.reply = (request) =>
+              request.method == 'DELETE' &&
+                  request.uri.path.contains(
+                    feature == 'wishlist'
+                        ? '/customer/wishlist/'
+                        : '/customer/recently-viewed/',
+                  )
+              ? pending.future
+              : previousReply(request);
+          await tester.tap(removal);
+          await tester.pumpAndSettle();
+          expect(
+            find.text(
+              feature == 'wishlist'
+                  ? 'Remove from Wishlist?'
+                  : 'Remove from history?',
+            ),
+            findsOneWidget,
+          );
+          await tester.tap(find.text('Remove'));
+          await tester.pump();
+          expect(find.text('Removing…'), findsOneWidget);
+          pending.complete(
+            jsonReply(
+              fixture(
+                feature == 'wishlist' ? 'wishlist' : 'recently-viewed-items',
+                feature == 'wishlist' ? 'op-040' : 'op-043',
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+        }
         TextField? input;
         FocusNode? inputFocus;
         if (find.byType(TextFormField).evaluate().isNotEmpty) {

@@ -58,8 +58,10 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 - Legacy cleanup failure is ignored without plaintext/session fallback or another guest history store.
 - Page query validates cursor≤2048 and supported keys; never substitute a fabricated cursor.
 - Private history errors keep safe retry without exposing previous account’s stale rows.
-- Place removal at the right edge of each row with a red outlined/tinted 48px control, accessible
-  label and the existing confirmation.
+- Put “View product” and “Remove from history” text buttons at the right side of each row. Retain the
+  removal confirmation, show “Removing…” while pending, and keep 48px targets and visible focus.
+- On narrow screens or enlarged text, place both actions under item details, right aligned and
+  wrapping without clipping.
 - Preserve merge/resolver DTO contract coverage; test account-only recording and isolated legacy
   cleanup without reading hints.
 - Test blocked storage, repeated PUT/remove/clear, session generation and cursor

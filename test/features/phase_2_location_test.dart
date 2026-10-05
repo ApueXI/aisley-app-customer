@@ -28,22 +28,49 @@ class MissingAssets extends CachingAssetBundle {
       throw StateError('Unavailable asset');
 }
 
+class CorruptRegionalAssets extends CachingAssetBundle {
+  @override
+  Future<String> loadString(String key, {bool cache = true}) async =>
+      key.endsWith('list-of-all-regions.json')
+      ? File(key).readAsStringSync()
+      : '{corrupt regional data';
+
+  @override
+  Future<ByteData> load(String key) async => throw UnimplementedError();
+}
+
+class IncompleteHierarchyAssets extends CachingAssetBundle {
+  @override
+  Future<String> loadString(String key, {bool cache = true}) async {
+    if (key.endsWith('list-of-all-regions.json')) {
+      return File(key).readAsStringSync();
+    }
+    return jsonEncode({
+      'region': {
+        'psgc_code': '0100000000',
+        'name': 'Region I (Ilocos Region)',
+        'geographic_level': 'region',
+        'children': [
+          {
+            'psgc_code': '0101000000',
+            'name': 'Province',
+            'geographic_level': 'province',
+            'children': <Object>[],
+          },
+        ],
+      },
+    });
+  }
+
+  @override
+  Future<ByteData> load(String key) async => throw UnimplementedError();
+}
+
 class SelectorAssets extends CachingAssetBundle {
   @override
   Future<String> loadString(String key, {bool cache = true}) async {
     if (key.endsWith('list-of-all-regions.json')) {
-      return jsonEncode([
-        {
-          'psgc_code': '1300000000',
-          'name': 'NCR',
-          'file': '1300000000-national-capital-region-ncr/addresses.json',
-        },
-        {
-          'psgc_code': '0100000000',
-          'name': 'Region I',
-          'file': '0100000000-region-i-ilocos-region/addresses.json',
-        },
-      ]);
+      return File(key).readAsStringSync();
     }
     Map<String, dynamic> node(
       String code,
@@ -58,19 +85,27 @@ class SelectorAssets extends CachingAssetBundle {
     };
     if (key.contains('1300000000')) {
       return jsonEncode({
-        'region': node('1300000000', 'NCR', 'region', [
-          node('1300100000', 'City', 'city', [
-            node('1300100001', 'Barangay', 'barangay', []),
-          ]),
-        ]),
+        'region': node(
+          '1300000000',
+          'National Capital Region (NCR)',
+          'region',
+          [
+            node('1300100000', 'City', 'city', [
+              node('1300100001', 'Barangay', 'barangay', []),
+            ]),
+          ],
+        ),
       });
     }
     return jsonEncode({
-      'region': node('0100000000', 'Region I', 'region', [
+      'region': node('0100000000', 'Region I (Ilocos Region)', 'region', [
         node('0101000000', 'Province', 'province', [
           node('0101010000', 'City', 'city', [
             node('0101010001', 'Barangay', 'barangay', []),
           ]),
+        ]),
+        node('0102000000', 'Direct City', 'city', [
+          node('0102000001', 'Direct Barangay', 'barangay', []),
         ]),
       ]),
     });
@@ -161,6 +196,14 @@ void main() {
     expect(barangays, greaterThan(40000));
     expect(direct, greaterThan(16));
   });
+  test(
+    'incomplete hierarchy is rejected before it can be offered for selection',
+    () async {
+      final loader = PsgcLoader(bundle: IncompleteHierarchyAssets());
+      final region = (await loader.regions()).first;
+      await expectLater(loader.dataset(region), throwsFormatException);
+    },
+  );
   test('provider and GPS remain inactive until both public configuration inputs exist', () async {
     for (final config in [
       mapsConfig(requested: false),
@@ -267,23 +310,75 @@ void main() {
       throwsA(isA<ApiFailure>()),
     );
   });
-  testWidgets('unavailable PSGC selectors show retry and manual fallback', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: PsgcFields(
-            loader: PsgcLoader(bundle: MissingAssets()),
-            onChange: (_) {},
+  testWidgets(
+    'unavailable PSGC selectors show retry and block locality entry',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PsgcFields(
+              loader: PsgcLoader(bundle: MissingAssets()),
+              onChange: (_) {},
+            ),
           ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(find.textContaining('Enter each locality manually'), findsOneWidget);
-    expect(find.text('Retry suggestions'), findsOneWidget);
-  });
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('unavailable. Retry before saving.'),
+        findsOneWidget,
+      );
+      expect(find.text('Retry address choices'), findsOneWidget);
+      expect(find.textContaining('manual'), findsNothing);
+      for (final menu in tester.widgetList<DropdownMenu<String>>(
+        find.byType(DropdownMenu<String>),
+      )) {
+        expect(menu.enabled, isFalse);
+      }
+    },
+  );
+  testWidgets(
+    'corrupt regional data preserves unmatched saved text and blocks submission',
+    (tester) async {
+      final formKey = GlobalKey<FormState>();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: Form(
+                key: formKey,
+                child: PsgcFields(
+                  initialValues: const {
+                    'region': 'Region I (Ilocos Region)',
+                    'province': 'Saved province for review',
+                    'city_municipality': 'Saved city for review',
+                    'barangay': 'Saved barangay for review',
+                  },
+                  loader: PsgcLoader(bundle: CorruptRegionalAssets()),
+                  onChange: (_) {},
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.textContaining('choices are unavailable'), findsOneWidget);
+      expect(find.text('Retry address choices'), findsOneWidget);
+      expect(formKey.currentState!.validate(), isFalse);
+      final cityMenu = tester.widget<DropdownMenu<String>>(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is DropdownMenu<String> &&
+              widget.label is Text &&
+              (widget.label! as Text).data == 'City / Municipality',
+        ),
+      );
+      expect(cityMenu.controller!.text, 'Saved city for review');
+      expect(cityMenu.enabled, isFalse);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
   testWidgets(
     'numeric coordinates require a valid pair and explicit confirmation',
     (tester) async {
@@ -337,32 +432,54 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      Finder field(String label) => find.byWidgetPredicate(
-        (widget) =>
-            widget is TextField && widget.decoration?.labelText == label,
-      );
+      Finder field(String label) {
+        final menu = find.byWidgetPredicate(
+          (widget) =>
+              widget is DropdownMenu<String> &&
+              widget.label is Text &&
+              (widget.label! as Text).data == label,
+        );
+        return find.descendant(of: menu, matching: find.byType(TextField));
+      }
 
-      await tester.enterText(field('Region'), 'NCR');
+      await tester.tap(field('Region'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('NCR').last);
+      expect(find.text('Region I (Ilocos Region)'), findsWidgets);
+      await tester.enterText(field('Region'), 'National Capital');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('National Capital Region (NCR)').last);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(field('Province'));
+      await tester.tap(field('Province'));
       await tester.pumpAndSettle();
       await tester.enterText(field('Province'), 'National Capital');
       await tester.pumpAndSettle();
       await tester.tap(find.text('National Capital Region (NCR)').last);
       await tester.pumpAndSettle();
+      await tester.ensureVisible(field('City / Municipality'));
+      await tester.tap(field('City / Municipality'));
+      await tester.pumpAndSettle();
       await tester.enterText(field('City / Municipality'), 'City');
       await tester.pumpAndSettle();
       await tester.tap(find.text('City').last);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(field('Barangay'));
+      await tester.tap(field('Barangay'));
       await tester.pumpAndSettle();
       await tester.enterText(field('Barangay'), 'Barangay');
       await tester.pumpAndSettle();
       await tester.tap(find.text('Barangay').last);
       await tester.pumpAndSettle();
       expect(changes.last['barangay'], 'Barangay');
+      await tester.ensureVisible(field('Region'));
+      await tester.tap(field('Region'));
+      await tester.pumpAndSettle();
       await tester.enterText(field('Region'), 'Region I');
       await tester.pumpAndSettle();
+      await tester.tap(find.text('Region I (Ilocos Region)').last);
+      await tester.pumpAndSettle();
       expect(changes.last, {
-        'region': 'Region I',
+        'region': 'Region I (Ilocos Region)',
         'province': '',
         'city_municipality': '',
         'barangay': '',
@@ -370,40 +487,149 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     },
   );
-  testWidgets('existing locality text hydrates without being overwritten', (
+  testWidgets(
+    'typed exact locality text is not selected until an option is chosen',
+    (tester) async {
+      final formKey = GlobalKey<FormState>();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: Form(
+                key: formKey,
+                child: PsgcFields(
+                  loader: PsgcLoader(bundle: SelectorAssets()),
+                  onChange: (_) {},
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final regionMenu = find.byWidgetPredicate(
+        (widget) =>
+            widget is DropdownMenu<String> &&
+            widget.label is Text &&
+            (widget.label! as Text).data == 'Region',
+      );
+      final regionField = find.descendant(
+        of: regionMenu,
+        matching: find.byType(TextField),
+      );
+      await tester.tap(regionField);
+      await tester.pumpAndSettle();
+      await tester.enterText(regionField, 'National Capital Region (NCR)');
+      await tester.pumpAndSettle();
+      expect(formKey.currentState!.validate(), isFalse);
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<DropdownMenu<String>>(regionMenu).errorText,
+        'Choose a listed Region option.',
+      );
+
+      await tester.tap(find.text('National Capital Region (NCR)').last);
+      await tester.pumpAndSettle();
+      expect(formKey.currentState!.validate(), isFalse);
+      await tester.pumpAndSettle();
+      expect(tester.widget<DropdownMenu<String>>(regionMenu).errorText, isNull);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+  testWidgets('unmapped regional direct cities cannot be submitted', (
     tester,
   ) async {
+    final formKey = GlobalKey<FormState>();
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: PsgcFields(
-            loader: PsgcLoader(bundle: SelectorAssets()),
-            initialValues: const {
-              'region': 'NCR',
-              'province': 'National Capital Region (NCR)',
-              'city_municipality': 'City',
-              'barangay': 'Barangay',
-            },
-            onChange: (_) {},
+          body: SingleChildScrollView(
+            child: Form(
+              key: formKey,
+              child: PsgcFields(
+                initialValues: const {
+                  'region': 'Region I (Ilocos Region)',
+                  'province': 'Province',
+                },
+                loader: PsgcLoader(bundle: SelectorAssets()),
+                onChange: (_) {},
+              ),
+            ),
           ),
         ),
       ),
     );
     await tester.pumpAndSettle();
-    for (final entry in const {
-      'Region': 'NCR',
-      'Province': 'National Capital Region (NCR)',
-      'City / Municipality': 'City',
-      'Barangay': 'Barangay',
-    }.entries) {
-      final field = tester.widget<TextField>(
-        find.byWidgetPredicate(
-          (widget) =>
-              widget is TextField && widget.decoration?.labelText == entry.key,
-        ),
-      );
-      expect(field.controller?.text, entry.value);
-    }
+    final cityMenu = find.byWidgetPredicate(
+      (widget) =>
+          widget is DropdownMenu<String> &&
+          widget.label is Text &&
+          (widget.label! as Text).data == 'City / Municipality',
+    );
+    final cityField = find.descendant(
+      of: cityMenu,
+      matching: find.byType(TextField),
+    );
+    await tester.ensureVisible(cityField);
+    await tester.tap(cityField);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Direct City — regional direct city').last);
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('has no supported Province mapping'),
+      findsOneWidget,
+    );
+    expect(formKey.currentState!.validate(), isFalse);
+    await tester.pumpAndSettle();
+    final provinceMenu = find.byWidgetPredicate(
+      (widget) =>
+          widget is DropdownMenu<String> &&
+          widget.label is Text &&
+          (widget.label! as Text).data == 'Province',
+    );
+    expect(
+      tester.widget<DropdownMenu<String>>(provinceMenu).errorText,
+      'No supported Province mapping is available for this city.',
+    );
     await tester.pumpWidget(const SizedBox());
   });
+  testWidgets(
+    'matching locality text hydrates through the selected hierarchy',
+    (tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PsgcFields(
+              loader: PsgcLoader(bundle: SelectorAssets()),
+              initialValues: const {
+                'region': 'National Capital Region (NCR)',
+                'province': 'National Capital Region (NCR)',
+                'city_municipality': 'City',
+                'barangay': 'Barangay',
+              },
+              onChange: (_) {},
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      for (final entry in const {
+        'Region': 'National Capital Region (NCR)',
+        'Province': 'National Capital Region (NCR)',
+        'City / Municipality': 'City',
+        'Barangay': 'Barangay',
+      }.entries) {
+        final menu = tester.widget<DropdownMenu<String>>(
+          find.byWidgetPredicate(
+            (widget) =>
+                widget is DropdownMenu<String> &&
+                widget.label is Text &&
+                (widget.label! as Text).data == entry.key,
+          ),
+        );
+        expect(menu.controller?.text, entry.value);
+      }
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
 }

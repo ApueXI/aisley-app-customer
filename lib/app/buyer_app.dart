@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:ui' show ViewFocusEvent, ViewFocusState;
 
+import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -9,6 +10,16 @@ import '../core/ui/marketplace_chrome.dart';
 import 'app_dependencies.dart';
 import 'router.dart';
 import 'theme.dart';
+
+class BuyerScrollBehavior extends MaterialScrollBehavior {
+  const BuyerScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    ...super.dragDevices,
+    PointerDeviceKind.mouse,
+  };
+}
 
 class BuyerApp extends StatefulWidget {
   const BuyerApp({super.key, required this.dependencies});
@@ -54,6 +65,7 @@ class _BuyerAppState extends State<BuyerApp> with WidgetsBindingObserver {
     debugShowCheckedModeBanner: false,
     theme: buyerTheme(),
     themeMode: ThemeMode.light,
+    scrollBehavior: const BuyerScrollBehavior(),
     builder: (context, child) => ListenableBuilder(
       listenable: Listenable.merge([
         widget.dependencies.session,

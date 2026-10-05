@@ -32,12 +32,13 @@ class PsgcNode {
 
   factory PsgcNode.fromJson(Object? json) {
     final map = _map(json);
+    final code = _string(map['psgc_code']);
     final children = map['children'];
-    if (children is! List) {
+    if (!RegExp(r'^\d{10}$').hasMatch(code) || children is! List) {
       throw const FormatException('Invalid PSGC children.');
     }
     return PsgcNode(
-      code: _string(map['psgc_code']),
+      code: code,
       name: _string(map['name']),
       level: _string(map['geographic_level']),
       children: List.unmodifiable(children.map(PsgcNode.fromJson)),
@@ -49,6 +50,54 @@ class PsgcDataset {
   const PsgcDataset({required this.region, required this.children});
   final PsgcNode region;
   final List<PsgcNode> children;
+
+  void validateHierarchy() {
+    if (region.level != 'region' || children.isEmpty) {
+      throw const FormatException('PSGC region has no selectable localities.');
+    }
+    final codes = <String>{};
+    void visit(PsgcNode node, PsgcNode? parent) {
+      if (!codes.add(node.code)) {
+        throw const FormatException('PSGC node codes must be unique.');
+      }
+      final allowed = switch (parent?.level) {
+        null => node.level == 'region',
+        'region' =>
+          node.level == 'province' ||
+              node.level == 'city' ||
+              node.level == 'municipality',
+        'province' => node.level == 'city' || node.level == 'municipality',
+        'city' || 'municipality' =>
+          node.level == 'barangay' || node.level == 'sub_municipality',
+        'sub_municipality' => node.level == 'barangay',
+        _ => false,
+      };
+      if (!allowed) {
+        throw const FormatException('Invalid PSGC parent and child levels.');
+      }
+      if (node.level == 'province' &&
+          !node.children.any(
+            (child) => child.level == 'city' || child.level == 'municipality',
+          )) {
+        throw const FormatException('PSGC Province has no selectable cities.');
+      }
+      if ((node.level == 'city' || node.level == 'municipality') &&
+          barangaysUnder(node).isEmpty) {
+        throw const FormatException('PSGC city has no selectable Barangays.');
+      }
+      if (node.level == 'sub_municipality' && node.children.isEmpty) {
+        throw const FormatException('PSGC sub-municipality has no Barangays.');
+      }
+      for (final child in node.children) {
+        visit(child, node);
+      }
+    }
+
+    visit(region, null);
+    if (provinces.isEmpty && directCities.isEmpty) {
+      throw const FormatException('PSGC region has no selectable localities.');
+    }
+  }
 
   List<PsgcNode> get provinces =>
       children.where((node) => node.level == 'province').toList();
@@ -89,8 +138,22 @@ class PsgcLoader {
     final decoded = jsonDecode(
       await _bundle.loadString('assets/psgc/list-of-all-regions.json'),
     );
-    if (decoded is! List) throw const FormatException('Invalid PSGC index.');
-    _regions = List.unmodifiable(decoded.map(PsgcRegion.fromJson));
+    if (decoded is! List || decoded.length != _allowedRegionalFiles.length) {
+      throw const FormatException('Invalid or incomplete PSGC index.');
+    }
+    final regions = decoded.map(PsgcRegion.fromJson).toList(growable: false);
+    if (regions.map((region) => region.code).toSet().length != regions.length ||
+        regions.map((region) => region.file).toSet().length != regions.length ||
+        regions.any(
+          (region) =>
+              !_allowedRegionalFiles.contains(region.file) ||
+              !RegExp(r'^\d{10}$').hasMatch(region.code) ||
+              region.name.trim().isEmpty ||
+              !region.file.startsWith('${region.code}-'),
+        )) {
+      throw const FormatException('Invalid or incomplete PSGC index.');
+    }
+    _regions = List.unmodifiable(regions);
     return _regions!;
   }
 
@@ -111,6 +174,7 @@ class PsgcLoader {
       throw const FormatException('PSGC region does not match the index.');
     }
     final dataset = PsgcDataset(region: node, children: node.children);
+    dataset.validateHierarchy();
     _datasets[region.code] = dataset;
     return dataset;
   }
@@ -122,7 +186,7 @@ Map<String, dynamic> _map(Object? value) {
 }
 
 String _string(Object? value) {
-  if (value is String && value.isNotEmpty) return value;
+  if (value is String && value.trim().isNotEmpty) return value;
   throw const FormatException('Invalid PSGC string.');
 }
 

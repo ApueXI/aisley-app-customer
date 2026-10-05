@@ -11,6 +11,7 @@ class CartController extends CommerceController {
   Set<String> _selection = {};
   Set<String> get selection => Set.unmodifiable(_selection);
   bool loading = false, writing = false, stale = true, uncertain = false;
+  String? writingItemId, writingIntent;
   bool Function() locked = () => false;
   void Function()? onChanged;
   bool get canEdit =>
@@ -141,19 +142,31 @@ class CartController extends CommerceController {
         variantId: variantId,
         changeVariant: changeVariant,
       ),
+      itemId: id,
+      intent: 'edit',
     );
   }
 
   Future<bool> remove(String id) async {
     if (!canEdit) return false;
-    return _write((credential) => repository.remove(credential, id));
+    return _write(
+      (credential) => repository.remove(credential, id),
+      itemId: id,
+      intent: 'remove',
+    );
   }
 
-  Future<bool> _write(Future<BuyerCart> Function(SessionLease) action) async {
+  Future<bool> _write(
+    Future<BuyerCart> Function(SessionLease) action, {
+    String? itemId,
+    String? intent,
+  }) async {
     final credential = lease;
     if (credential == null) return false;
     final generation = epoch;
     writing = true;
+    writingItemId = itemId;
+    writingIntent = intent;
     error = null;
     fieldErrors = const {};
     onChanged?.call();
@@ -191,6 +204,8 @@ class CartController extends CommerceController {
           stale = true;
         }
         writing = false;
+        writingItemId = null;
+        writingIntent = null;
         notifyListeners();
       }
     }
@@ -202,6 +217,7 @@ class CartController extends CommerceController {
     cart = null;
     _selection.clear();
     loading = writing = false;
+    writingItemId = writingIntent = null;
     stale = true;
     onChanged?.call();
   }

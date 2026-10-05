@@ -20,14 +20,14 @@ Flutter: **implemented; acceptance partial**. See [Phase 2 evidence](../../../re
 Addresses → cascading/manual form → optional pin → save/default → owned shipping selection.
 
 - Requests use snake_case recipient/contact/address/locality/postal/country/type and optional label/line2/pair/is_default; DTO fields are camelCase. Type is shipping,billing,both and overlapping defaults clear transactionally through create/update, with no separate default route.
-- Use the bundled unchanged PSGC JSON for editable Region→Province→City/Municipality→Barangay
-  autocomplete suggestions, filtered by selected parents. Preserve manual entry, hydrated saved
-  values and supplied NCR/direct-city hierarchy; npm packages are not Dart dependencies.
-- Intentional Geoapify pin clears stale pairs when text changes and never decides deliverability. Use optional flutter_map/latlong2/geolocator; suitable mobile public credentials remain a deployment gate; manual save stays usable. Confirm deletion. Address CRUD never reroutes a placed Order.
+- Use the bundled unchanged PSGC JSON for searchable Region→Province→City/Municipality→Barangay
+  dropdowns. Search text is separate from the selected entry; typing a matching name does not select
+  it. Preserve unmatched saved text for review but require a valid hierarchical selection to save.
+  Keep the supplied NCR/direct-city hierarchy; npm packages are not Dart dependencies.
+- Intentional Geoapify pin clears stale pairs when text changes and never decides deliverability. Use optional flutter_map/latlong2/geolocator; suitable mobile public credentials remain a deployment gate; saving with selected locality options works without a pin. Confirm deletion. Address CRUD never reroutes a placed Order.
 
-The local bundle supplies the implementation contract. Upstream paths are optional provenance only.
-Use this feature with its prerequisite session/consent boundary and the related shopping or communication
-repositories.
+The local bundle is authoritative; upstream paths are optional provenance. Follow the prerequisite
+session/consent boundary and related shopping or communication repositories.
 The Customer client cannot perform Seller/Admin/Logistics/Courier actions. Current Laravel ownership and
 capabilities remain authoritative.
 
@@ -48,14 +48,23 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 - Copy the nineteen unchanged assets and load the index before lazy-loading a selected region.
 - Nodes preserve code strings and geographic_level; provinces and direct city/municipality children are
   both real structures.
-- Parent changes clear invalid descendants; Barangay list belongs only to the selected city/municipality.
-- NCR contains direct cities and no Province node: keep one editable Province field and offer
-  National Capital Region (NCR) as a compatibility suggestion. Do not duplicate locality fields.
-- For direct cities elsewhere preserve required manual Province entry when no matching province
-  exists; parent edits clear dependent locality selections and stale coordinates.
+- Region, Province, City/Municipality and Barangay are searchable dropdowns with a visible affordance;
+  opening a ready selector shows choices and typing filters only its menu.
+- A user must choose an option. Typed arbitrary text, including an exact option name, fails validation
+  until that option is explicitly selected.
+- Parent changes clear dependent selected entries and text, and clear stale coordinates; Barangay
+  belongs only to the selected city/municipality.
+- NCR contains direct cities and no Province node: show the required Province selector with the single
+  `National Capital Region (NCR)` compatibility option. It remains a saved compatibility string, not a
+  claimed PSGC Province.
+- Show direct cities separately when present elsewhere, but do not invent a Province mapping. Explain
+  the unavailable mapping and block save when the selected hierarchy has no supported Province.
 - Codes remain local lookup state; saved API fields contain reviewed names. Postal code/street are
   manual.
-- Unavailable/incomplete dataset keeps every text field editable and clearly offers manual fallback.
+- Missing, corrupt or incomplete PSGC data shows Retry and blocks submission; do not accept custom
+  locality text as a fallback. Retry evicts failed loads and preserves the current safe draft.
+- Street/building, unit/additional line, recipient, contact and postal code remain text fields. Country
+  is a dropdown restricted to Philippines.
 - Pin location makes one intentional Philippines-filtered Geoapify request; no lookup on typing/cascade
   changes.
 - Show candidate and permit reviewed pin adjustment; save only finite valid coordinate pair after
@@ -64,12 +73,13 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
   recipient/locality text.
 - Use current location requests foreground permission once per deliberate action and allows denial/text
   fallback.
-- Maps need approved public credentials/attribution; manual save works without provider configuration.
+- Maps need approved public credentials/attribution; saving with valid locality selections works without provider configuration.
 - Delete requires confirmation; address deletion/edit does not mutate any placed Order snapshot.
 - Uncertain create rereads list before a deliberate resubmit; default updates refetch whole list to
   reflect cleared overlaps.
-- Test all region paths/checksums, NCR cascade/manual Province text, parent resets and corrupted/missing
-  asset fallback.
+- Test all region paths/checksums, opening/filtering/search-only text, explicit selection, exact-match
+  rejection, NCR compatibility, unsupported direct cities, parent resets and failed-asset Retry.
+- Test saved-address hydration for matching hierarchies and preservation/validation of unmatched text.
 - Test paired/ranged coordinates, incomplete address, defaults overlap, foreign UUID denial and immutable
   Order address.
 
