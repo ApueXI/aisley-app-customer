@@ -39,13 +39,18 @@ Unavailable APIs must not be mocked into production success. Test fixtures may m
 
 ## Reported checkout deployment failure — 2026-10-05
 
-The user supplied a quote HTTP 500 response with PostgreSQL SQLSTATE 42P01: missing
-`shop_logistics_providers`. This is reported runtime evidence, not an agent-run live test.
-Flutter sends JSON and bearer headers; quote failure keeps COD placement disabled.
-Backend ownership: inspect the deployed revision, migration status and target database,
-reconcile the schema, then verify authenticated quotes. Compare the storefront API origin
-and checkout path before claiming parity. No migration or backend repair is authorized
-by the Flutter change; do not expose SQL, identifiers or traces in the app.
+The user reports that checkout works in the storefront webapp but fails in the Buyer
+Flutter app. In the Flutter quote request, they observed HTTP 500 with PostgreSQL SQLSTATE
+42P01 because `shop_logistics_providers` is absent from the database handling that request.
+This is a Buyer Flutter versus storefront integration/deployment discrepancy, not evidence
+that checkout is generally unavailable or that the storefront database is missing the table.
+The response and header capture are user-provided, not an agent-run live test. Flutter sends
+JSON and bearer headers; quote failure correctly keeps COD placement disabled.
+Backend owner follow-up: compare the storefront and Flutter API origins, quote request path,
+deployed revisions and target database/migration state, then verify authenticated quotes.
+Do not attribute the discrepancy to the mobile client or claim parity until that comparison
+is complete. No migration or backend repair is authorized by the Flutter change; never
+surface SQL, identifiers or traces in the app.
 
 ## Newly inspected contracts — checkout 57e9eb2
 

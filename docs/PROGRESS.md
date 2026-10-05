@@ -126,3 +126,8 @@ Format:
 - Recorded user-reported quote HTTP 500 caused by missing PostgreSQL `shop_logistics_providers`; COD placement remains gated on a successful quote. Backend schema/deployed revision and storefront path comparison remain owner follow-up. No migration ran.
 - Added checkout mount/reopen regression and mixed category image/label responsive-size checks. `dart format --output=none --set-exit-if-changed lib test`, `flutter analyze --no-pub`, full Flutter tests (287 passed, 42 opt-in live tests skipped), Chromium tests (10 passed), `python3 tool/verify_bundle.py` (685 links, 22 spec lengths, PSGC checks), `git diff --check`, web release build and release APK build pass. Revised Customer specs range from 224–230 physical lines.
 - Manual real-browser UI and installed Android/TalkBack checks remain open. Builds and synthetic tests do not verify live checkout until the missing backend table is reconciled.
+
+
+## 2026-10-05
+
+- Clarified the checkout discrepancy from user follow-up: the storefront webapp works per user report, while the Buyer Flutter quote call receives a 500 from its API target because that database lacks `shop_logistics_providers`. Logged it as a Flutter/storefront integration or deployment mismatch pending API-origin, revision and database comparison; this does not establish a generally unavailable checkout or a mobile code cause.
