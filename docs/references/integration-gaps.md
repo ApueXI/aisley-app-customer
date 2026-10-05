@@ -37,19 +37,23 @@ Baseline reviewed 2026-10-03. Phases 1–4 are implemented with verification rec
 Unavailable APIs must not be mocked into production success. Test fixtures may model future/denied states clearly, but future endpoint proposals need separate backend authorization and acceptance.
 
 
-## Reported checkout deployment failure — 2026-10-05
+## Reported checkout provider failure — updated 2026-10-05
 
-The user reports that checkout works in the storefront webapp but fails in the Buyer
-Flutter app. In the Flutter quote request, they observed HTTP 500 with PostgreSQL SQLSTATE
-42P01 because `shop_logistics_providers` is absent from the database handling that request.
-This is a Buyer Flutter versus storefront integration/deployment discrepancy, not evidence
-that checkout is generally unavailable or that the storefront database is missing the table.
-The response and header capture are user-provided, not an agent-run live test. Flutter sends
-JSON and bearer headers; quote failure correctly keeps COD placement disabled.
-Backend owner follow-up: compare the storefront and Flutter API origins, quote request path,
-deployed revisions and target database/migration state, then verify authenticated quotes.
-Do not attribute the discrepancy to the mobile client or claim parity until that comparison
-is complete. No migration or backend repair is authorized by the Flutter change; never
+The user first reported that storefront checkout worked while Buyer Flutter quote returned
+HTTP 500 / PostgreSQL SQLSTATE 42P01 because `shop_logistics_providers` was missing from
+the database handling that Flutter request. The user now reports the storefront also fails,
+showing: “No shipping provider can quote this Shop order right now. Refresh checkout to try
+again.” This newer report supersedes the earlier storefront-success observation. Flutter's
+reported 500 and the storefront's provider-quote failure are evidence of checkout problems
+across client paths over time, not a mobile-only gap. The exact current API/database state
+and whether both paths share the same cause remain unverified; the two responses differ.
+
+Keep COD placement disabled until a valid server quote succeeds. Backend owner follow-up:
+inspect the current quote service, `shop_logistics_providers` migration/schema and enabled
+Shop-provider configuration in the database each client reaches; compare API origins and
+deployed revisions, then verify a quote through both paths. Do not present the issue as
+resolved or generally attribute it to Flutter. These are user-reported responses, not an
+agent-run live test. No migration or backend repair was part of the Flutter work; never
 surface SQL, identifiers or traces in the app.
 
 ## Newly inspected contracts — checkout 57e9eb2

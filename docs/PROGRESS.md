@@ -131,3 +131,8 @@ Format:
 ## 2026-10-05
 
 - Clarified the checkout discrepancy from user follow-up: the storefront webapp works per user report, while the Buyer Flutter quote call receives a 500 from its API target because that database lacks `shop_logistics_providers`. Logged it as a Flutter/storefront integration or deployment mismatch pending API-origin, revision and database comparison; this does not establish a generally unavailable checkout or a mobile code cause.
+
+
+## 2026-10-05
+
+- Updated the checkout gap after user reports the storefront now also fails with “No shipping provider can quote this Shop order right now.” This supersedes the earlier report of storefront success; recorded both client-path failures over time, the distinct observed responses, and backend checks still needed. No live request or backend operation was performed.
