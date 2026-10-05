@@ -37,6 +37,16 @@ Baseline reviewed 2026-10-03. Phases 1–4 are implemented with verification rec
 Unavailable APIs must not be mocked into production success. Test fixtures may model future/denied states clearly, but future endpoint proposals need separate backend authorization and acceptance.
 
 
+## Reported checkout deployment failure — 2026-10-05
+
+The user supplied a quote HTTP 500 response with PostgreSQL SQLSTATE 42P01: missing
+`shop_logistics_providers`. This is reported runtime evidence, not an agent-run live test.
+Flutter sends JSON and bearer headers; quote failure keeps COD placement disabled.
+Backend ownership: inspect the deployed revision, migration status and target database,
+reconcile the schema, then verify authenticated quotes. Compare the storefront API origin
+and checkout path before claiming parity. No migration or backend repair is authorized
+by the Flutter change; do not expose SQL, identifiers or traces in the app.
+
 ## Newly inspected contracts — checkout 57e9eb2
 
 | ID | New finding / treatment | Release evidence |

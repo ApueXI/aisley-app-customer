@@ -54,8 +54,13 @@ class CartItemRow extends StatelessWidget {
             ),
           );
 
-    return Padding(
+    return Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: Theme.of(context).colorScheme.outline),
+        ),
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -220,7 +220,22 @@ class _HomeScreenState extends State<HomeScreen> {
     List<HomeCategory> categories,
   ) => LayoutBuilder(
     builder: (context, constraints) {
-      final tileWidth = 104 * catalogTextScale(context);
+      final tileWidth = (104 * catalogTextScale(context)).clamp(
+        0.0,
+        constraints.maxWidth,
+      );
+      final labelStyle = DefaultTextStyle.of(context).style;
+      var labelHeight = 0.0;
+      for (final category in categories) {
+        final painter = TextPainter(
+          text: TextSpan(text: category.name, style: labelStyle),
+          textDirection: Directionality.of(context),
+          textScaler: MediaQuery.textScalerOf(context),
+        )..layout(maxWidth: tileWidth - 24);
+        if (painter.height > labelHeight) labelHeight = painter.height;
+        painter.dispose();
+      }
+      final tileHeight = 24 + 48 + 8 + labelHeight.ceilToDouble();
       final capacity = ((constraints.maxWidth + 8) / (tileWidth + 8))
           .floor()
           .clamp(1, categories.length);
@@ -250,7 +265,9 @@ class _HomeScreenState extends State<HomeScreen> {
               for (final category in visible)
                 SizedBox(
                   width: tileWidth,
+                  height: tileHeight,
                   child: Card(
+                    margin: EdgeInsets.zero,
                     child: InkWell(
                       onTap: () => context.push(
                         '/search?mode=products&q=${Uri.encodeQueryComponent(category.name)}',
@@ -268,7 +285,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                 label: category.name,
                               )
                             else
-                              const Icon(Icons.category_outlined, size: 32),
+                              const SizedBox(
+                                width: 48,
+                                height: 48,
+                                child: Icon(Icons.category_outlined, size: 32),
+                              ),
                             const SizedBox(height: 8),
                             Text(category.name, textAlign: TextAlign.center),
                           ],

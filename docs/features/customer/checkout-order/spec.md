@@ -164,6 +164,7 @@ universal error envelope.
 
 ### Screen and interaction states
 
+- Initial address loading starts after the first frame with a mounted guard; existing listeners must not be notified during build.
 - Initial loading exposes progress and accessible labels without a private-data flash.
 - Empty success explains the next supported step; unavailable includes Retry and does not pretend there
   are zero records.

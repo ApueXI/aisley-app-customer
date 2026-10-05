@@ -55,3 +55,14 @@ synthetic and live/device acceptance remain unchecked until the whole criterion 
 Responsive marketplace implementation and exact-viewport synthetic browser evidence are
 recorded in [marketplace verification](references/marketplace-verification.md), including
 mobile/desktop screenshots. Broad live/device/production criteria above remain open.
+
+## Shopping boundaries and checkout initialization — 2026-10-05
+
+Regression coverage measures equal category cards with short/long labels and image/fallback
+states across 320–1440px, landscape and text scales 1/1.5/2. Checkout mount/reopen coverage
+keeps an existing controller listener mounted to detect build-phase notifications.
+Product dividers span the complete item, below wrapped actions. Manual localhost:8766
+browser inspection and installed Android/TalkBack remain unverified for this change.
+The user-reported quote HTTP 500 is a missing backend table, recorded in the
+[integration gaps](references/integration-gaps.md#reported-checkout-deployment-failure--2026-10-05).
+Builds and synthetic checks do not establish successful live quotes or COD placement.

@@ -177,7 +177,18 @@ void main() {
             return jsonReply(longFixture('order-status', 'op-032'));
           }
           if (path.endsWith('/home')) {
-            return jsonReply(longFixture('customer-homepage', 'op-047'));
+            final home = longFixture('customer-homepage', 'op-047');
+            final category = (home['categories'] as List).first as Map;
+            home['categories'] = [
+              {...category, 'name': 'Books'},
+              {
+                ...category,
+                'id': '22222222-2222-4222-8222-222222222222',
+                'name': 'Home and kitchen accessories',
+                'imageUrl': 'https://untrusted.invalid/category.png',
+              },
+            ];
+            return jsonReply(home);
           }
           if (path.endsWith('/products/search')) {
             return jsonReply(longFixture('search', 'op-019'));
@@ -327,6 +338,13 @@ void main() {
         await tester.pumpWidget(app());
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
+        if (feature == 'home') {
+          if (find.text('Show all').evaluate().isNotEmpty) {
+            await tester.ensureVisible(find.text('Show all'));
+            await tester.tap(find.text('Show all'));
+            await tester.pumpAndSettle();
+          }
+        }
         if (feature == 'cart') {
           expect(find.text('View product'), findsWidgets);
           expect(find.text('Edit cart item'), findsWidgets);
@@ -443,6 +461,24 @@ void main() {
                 isNull,
                 reason: '$feature $actual text $scale',
               );
+              if (feature == 'home') {
+                if (find.text('Show all').evaluate().isNotEmpty) {
+                  await tester.ensureVisible(find.text('Show all'));
+                  await tester.tap(find.text('Show all'));
+                  await tester.pumpAndSettle();
+                }
+                final cards = ['Books', 'Home and kitchen accessories']
+                    .map(
+                      (label) => find
+                          .ancestor(
+                            of: find.text(label),
+                            matching: find.byType(Card),
+                          )
+                          .first,
+                    )
+                    .toList();
+                expect(tester.getSize(cards.first), tester.getSize(cards.last));
+              }
             }
           }
         }

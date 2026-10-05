@@ -85,8 +85,15 @@ class _SavedProductsScreenState extends State<SavedProductsScreen> {
               ),
             ),
           for (final item in _controller.items)
-            Padding(
+            Container(
               padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: Theme.of(context).colorScheme.outline,
+                  ),
+                ),
+              ),
               child: LayoutBuilder(
                 builder: (context, constraints) {
                   final scale = MediaQuery.textScalerOf(context).scale(1);

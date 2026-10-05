@@ -67,7 +67,7 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 - Keep the 48px Cart selection checkbox on the left. Put text buttons named “View product”, “Edit cart
   item” and “Remove cart item” on the right, preserving the existing removal confirmation.
 - On narrow screens or enlarged text, place the Cart actions below item details, right aligned and
-  wrapping without clipping; retain 48px targets and visible focus.
+  wrapping without clipping; retain 48px targets and visible focus. A full-width bottom divider separates each complete item and its actions.
 - Tri-state Select all acts once in the Cart controller on eligible lines across Shop groups. A
   partial selection fills remaining eligible lines; a full selection clears them. Existing edit
   locks, quote invalidation and server-response reconciliation still apply.

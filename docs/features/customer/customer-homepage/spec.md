@@ -60,6 +60,7 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
   filters. Initially show one width/text-scaled category row. Place Show all/Show less by the
   heading, wrapping beneath it when needed; hide it when all fit and retain expansion while Home
   stays mounted.
+- Category cards share measured label height and a 48px image/icon area; full labels fit at current text scale.
 - Shared Product cards keep square images, two-line titles, aligned price/metadata slots and aligned
   purchase actions while respecting text scaling. Listing Add to Cart uses current Product detail.
 - Deal price/progress is a display projection; expiry/timer does not guarantee checkout eligibility or

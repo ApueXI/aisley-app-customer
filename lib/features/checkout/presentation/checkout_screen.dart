@@ -24,7 +24,9 @@ class _CheckoutScreenState extends State<CheckoutScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _controller.loadAddresses();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _controller.loadAddresses();
+    });
   }
 
   @override
