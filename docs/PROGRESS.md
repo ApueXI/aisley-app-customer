@@ -143,3 +143,8 @@ Format:
 - Updated Buyer presentation guidance and the three affected Customer specs; revised specs are 226, 226 and 225 physical lines. Added assertions for border color and Product/action containment in the responsive widget cases.
 - `dart format` reports all four changed Dart files formatted; `flutter analyze --no-pub` reports no issues; focused Checkout/Wishlist/Recently Viewed responsive widget tests pass (3 cases). `python3 tool/verify_bundle.py` passes 685 links, all 22 spec lengths, PSGC checksums/registrations and Android boundaries; `git diff --check` passes.
 - Adopted Laravel baseline remains `57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50`. Live API and installed Android/TalkBack visual acceptance remain open; unrelated existing `pubspec.yaml` and `pubspec.lock` edits are preserved outside this change.
+
+## 2026-10-08
+
+- Created local, Git-ignored `cabigan/plan.md` with prioritized Flutter improvements, acceptance work, backend-dependent candidates and release preparation, based on implemented Phases 1–5 and existing open gates. Adopted Laravel baseline remains `57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50`; no application/backend changes or new acceptance claims.
+- Documentation links, bundle validation and whitespace checked; no Flutter tests/builds or live/device checks required for this planning-only change. Preserved the existing `.gitignore` edit and its local-plan exclusion; progress is 150 physical lines, so no archive is required.
