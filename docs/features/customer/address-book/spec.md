@@ -12,10 +12,10 @@ contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 
 ## WHAT
 
-Backend: Owned CRUD/defaults and checkout snapshots implemented; Dart assets/native pin integration
-pending.
+Backend: Owned CRUD/defaults and checkout snapshots implemented; optional coordinate fields unchanged.
+Geoapify remains external; installed-device and live-provider acceptance remain open.
 
-Flutter: **implemented; acceptance partial**. See [Phase 2 evidence](../../../references/phase-2-verification.md); live-account/device gates remain open.
+Flutter: **implemented; acceptance partial**. See [Phase 2 evidence](../../../references/phase-2-verification.md) and [MapLibre evidence](../../../references/maplibre-verification.md); live-account/device gates remain open.
 
 Addresses → cascading/manual form → optional pin → save/default → owned shipping selection.
 
@@ -24,7 +24,7 @@ Addresses → cascading/manual form → optional pin → save/default → owned 
   dropdowns. Search text is separate from the selected entry; typing a matching name does not select
   it. Preserve unmatched saved text for review but require a valid hierarchical selection to save.
   Keep the supplied NCR/direct-city hierarchy; npm packages are not Dart dependencies.
-- Intentional Geoapify pin clears stale pairs when text changes and never decides deliverability. Use optional flutter_map/latlong2/geolocator; suitable mobile public credentials remain a deployment gate; saving with selected locality options works without a pin. Confirm deletion. Address CRUD never reroutes a placed Order.
+- Intentional Geoapify pin clears stale pairs when text changes and never decides deliverability. Use optional maplibre_gl/geolocator; suitable mobile public credentials remain a deployment gate; saving with selected locality options works without a pin. Confirm deletion. Address CRUD never reroutes a placed Order.
 
 The local bundle is authoritative; upstream paths are optional provenance. Follow the prerequisite
 session/consent boundary and related shopping or communication repositories.
@@ -67,8 +67,8 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
   is a dropdown restricted to Philippines.
 - Pin location makes one intentional Philippines-filtered Geoapify request; no lookup on typing/cascade
   changes.
-- Show candidate and permit reviewed pin adjustment; save only finite valid coordinate pair after
-  explicit confirmation.
+- Review Geoapify candidates, then show MapLibre with tap/drag pin and numeric adjustment; save only
+  finite valid pairs after confirmation. Map preparation failure exposes Retry and numeric/text fallback.
 - Changing location text clears stale coordinates; GPS choice never silently overwrites
   recipient/locality text.
 - Use current location requests foreground permission once per deliberate action and allows denial/text
@@ -160,8 +160,8 @@ universal error envelope.
   dependencies through AppDependencies.
 - `PsgcLoader` owns safe platform access without widget HTTP calls; inject dependencies through
   AppDependencies.
-- `PinViewModel` owns feature transitions, draft/query state and deliberate actions; inject dependencies
-  through AppDependencies.
+- `MapPinDialog` owns explicit lookup/GPS/confirmation; `AddressPinMap` owns bounded map preparation.
+  `AddressMapAdapter` owns the MapLibre view, draggable pin, queued camera updates and disposal.
 - Screens compose focused sections/forms/history; reusable widgets render typed state and forward
   callbacks.
 - Use ChangeNotifier/ListenableBuilder with immutable DTO snapshots. No HTTP or JSON guesses in build().

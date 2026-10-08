@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../../core/config/app_config.dart';
+import 'geoapify_map_style.dart';
 
 class GeoCandidate {
   const GeoCandidate({
@@ -40,6 +41,42 @@ class MapLocationService {
   final AppConfig config;
   final Dio _client;
   final LocationAccess _location;
+
+  /// Check the selected location's tile before creating the SDK view. The SDK
+  /// does not expose tile errors to Dart, so this catches denial/quota/offline
+  /// failures without passing raw provider errors to the screen or logs.
+  Future<List<int>> pinTile(
+    GeoCandidate point, {
+    CancelToken? cancelToken,
+  }) async {
+    if (!config.mapsEnabled ||
+        !point.latitude.isFinite ||
+        !point.longitude.isFinite ||
+        point.latitude.abs() > 90 ||
+        point.longitude.abs() > 180) {
+      throw const MapProviderFailure();
+    }
+    final response = await _client.get<List<int>>(
+      geoapifyPinTile(
+        point.latitude,
+        point.longitude,
+        config.geoapifyPublicApiKey,
+      ).toString(),
+      options: Options(
+        responseType: ResponseType.bytes,
+        headers: const {'Accept': 'image/png'},
+      ),
+      cancelToken: cancelToken,
+    );
+    if (response.statusCode != 200 ||
+        response.data == null ||
+        response.data!.isEmpty ||
+        response.headers.value('content-type')?.split(';').first !=
+            'image/png') {
+      throw const MapProviderFailure();
+    }
+    return response.data!;
+  }
 
   Future<List<GeoCandidate>> geocode(String confirmedAddress) async {
     if (!config.mapsEnabled) return const [];

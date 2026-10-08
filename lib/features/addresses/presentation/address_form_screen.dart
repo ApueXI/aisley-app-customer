@@ -372,16 +372,14 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
       );
       return;
     }
-    final pin = await showDialog<GeoCandidate>(
+    final pin = await showAddressPinDialog(
       context: context,
-      builder: (_) => MapPinDialog(
-        dependencies: widget.dependencies,
-        initial: _pin,
-        addressText: _locationKeys
-            .map((key) => _fields[key]!.text.trim())
-            .where((value) => value.isNotEmpty)
-            .join(', '),
-      ),
+      dependencies: widget.dependencies,
+      initial: _pin,
+      addressText: _locationKeys
+          .map((key) => _fields[key]!.text.trim())
+          .where((value) => value.isNotEmpty)
+          .join(', '),
     );
     if (mounted && pin != null && widget.dependencies.session.active) {
       setState(() {

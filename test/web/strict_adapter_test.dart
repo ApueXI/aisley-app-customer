@@ -277,6 +277,15 @@ void main() {
         ) as JSBoolean).toDart,
         true,
       );
+      await provider.get(
+        'https://maps.geoapify.com/v1/tile/osm-carto/16/0/0.png',
+      );
+      expect(
+        (_evaluate(
+          'buyerReferrer === "strict-origin-when-cross-origin"'.toJS,
+        ) as JSBoolean).toDart,
+        true,
+      );
       await provider.get('https://api.example.invalid/api/v1/public');
       expect(
         (_evaluate('buyerReferrer === "no-referrer"'.toJS) as JSBoolean).toDart,

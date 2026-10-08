@@ -38,6 +38,23 @@ class BundleTest(unittest.TestCase):
         self.assertTrue(any('usesCleartextTraffic' in error for error in errors))
         self.assertTrue(any('foreground-only' in error for error in errors))
 
+    def test_verbatim_progress_archive_checks_original_links_and_missing_targets(self):
+        # Never mutate the source docs through the read-only symlink.
+        (self.root / 'docs').unlink()
+        shutil.copytree(bundle.ROOT / 'docs', self.root / 'docs')
+        logs = self.root / 'docs/logs'
+        logs.mkdir(exist_ok=True)
+        archive = logs / 'PROGRESS-2099-01-01-2.md'
+        archive.write_text('[Evidence](references/phase-1-verification.md)\n')
+        self.assertEqual(bundle.verify(self.root)[0], [])
+        archive.write_text('[Missing](references/absent-archive-target.md)\n')
+        errors, _ = bundle.verify(self.root)
+        self.assertTrue(any('absent-archive-target.md' in error for error in errors))
+        archive.unlink()
+        (logs / 'ordinary.md').write_text('[Evidence](references/phase-1-verification.md)\n')
+        errors, _ = bundle.verify(self.root)
+        self.assertTrue(any('ordinary.md: missing local link' in error for error in errors))
+
     def test_debug_subdomains_and_profile_http_override_fail(self):
         network = self.root / 'android/app/src/debug/res/xml/local_network_security.xml'
         network.write_text(network.read_text().replace('<domain>', '<domain includeSubdomains="true">', 1))

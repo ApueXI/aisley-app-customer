@@ -2,13 +2,35 @@ import 'package:flutter/material.dart';
 
 import '../../../core/ui/responsive_layout.dart';
 
-import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:latlong2/latlong.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../app/app_dependencies.dart';
 import '../data/map_location_service.dart';
+import 'address_map_adapter.dart';
+import 'address_pin_map.dart';
+
+Future<GeoCandidate?> showAddressPinDialog({
+  required BuildContext context,
+  required AppDependencies dependencies,
+  required String addressText,
+  GeoCandidate? initial,
+  AddressMapFactory mapAdapterFactory = MapLibreAddressMap.new,
+}) => Navigator.of(context, rootNavigator: true).push<GeoCandidate>(
+  // DialogRoute's opaque web semantics intercept the HTML map's pointer events.
+  // A fullscreen page keeps the modal focus/back behavior without that overlay.
+  MaterialPageRoute<GeoCandidate>(
+    fullscreenDialog: true,
+    traversalEdgeBehavior: TraversalEdgeBehavior.closedLoop,
+    builder: (_) => SafeArea(
+      child: MapPinDialog(
+        dependencies: dependencies,
+        addressText: addressText,
+        initial: initial,
+        mapAdapterFactory: mapAdapterFactory,
+      ),
+    ),
+  ),
+);
 
 class MapPinDialog extends StatefulWidget {
   const MapPinDialog({
@@ -16,38 +38,39 @@ class MapPinDialog extends StatefulWidget {
     required this.dependencies,
     required this.addressText,
     this.initial,
+    this.mapAdapterFactory = MapLibreAddressMap.new,
   });
   final AppDependencies dependencies;
   final String addressText;
   final GeoCandidate? initial;
+  final AddressMapFactory mapAdapterFactory;
 
   @override
   State<MapPinDialog> createState() => _MapPinDialogState();
 }
 
 class _MapPinDialogState extends State<MapPinDialog> {
-  final _map = MapController();
-  final _mapKey = GlobalKey();
   final _latitude = TextEditingController(),
       _longitude = TextEditingController();
   GeoCandidate? _selected;
   List<GeoCandidate> _candidates = const [];
-  int _epoch = 0;
-  bool _busy = false, _tileFailed = false;
+  int _epoch = 0, _recenterRevision = 0;
+  bool _busy = false, _accessRevoked = false;
   String? _error;
+
+  bool get _allowed => !_accessRevoked && widget.dependencies.session.active;
 
   @override
   void initState() {
     super.initState();
     widget.dependencies.session.registerPrivateCleanup(_clearPrivate);
-    _selected = widget.initial;
+    _selected = _allowed ? widget.initial : null;
     if (_selected != null) _writeCoordinates(_selected!);
   }
 
   @override
   void dispose() {
     widget.dependencies.session.unregisterPrivateCleanup(_clearPrivate);
-    _map.dispose();
     _latitude.dispose();
     _longitude.dispose();
     super.dispose();
@@ -55,6 +78,7 @@ class _MapPinDialogState extends State<MapPinDialog> {
 
   void _clearPrivate() {
     _epoch++;
+    _accessRevoked = true;
     _busy = false;
     _selected = null;
     _candidates = const [];
@@ -115,98 +139,14 @@ class _MapPinDialogState extends State<MapPinDialog> {
               Text(_selected!.label),
               const Text('Tap the map or drag the pin to adjust its position.'),
               const SizedBox(height: 12),
-              SizedBox(
-                key: _mapKey,
-                height: 300,
-                child: FlutterMap(
-                  mapController: _map,
-                  options: MapOptions(
-                    initialCenter: LatLng(
-                      _selected!.latitude,
-                      _selected!.longitude,
-                    ),
-                    initialZoom: 16,
-                    onTap: (_, point) => _choose(
-                      GeoCandidate(
-                        label: 'Adjusted pin',
-                        latitude: point.latitude,
-                        longitude: point.longitude,
-                      ),
-                      moveCamera: false,
-                    ),
-                  ),
-                  children: [
-                    TileLayer(
-                      urlTemplate: 'https://maps.geoapify.com/v1/tile/osm-carto/{z}/{x}/{y}.png?apiKey={apiKey}',
-                      additionalOptions: {
-                        'apiKey':
-                            widget.dependencies.config.geoapifyPublicApiKey,
-                      },
-                      userAgentPackageName: 'com.aisley.buyer',
-                      errorTileCallback: (_, _, _) {
-                        if (!_tileFailed) {
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            if (mounted) setState(() => _tileFailed = true);
-                          });
-                        }
-                      },
-                    ),
-                    MarkerLayer(
-                      markers: [
-                        Marker(
-                          point: LatLng(
-                            _selected!.latitude,
-                            _selected!.longitude,
-                          ),
-                          width: 48,
-                          height: 48,
-                          child: GestureDetector(
-                            onPanUpdate: (details) {
-                              final box = _mapKey.currentContext
-                                  ?.findRenderObject();
-                              if (box is! RenderBox) return;
-                              final point = _map.camera.screenOffsetToLatLng(
-                                box.globalToLocal(details.globalPosition),
-                              );
-                              _choose(
-                                GeoCandidate(
-                                  label: 'Adjusted pin',
-                                  latitude: point.latitude,
-                                  longitude: point.longitude,
-                                ),
-                                moveCamera: false,
-                              );
-                            },
-                            child: const Icon(
-                              Icons.location_on,
-                              size: 48,
-                              color: Color(0xFFB60060),
-                              semanticLabel: 'Address pin',
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+              AddressPinMap(
+                key: const ValueKey('address-pin-map'),
+                point: _selected!,
+                locations: widget.dependencies.mapLocations!,
+                adapterFactory: widget.mapAdapterFactory,
+                recenterRevision: _recenterRevision,
+                onSelect: (point) => _choose(point, moveCamera: false),
               ),
-              Wrap(
-                children: [
-                  TextButton(
-                    onPressed: () => _source('https://www.geoapify.com/'),
-                    child: const Text('© Geoapify'),
-                  ),
-                  TextButton(
-                    onPressed: () =>
-                        _source('https://www.openstreetmap.org/copyright'),
-                    child: const Text('© OpenStreetMap contributors'),
-                  ),
-                ],
-              ),
-              if (_tileFailed)
-                const Text(
-                  'Map tiles are unavailable. You can still review the coordinates or cancel and save a manual address.',
-                ),
             ],
             const SizedBox(height: 12),
             TextField(
@@ -246,8 +186,7 @@ class _MapPinDialogState extends State<MapPinDialog> {
   );
 
   Future<void> _geocode() async {
-    if (!widget.dependencies.session.active ||
-        !widget.dependencies.config.mapsEnabled) {
+    if (!_allowed || !widget.dependencies.config.mapsEnabled) {
       return;
     }
     final epoch = _epoch;
@@ -279,8 +218,7 @@ class _MapPinDialogState extends State<MapPinDialog> {
   }
 
   Future<void> _gps() async {
-    if (!widget.dependencies.session.active ||
-        !widget.dependencies.config.mapsEnabled) {
+    if (!_allowed || !widget.dependencies.config.mapsEnabled) {
       return;
     }
     final epoch = _epoch;
@@ -317,21 +255,16 @@ class _MapPinDialogState extends State<MapPinDialog> {
   }
 
   void _choose(GeoCandidate candidate, {bool moveCamera = true}) {
+    if (!mounted || !_allowed) return;
     setState(() {
       _selected = candidate;
+      if (moveCamera) _recenterRevision++;
       _writeCoordinates(candidate);
     });
-    if (moveCamera) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _mapKey.currentContext != null) {
-          _map.move(LatLng(candidate.latitude, candidate.longitude), 16);
-        }
-      });
-    }
   }
 
   void _confirm() {
-    if (!widget.dependencies.session.active) {
+    if (!_allowed) {
       Navigator.pop(context);
       return;
     }
@@ -356,11 +289,5 @@ class _MapPinDialogState extends State<MapPinDialog> {
         longitude: longitude,
       ),
     );
-  }
-
-  Future<void> _source(String url) async {
-    try {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-    } catch (_) {}
   }
 }

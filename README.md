@@ -243,3 +243,8 @@ for controlled authenticated and installed-device verification.
 
 The Buyer marketplace now adapts to Android phones/tablets and desktop browsers in the
 same Flutter app. See [design](docs/design-buyer.md) and [marketplace evidence](docs/references/marketplace-verification.md).
+
+Optional address maps use MapLibre for rendering and Geoapify for address lookup
+and light raster tiles. `MAPS_ENABLED` defaults to false; enable it with an approved
+`GEOAPIFY_PUBLIC_API_KEY`. Coordinate entry and manual address saving remain available.
+See [map setup](docs/maps-location-api.md) and [verification](docs/references/maplibre-verification.md).

@@ -26,6 +26,21 @@ synthetic credential or write to Laravel. Unknown API requests fail locally. It 
 certify deployed CORS, real-account commerce or installed-device acceptance. The existing
 live browser mode remains separate and needs the authorized API already running.
 
+## MapLibre address maps — 2026-10-08
+
+Current optional map dependencies are `maplibre_gl: 0.27.1` and the existing
+`geolocator` constraint/lock. MapLibre replaces `flutter_map` and `latlong2`; the
+original table below remains historical compatibility evidence. JDK 21 is required
+for the MapLibre plugin; retain the project's current Flutter/Gradle/AGP stack.
+Web requires WebGL2 and the default plugin's pinned JS/CSS/worker host `unpkg.com`;
+no manual scripts are needed in `web/index.html`.
+
+Geoapify still supplies both forward geocoding and light raster tiles. Enable only
+with `--dart-define=MAPS_ENABLED=true` and an approved public
+`--dart-define=GEOAPIFY_PUBLIC_API_KEY=<public-key>`; these are public build inputs.
+Missing inputs keep maps disabled and manual address saving available. See
+[map guidance](maps-location-api.md) and [verification](references/maplibre-verification.md).
+
 ## Current Phases 1–4 local development
 
 The ten approved package pins support implemented auth, discovery/account, commerce and communication.
@@ -104,9 +119,8 @@ dependencies:
   shared_preferences: 2.5.3
   url_launcher: 6.3.2
   flutter_markdown_plus: 1.0.12
-  # Optional pinning only; omit these three for a text-only delivery.
-  flutter_map: 8.2.2
-  latlong2: 0.9.1
+  # Optional pinning only; omit these two for a text-only delivery.
+  maplibre_gl: 0.27.1
   geolocator: 14.0.2
 flutter:
   uses-material-design: true
