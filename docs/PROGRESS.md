@@ -25,3 +25,11 @@ Format:
 ## 2026-10-08
 
 - Added the [archive evidence index](logs/README.md) and taught bundle validation to resolve only dated verbatim progress archives from their original `docs/` base. Missing targets and ordinary-document links still fail validation. All eleven Python tooling tests and final bundle/spec/PSGC/Android validation pass; historical archive bytes remain unchanged.
+
+
+## 2026-10-08
+
+- Verified the user-supplied Geoapify key on `test/geoapify-live-address-maps` using only its `.env` entry under the user's explicit authorization; no key or other environment values were printed, committed or added to source. Laravel baseline remains `57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50`; no application/backend/wire/dependency changes.
+- Live public-landmark geocoding and raster tiles returned HTTP 200 with valid Philippine coordinates/PNG without browser headers. Isolated initial HTTP 401 rejection to `Origin: http://localhost:8766`; referrer alone succeeded. After the user added the exact allowed origin, the same Origin/referrer tile request and full live browser smoke passed.
+- Added opt-in `--live-geoapify` to the existing MapLibre browser harness. Actual provider lookup/tiles, raster content without SDK errors, tap/drag, candidate recentering, retained resizing, Cancel renderer disposal and Retry pass with accessibility enabled; quota failure remains intentionally injected. Default synthetic mode also passes and blocks provider traffic. Laravel replies remain synthetic, with only the synthetic login writing to the intercepted API; no real account/private address or Laravel write was used.
+- Web release build with ignored public-key configuration passed in 98.0 seconds; eleven Python tooling tests and syntax checks pass. No attached Android device was available, so native rendering/GPS/TalkBack, production key restrictions/quotas and real-account CRUD/shipping gates remain open. See [live provider evidence](references/geoapify-live-verification.md). Temporary key configuration is removed after verification; progress remains below the archive threshold.

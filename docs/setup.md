@@ -41,6 +41,10 @@ with `--dart-define=MAPS_ENABLED=true` and an approved public
 Missing inputs keep maps disabled and manual address saving available. See
 [map guidance](maps-location-api.md) and [verification](references/maplibre-verification.md).
 
+The smoke harness accepts `--live-geoapify` for real public-landmark lookup/tiles
+while keeping Laravel responses synthetic. Use a public-key build and allow the
+exact local origin in the provider settings. See [live-key results](references/geoapify-live-verification.md).
+
 ## Current Phases 1–4 local development
 
 The ten approved package pins support implemented auth, discovery/account, commerce and communication.

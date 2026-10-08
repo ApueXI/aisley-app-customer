@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
-"""Verify MapLibre with synthetic API/provider responses at localhost:8766.
+"""Verify MapLibre at localhost:8766 with synthetic Laravel responses.
 
-Requires a web build with MAPS_ENABLED=true and a synthetic public Geoapify key,
-Chromium and chromedriver. No Laravel/provider request or real credential is used.
+Requires a web build with MAPS_ENABLED=true, Chromium and chromedriver. Provider
+responses are synthetic by default. --live-geoapify exercises the compiled public
+key with public-landmark lookup and real tiles; it never writes to Laravel.
 The plugin's pinned MapLibre JS/CSS/worker resources load from its default CDN.
 """
+import argparse
 import base64
 import json
 import shutil
@@ -34,6 +36,10 @@ def tile_png():
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--live-geoapify', action='store_true',
+                        help='Use live Geoapify lookup/tiles with a public-key web build; Laravel remains synthetic.')
+    live_provider = parser.parse_args().live_geoapify
     browser, driver = shutil.which('chromium'), shutil.which('chromedriver')
     if not browser or not driver:
         raise SystemExit('Chromium and chromedriver are required.')
@@ -76,6 +82,9 @@ def main():
                 if script(source):
                     return
                 time.sleep(.15)
+            if live_provider:
+                diagnostics = script("return {mapInstances:window.buyerMapInstances?.length ?? 0,tileStatus:window.buyerLiveTileStatus ?? null,lookupStatus:window.buyerLiveLookupStatus ?? null,rendererErrors:window.buyerRendererErrors ?? 0,mapFallback:document.body.innerText.includes('Retry map')};")
+                print('Live check diagnostics (no URLs/credentials): ' + json.dumps(diagnostics))
             raise AssertionError(description)
 
         def text(value):
@@ -96,6 +105,13 @@ def main():
                     'role': 'customer', 'status': 'active'}
         address = fixture('address-book', 'op-015')
         address['data'][0].update(latitude=14.6, longitude=121, country='Philippines')
+        if live_provider:
+            # Public landmark, never a person's address or real customer record.
+            address['data'][0].update(addressLine1='Rizal Park', addressLine2='',
+                barangay='Ermita', cityMunicipality='Manila',
+                province='National Capital Region (NCR)',
+                region='National Capital Region (NCR)', postalCode='1000',
+                latitude=14.5831, longitude=120.9794)
         replies = {
             '/api/v1/customer/auth/login': {'message': 'Synthetic sign-in', 'customer': identity, 'token': 'synthetic-map-session'},
             '/api/v1/customer/auth/me': {'customer': identity},
@@ -107,6 +123,7 @@ def main():
         inject = '''
         const replies = REPLIES;
         const tile = TILE;
+        const liveProvider = LIVE_PROVIDER;
         window.buyerMapRequests = []; window.buyerMapProviderDenied = false;
         window.buyerMapInstances = [];
         const realFetch = window.fetch;
@@ -122,16 +139,22 @@ def main():
             if(options?.headers && JSON.stringify(options.headers).toLowerCase().includes('authorization'))
               throw new Error('Private authorization reached provider');
             window.buyerMapRequests.push({kind:uri.pathname.includes('geocode') ? 'geocode' : 'tile'});
+            if(window.buyerMapProviderDenied) return Promise.resolve(new Response('{}', {status:429,headers:{'Content-Type':'application/json'}}));
+            if(liveProvider) return realFetch.apply(this, arguments).then(async response => {
+              if(uri.pathname.includes('geocode')) {
+                window.buyerLiveLookupStatus = response.status;
+                if(response.ok) window.buyerLiveCandidate = (await response.clone().json()).results?.[0];
+              } else window.buyerLiveTileStatus = response.status;
+              return response;
+            });
             if(uri.pathname.includes('geocode')) return Promise.resolve(new Response(JSON.stringify({results:[
               {lat:14.6,lon:121,country_code:'ph',formatted:'Synthetic lookup candidate'}]}),
               {headers:{'Content-Type':'application/json'}}));
-            if(window.buyerMapProviderDenied) return Promise.resolve(new Response('{}', {status:429,headers:{'Content-Type':'application/json'}}));
             return realFetch('data:image/png;base64,' + tile);
           }
           return realFetch.apply(this, arguments);
         };
-        // Keep worker raster requests synthetic too. Capture the actual MapLibre
-        // engine for assertions while retaining the default plugin library loader.
+        // Capture the real renderer; replace worker tiles only in synthetic mode.
         const capture = new MutationObserver(() => {
           if(!document.querySelector('link[href*="unpkg.com/maplibre-gl"]')) return;
           capture.disconnect();
@@ -145,12 +168,16 @@ def main():
               options.transformRequest = (url) => {
                 if(url.includes('geoapify.com')) {
                   window.buyerMapRequests.push({kind:'renderer-tile'});
-                  return {url:'data:image/png;base64,' + tile};
+                  if(!liveProvider) return {url:'data:image/png;base64,' + tile};
                 }
                 return {url};
               };
               super(options);
-              this.on('error',()=>{});
+              this.on('error',()=>{window.buyerRendererErrors=(window.buyerRendererErrors ?? 0)+1;});
+              this.on('sourcedata',event=>{
+                if(event.sourceId==='geoapify' && event.sourceDataType==='content')
+                  window.buyerRasterContents=(window.buyerRasterContents ?? 0)+1;
+              });
               this.on('click',()=>{window.buyerMapClickCount=(window.buyerMapClickCount ?? 0)+1;});
               window.buyerMapInstances.push(this);
             }
@@ -162,10 +189,13 @@ def main():
           }});
         });
         capture.observe(document,{childList:true,subtree:true});
-        '''.replace('REPLIES', json.dumps(replies)).replace('TILE', json.dumps(base64.b64encode(tile_png()).decode()))
+        '''.replace('REPLIES', json.dumps(replies)).replace('TILE', json.dumps(base64.b64encode(tile_png()).decode())).replace('LIVE_PROVIDER', json.dumps(live_provider))
         call(prefix + '/goog/cdp/execute', {'cmd': 'Page.addScriptToEvaluateOnNewDocument', 'params': {'source': inject}})
         call(prefix + '/goog/cdp/execute', {'cmd': 'Network.enable', 'params': {}})
-        call(prefix + '/goog/cdp/execute', {'cmd': 'Network.setBlockedURLs', 'params': {'urls': ['*geoapify.com*', 'https://api.example.invalid/*']}})
+        blocked = ['https://api.example.invalid/*']
+        if not live_provider:
+            blocked.append('*geoapify.com*')
+        call(prefix + '/goog/cdp/execute', {'cmd': 'Network.setBlockedURLs', 'params': {'urls': blocked}})
         call(prefix + '/url', {'url': 'http://localhost:8766'})
         wait_for("const p=document.querySelector('flt-semantics-placeholder');if(p)p.click();return document.querySelector('input[aria-label=Email]') !== null;", 'Sign-in semantics unavailable.')
         for label, value in [('Email', 'synthetic@example.invalid'), ('Password', 'Synthetic123')]:
@@ -180,7 +210,11 @@ def main():
         click('Pin location or use GPS')
         text('Confirm address pin')
         wait_for("return window.buyerMapInstances.length === 1 && document.body.innerText.includes('© OpenMapTiles') && !document.querySelector('[role=progressbar]');", 'MapLibre pin did not become ready.')
-        wait_for("return window.buyerMapInstances[0].areTilesLoaded() && window.buyerMapRequests.some(r=>r.kind==='renderer-tile');", 'Synthetic raster tiles must render.')
+        wait_for("return window.buyerMapInstances[0].areTilesLoaded() && window.buyerMapRequests.some(r=>r.kind==='renderer-tile');", 'Raster tiles must render.')
+        if live_provider:
+            assert script('return window.buyerLiveTileStatus === 200;'), 'Live Geoapify tile probe must succeed.'
+            wait_for('return (window.buyerRasterContents ?? 0)>0;', 'Live raster content must reach MapLibre.')
+            assert script('return (window.buyerRendererErrors ?? 0)===0;'), 'Live raster loading must have no SDK errors.'
         canvas = script("const c=document.querySelector('.maplibregl-canvas');c.scrollIntoView({block:'center'});const r=c.getBoundingClientRect();return {x:r.left+r.width/2,y:r.top+r.height/2};")
         # Actual browser map click, away from the centered pin.
         call(prefix + '/actions', {'actions': [{'type': 'pointer', 'id': 'map-tap', 'parameters': {'pointerType': 'mouse'}, 'actions': [
@@ -197,13 +231,19 @@ def main():
             {'type': 'pointerMove', 'origin': 'viewport', 'x': round(canvas['x'] + 95), 'y': round(canvas['y'] - 30), 'duration': 500},
             {'type': 'pointerUp', 'button': 0}]}]})
         wait_for("const f=window.buyerMapInstances[0].queryRenderedFeatures().find(f=>f.properties.draggable);return f && JSON.stringify(f.geometry.coordinates) !== " + json.dumps(json.dumps(tapped, separators=(',', ':'))) + ";", 'Pin drag must update coordinates.')
-        directory = Path('build/verification/maplibre-screenshots')
-        directory.mkdir(parents=True, exist_ok=True)
-        (directory / 'address-pin.png').write_bytes(base64.b64decode(call(prefix + '/screenshot')))
+        if not live_provider:
+            directory = Path('build/verification/maplibre-screenshots')
+            directory.mkdir(parents=True, exist_ok=True)
+            (directory / 'address-pin.png').write_bytes(base64.b64decode(call(prefix + '/screenshot')))
         click('Find this address on the map')
-        text('Synthetic lookup candidate')
-        click('Synthetic lookup candidate', exact=False)
-        wait_for("return Math.abs(window.buyerMapInstances[0].getCenter().lat-14.6) < .000001;", 'Candidate selection must recenter map.')
+        if live_provider:
+            wait_for("const c=window.buyerLiveCandidate;return window.buyerLiveLookupStatus===200 && c && Number.isFinite(c.lat) && Number.isFinite(c.lon) && c.country_code==='ph';", 'Live public-landmark lookup must return valid Philippine coordinates.')
+            wait_for("const label=window.buyerLiveCandidate.formatted;const b=Array.from(document.querySelectorAll('[flt-tappable]')).find(e=>(e.innerText || e.getAttribute('aria-label') || '').includes(label));if(b){b.click();return true;}return false;", 'Live lookup candidate must be selectable.')
+            wait_for("const m=window.buyerMapInstances[0],c=window.buyerLiveCandidate;return Math.abs(m.getCenter().lat-c.lat)<.000001 && Math.abs(m.getCenter().lng-c.lon)<.000001;", 'Live candidate must recenter map.')
+        else:
+            text('Synthetic lookup candidate')
+            click('Synthetic lookup candidate', exact=False)
+            wait_for("return Math.abs(window.buyerMapInstances[0].getCenter().lat-14.6) < .000001;", 'Candidate selection must recenter map.')
         assert script("return window.buyerMapRequests.filter(r=>r.kind==='geocode').length === 1 && window.buyerMapInstances.length === 1;"), 'Lookup must retain the map instance.'
         for width, height in [(320, 640), (844, 390), (1440, 900)]:
             call(prefix + '/goog/cdp/execute', {'cmd': 'Emulation.setDeviceMetricsOverride', 'params': {'width': width, 'height': height, 'deviceScaleFactor': 1, 'mobile': False}})
@@ -225,7 +265,8 @@ def main():
         text('Edit address')
         wait_for('return window.buyerMapRemoved === 2;', 'Retry map must also release the renderer on Cancel.')
         assert script("return window.buyerMapRequests.filter(r=>r.kind==='api' && r.method==='POST').length === 1;"), 'Only the synthetic login may write to the API.'
-        print('PASS: actual MapLibre renderer/raster tiles, tap/drag, Geoapify lookup/recenter, retained resizing, Cancel disposal, quota fallback and deliberate Retry; synthetic API/provider responses only.')
+        provider = 'live Geoapify with a public landmark' if live_provider else 'synthetic provider replies'
+        print('PASS: actual MapLibre raster rendering, tap/drag, lookup/recenter, retained resizing, Cancel disposal, simulated quota fallback and deliberate Retry; ' + provider + '; Laravel replies synthetic only.')
     finally:
         if session:
             try:
