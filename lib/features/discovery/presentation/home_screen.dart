@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -7,6 +9,7 @@ import '../data/catalog_models.dart';
 import '../data/home_models.dart';
 import 'catalog_widgets.dart';
 import 'home_controller.dart';
+import 'product_purchase_flow.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.dependencies});
@@ -23,6 +26,9 @@ class _HomeScreenState extends State<HomeScreen> {
     recentlyViewed: widget.dependencies.recentlyViewed!,
   );
 
+  final _search = TextEditingController();
+  bool _showAllCategories = false;
+
   @override
   void initState() {
     super.initState();
@@ -31,6 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    _search.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -47,11 +54,12 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: pagePadding(context),
           child: Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 1120),
+              constraints: const BoxConstraints(maxWidth: 1200),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _searchBar(context),
+                  if (MarketplaceScope.maybeOf(context)?.active != true)
+                    _searchBar(context),
                   if (_controller.loading && home == null)
                     const Padding(
                       padding: EdgeInsets.only(top: 56),
@@ -132,29 +140,32 @@ class _HomeScreenState extends State<HomeScreen> {
     ),
   );
 
-  Widget _searchBar(BuildContext context) => Semantics(
-    button: true,
-    label: 'Search Products or Shops',
-    child: InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: () => context.push('/search'),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          border: Border.all(color: const Color(0xFFD9D1D8)),
-          borderRadius: BorderRadius.circular(12),
-          color: const Color(0xFFFFFBFD),
-        ),
-        child: Row(
-          children: [
-            Icon(Icons.search, color: Theme.of(context).colorScheme.secondary),
-            const SizedBox(width: 12),
-            const Expanded(child: Text('Search Products and Shops')),
-            const Icon(Icons.arrow_forward, size: 18),
-          ],
-        ),
+  Widget _searchBar(BuildContext context) => TextField(
+    controller: _search,
+    maxLength: 100,
+    textInputAction: TextInputAction.search,
+    onSubmitted: _submitSearch,
+    decoration: InputDecoration(
+      counterText: '',
+      labelText: 'Search Products or Shops',
+      hintText: 'Search Products and Shops',
+      prefixIcon: const Icon(Icons.search),
+      suffixIcon: IconButton(
+        tooltip: 'Search',
+        icon: const Icon(Icons.arrow_forward),
+        onPressed: () => _submitSearch(_search.text),
       ),
     ),
+  );
+
+  void _submitSearch(String value) => context.push(
+    Uri(
+      path: '/search',
+      queryParameters: {
+        'mode': 'products',
+        if (value.trim().isNotEmpty) 'q': value.trim(),
+      },
+    ).toString(),
   );
 
   HomeCampaign? _campaign(BuyerHome home) {
@@ -168,9 +179,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return null;
   }
 
-  List<QuickAction> _supportedActions(BuyerHome home) => home.quickActions
-      .where((action) => const {'search', 'shops'}.contains(action.key))
-      .toList();
+  List<QuickAction> _supportedActions(BuyerHome home) =>
+      home.quickActions.where((action) => action.key == 'search').toList();
 
   Widget _campaignBanner(BuildContext context, HomeCampaign campaign) => Card(
     clipBehavior: Clip.antiAlias,
@@ -180,7 +190,9 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (campaign.imageMobileUrl ?? campaign.imageDesktopUrl
+          if ((MediaQuery.sizeOf(context).width >= 600
+                  ? campaign.imageDesktopUrl ?? campaign.imageMobileUrl
+                  : campaign.imageMobileUrl ?? campaign.imageDesktopUrl)
               case final url?)
             AspectRatio(
               aspectRatio: 2.4,
@@ -206,26 +218,92 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _categories(
     BuildContext context,
     List<HomeCategory> categories,
-  ) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const SectionHeading(title: 'Explore categories'),
-      const SizedBox(height: 8),
-      Wrap(
-        spacing: 8,
-        runSpacing: 8,
+  ) => LayoutBuilder(
+    builder: (context, constraints) {
+      final tileWidth = (104 * catalogTextScale(context)).clamp(
+        0.0,
+        constraints.maxWidth,
+      );
+      final labelStyle = DefaultTextStyle.of(context).style;
+      var labelHeight = 0.0;
+      for (final category in categories) {
+        final painter = TextPainter(
+          text: TextSpan(text: category.name, style: labelStyle),
+          textDirection: Directionality.of(context),
+          textScaler: MediaQuery.textScalerOf(context),
+        )..layout(maxWidth: tileWidth - 24);
+        if (painter.height > labelHeight) labelHeight = painter.height;
+        painter.dispose();
+      }
+      final tileHeight = 24 + 48 + 8 + labelHeight.ceilToDouble();
+      final capacity = ((constraints.maxWidth + 8) / (tileWidth + 8))
+          .floor()
+          .clamp(1, categories.length);
+      final showToggle = categories.length > capacity;
+      final visible = _showAllCategories
+          ? categories
+          : categories.take(capacity).toList();
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (final category in categories)
-            OutlinedButton(
-              onPressed: () => context.push(
-                '/search?mode=products&q=${Uri.encodeQueryComponent(category.name)}',
-              ),
-              child: Text(category.name),
-            ),
+          SectionHeading(
+            title: 'Explore Categories',
+            action: showToggle
+                ? TextButton(
+                    onPressed: () => setState(
+                      () => _showAllCategories = !_showAllCategories,
+                    ),
+                    child: Text(_showAllCategories ? 'Show less' : 'Show all'),
+                  )
+                : null,
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              for (final category in visible)
+                SizedBox(
+                  width: tileWidth,
+                  height: tileHeight,
+                  child: Card(
+                    margin: EdgeInsets.zero,
+                    child: InkWell(
+                      onTap: () => context.push(
+                        '/search?mode=products&q=${Uri.encodeQueryComponent(category.name)}',
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          children: [
+                            if (category.imageUrl != null)
+                              CatalogImage(
+                                url: category.imageUrl,
+                                discovery: widget.dependencies.discovery!,
+                                width: 48,
+                                height: 48,
+                                label: category.name,
+                              )
+                            else
+                              const SizedBox(
+                                width: 48,
+                                height: 48,
+                                child: Icon(Icons.category_outlined, size: 32),
+                              ),
+                            const SizedBox(height: 8),
+                            Text(category.name, textAlign: TextAlign.center),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 18),
         ],
-      ),
-      const SizedBox(height: 18),
-    ],
+      );
+    },
   );
 
   Widget _quickActions(BuildContext context, List<QuickAction> actions) => Wrap(
@@ -257,7 +335,7 @@ class _HomeScreenState extends State<HomeScreen> {
           title: title,
           action: TextButton(
             onPressed: () => context.push('/search'),
-            child: const Text('See more'),
+            child: const Text('See all'),
           ),
         ),
         const SizedBox(height: 8),
@@ -274,6 +352,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     product: product,
                     discovery: widget.dependencies.discovery!,
                     onTap: () => context.push('/products/${product.id}'),
+                    onAddToCart: () => unawaited(
+                      beginProductPurchase(
+                        context: context,
+                        dependencies: widget.dependencies,
+                        productId: product.id,
+                        action: ProductPurchaseAction.addToCart,
+                      ),
+                    ),
                   ),
                 ),
             ],
@@ -298,6 +384,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 product: product,
                 discovery: widget.dependencies.discovery!,
                 onTap: () => context.push('/products/${product.id}'),
+                onAddToCart: () => unawaited(
+                  beginProductPurchase(
+                    context: context,
+                    dependencies: widget.dependencies,
+                    productId: product.id,
+                    action: ProductPurchaseAction.addToCart,
+                  ),
+                ),
               ),
           ],
         ),

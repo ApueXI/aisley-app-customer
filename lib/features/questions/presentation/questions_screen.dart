@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
 import '../../../core/ui/form_page.dart';
+import '../../../core/ui/marketplace_widgets.dart';
 import '../../../core/communication/text_rules.dart';
 import 'question_controllers.dart';
 
@@ -87,22 +88,24 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
             if (list.loaded && list.items.isEmpty)
               const Text('No questions yet.'),
             for (final item in list.items)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SelectableText(
-                    item.question,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  if (item.askedAt != null)
-                    Text(item.askedAt!.toLocal().toString()),
-                  if (item.answer != null) ...[
-                    Text('Official answer · ${item.sellerLabel ?? 'Seller'}'),
-                    SelectableText(item.answer!),
-                  ] else
-                    const Text('Awaiting an official Seller answer.'),
-                  const Divider(),
-                ],
+              MarketSection(
+                title: 'Question',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SelectableText(
+                      item.question,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    if (item.askedAt != null)
+                      Text(item.askedAt!.toLocal().toString()),
+                    if (item.answer != null) ...[
+                      Text('Official answer · ${item.sellerLabel ?? 'Seller'}'),
+                      SelectableText(item.answer!),
+                    ] else
+                      const Text('Awaiting an official Seller answer.'),
+                  ],
+                ),
               ),
             if (list.pageError != null) Text(list.pageError!),
             if (list.hasMore)

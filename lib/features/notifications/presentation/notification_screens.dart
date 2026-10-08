@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
 import '../../../core/ui/responsive_layout.dart';
+import '../../../core/ui/marketplace_widgets.dart';
 import '../data/notification_models.dart';
 import 'notification_controllers.dart';
 
@@ -49,67 +50,66 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
                 ),
               ],
             ),
-            body: SafeArea(
-              child: ListView(
-                padding: pagePadding(context),
-                children: [
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      for (final status in ['all', 'unread', 'read'])
-                        ChoiceChip(
-                          label: Text(status),
-                          selected: controller.status == status,
-                          onSelected: (_) => controller.filter(status),
-                        ),
-                    ],
+            body: ListView(
+              padding: pagePadding(context),
+              children: [
+                MarketTabs<String>(
+                  values: const {
+                    'all': 'All',
+                    'unread': 'Unread',
+                    'read': 'Read',
+                  },
+                  selected: controller.status,
+                  onSelected: controller.filter,
+                ),
+                if (controller.loading)
+                  const LinearProgressIndicator(
+                    semanticsLabel: 'Loading notifications',
                   ),
-                  if (controller.loading)
-                    const LinearProgressIndicator(
-                      semanticsLabel: 'Loading notifications',
-                    ),
-                  if (controller.error != null) ...[
-                    Text(controller.error!),
-                    TextButton(
-                      onPressed: controller.coolingDown
-                          ? null
-                          : controller.load,
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                  if (controller.loaded && controller.items.isEmpty)
-                    const Text('No notifications in this filter.'),
-                  for (final item in controller.items)
-                    ListTile(
-                      minTileHeight: 72,
-                      title: Text(
-                        item.title.isEmpty ? 'Notification' : item.title,
-                      ),
-                      subtitle: Text(
-                        '${item.readAt == null ? 'Unread\n' : ''}${item.summary}',
-                      ),
-                      onTap: () async {
-                        await context.push('/notifications/${item.id}');
-                        if (mounted) controller.load();
-                      },
-                    ),
-                  if (controller.pageError != null) Text(controller.pageError!),
-                  if (controller.hasMore)
-                    TextButton(
-                      onPressed:
-                          controller.loading ||
-                              controller.paging ||
-                              controller.coolingDown
-                          ? null
-                          : () => controller.load(more: true),
-                      child: const Text('Load more notifications'),
-                    ),
+                if (controller.error != null) ...[
+                  Text(controller.error!),
                   TextButton(
-                    onPressed: () => context.push('/account/preferences'),
-                    child: const Text('Promotional preferences'),
+                    onPressed: controller.coolingDown ? null : controller.load,
+                    child: const Text('Retry'),
                   ),
                 ],
-              ),
+                if (controller.loaded && controller.items.isEmpty)
+                  const Text('No notifications in this filter.'),
+                for (final item in controller.items)
+                  ListTile(
+                    minTileHeight: 72,
+                    leading: Icon(
+                      item.readAt == null
+                          ? Icons.notifications_active_outlined
+                          : Icons.notifications_outlined,
+                    ),
+                    title: Text(
+                      item.title.isEmpty ? 'Notification' : item.title,
+                    ),
+                    subtitle: Text(
+                      '${item.readAt == null ? 'Unread\n' : ''}${item.summary}',
+                    ),
+                    onTap: () async {
+                      await context.push('/notifications/${item.id}');
+                      if (mounted) controller.load();
+                    },
+                  ),
+                if (controller.pageError != null) Text(controller.pageError!),
+                if (controller.hasMore)
+                  TextButton(
+                    onPressed:
+                        controller.loading ||
+                            controller.paging ||
+                            controller.coolingDown
+                        ? null
+                        : () => controller.load(more: true),
+                    child: const Text('Load more notifications'),
+                  ),
+                TextButton(
+                  onPressed: () => context.push('/account/preferences'),
+                  child: const Text('Promotional preferences'),
+                ),
+              ],
             ),
           ),
   );
@@ -167,52 +167,50 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
       final target = item == null ? null : notificationDestination(item);
       return ShoppingPage(
         appBar: AppBar(title: const Text('Notification')),
-        body: SafeArea(
-          child: ListView(
-            padding: pagePadding(context),
-            children: [
-              if (controller.loading)
-                const LinearProgressIndicator(
-                  semanticsLabel: 'Loading notification',
+        body: ListView(
+          padding: pagePadding(context),
+          children: [
+            if (controller.loading)
+              const LinearProgressIndicator(
+                semanticsLabel: 'Loading notification',
+              ),
+            if (controller.error != null) Text(controller.error!),
+            if (item != null) ...[
+              Text(
+                item.title.isEmpty ? 'Notification' : item.title,
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              SelectableText(item.summary),
+              if (item.createdAt != null)
+                Text(item.createdAt!.toLocal().toString()),
+              Text(item.readAt == null ? 'Unread' : 'Read'),
+              if (item.orderReference != null) Text(item.orderReference!),
+              if (target != '/notifications/${item.id}')
+                FilledButton(
+                  onPressed: () => context.push(target!),
+                  child: const Text('Open related content'),
+                )
+              else
+                const Text(
+                  'Related destination is unavailable. This notification remains readable.',
                 ),
-              if (controller.error != null) Text(controller.error!),
-              if (item != null) ...[
-                Text(
-                  item.title.isEmpty ? 'Notification' : item.title,
-                  style: Theme.of(context).textTheme.headlineSmall,
-                ),
-                SelectableText(item.summary),
-                if (item.createdAt != null)
-                  Text(item.createdAt!.toLocal().toString()),
-                Text(item.readAt == null ? 'Unread' : 'Read'),
-                if (item.orderReference != null) Text(item.orderReference!),
-                if (target != '/notifications/${item.id}')
-                  FilledButton(
-                    onPressed: () => context.push(target!),
-                    child: const Text('Open related content'),
-                  )
-                else
-                  const Text(
-                    'Related destination is unavailable. This notification remains readable.',
-                  ),
-              ],
-              if (controller.readError != null) ...[
-                Text(controller.readError!),
-                TextButton(
-                  onPressed: controller.reading || controller.coolingDown
-                      ? null
-                      : controller.displayed,
-                  child: const Text('Retry marking read'),
-                ),
-              ],
+            ],
+            if (controller.readError != null) ...[
+              Text(controller.readError!),
               TextButton(
-                onPressed: controller.loading || controller.coolingDown
+                onPressed: controller.reading || controller.coolingDown
                     ? null
-                    : controller.load,
-                child: const Text('Retry / refresh'),
+                    : controller.displayed,
+                child: const Text('Retry marking read'),
               ),
             ],
-          ),
+            TextButton(
+              onPressed: controller.loading || controller.coolingDown
+                  ? null
+                  : controller.load,
+              child: const Text('Retry / refresh'),
+            ),
+          ],
         ),
       );
     },

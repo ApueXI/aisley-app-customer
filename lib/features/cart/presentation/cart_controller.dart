@@ -11,6 +11,7 @@ class CartController extends CommerceController {
   Set<String> _selection = {};
   Set<String> get selection => Set.unmodifiable(_selection);
   bool loading = false, writing = false, stale = true, uncertain = false;
+  String? writingItemId, writingIntent;
   bool Function() locked = () => false;
   void Function()? onChanged;
   bool get canEdit =>
@@ -23,6 +24,19 @@ class CartController extends CommerceController {
       !locked();
   int? get badge => session.active && !stale ? cart?.itemCount : null;
 
+  bool? get selectAllValue {
+    final eligible =
+        cart?.items.where((line) => line.selectable).toList() ??
+        const <CartLine>[];
+    if (eligible.isEmpty) return false;
+    final selected = eligible
+        .where((line) => _selection.contains(line.id))
+        .length;
+    if (selected == 0) return false;
+    if (selected == eligible.length) return true;
+    return null;
+  }
+
   void select(String id, bool selected) {
     if (!canEdit ||
         cart?.items.any((line) => line.id == id && line.selectable) != true) {
@@ -32,6 +46,24 @@ class CartController extends CommerceController {
       _selection.add(id);
     } else {
       _selection.remove(id);
+    }
+    onChanged?.call();
+    notifyListeners();
+  }
+
+  void toggleSelectAllEligible() {
+    if (!canEdit) return;
+    final eligible =
+        cart?.items.where((line) => line.selectable).toList() ??
+        const <CartLine>[];
+    if (eligible.isEmpty) return;
+    final fullySelected = eligible.every(
+      (line) => _selection.contains(line.id),
+    );
+    if (fullySelected) {
+      _selection.removeAll(eligible.map((line) => line.id));
+    } else {
+      _selection.addAll(eligible.map((line) => line.id));
     }
     onChanged?.call();
     notifyListeners();
@@ -110,19 +142,31 @@ class CartController extends CommerceController {
         variantId: variantId,
         changeVariant: changeVariant,
       ),
+      itemId: id,
+      intent: 'edit',
     );
   }
 
   Future<bool> remove(String id) async {
     if (!canEdit) return false;
-    return _write((credential) => repository.remove(credential, id));
+    return _write(
+      (credential) => repository.remove(credential, id),
+      itemId: id,
+      intent: 'remove',
+    );
   }
 
-  Future<bool> _write(Future<BuyerCart> Function(SessionLease) action) async {
+  Future<bool> _write(
+    Future<BuyerCart> Function(SessionLease) action, {
+    String? itemId,
+    String? intent,
+  }) async {
     final credential = lease;
     if (credential == null) return false;
     final generation = epoch;
     writing = true;
+    writingItemId = itemId;
+    writingIntent = intent;
     error = null;
     fieldErrors = const {};
     onChanged?.call();
@@ -160,6 +204,8 @@ class CartController extends CommerceController {
           stale = true;
         }
         writing = false;
+        writingItemId = null;
+        writingIntent = null;
         notifyListeners();
       }
     }
@@ -171,6 +217,7 @@ class CartController extends CommerceController {
     cart = null;
     _selection.clear();
     loading = writing = false;
+    writingItemId = writingIntent = null;
     stale = true;
     onChanged?.call();
   }

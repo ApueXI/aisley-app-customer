@@ -35,7 +35,11 @@ void main() {
   for (final layout in [
     (size: const Size(320, 640), scale: 1.0),
     (size: const Size(320, 640), scale: 2.0),
+    (size: const Size(390, 844), scale: 1.0),
+    (size: const Size(600, 960), scale: 2.0),
+    (size: const Size(800, 1280), scale: 1.0),
     (size: const Size(1024, 768), scale: 1.0),
+    (size: const Size(1440, 900), scale: 1.0),
     (size: const Size(640, 320), scale: 2.0),
   ]) {
     for (final feature in [
@@ -94,8 +98,8 @@ void main() {
               await tester.pumpAndSettle();
               await check(tester);
             } else if (feature == 'checkout') {
-              await tester.ensureVisible(find.text('Get current quote'));
-              await tester.tap(find.text('Get current quote'));
+              await tester.ensureVisible(find.text('Review order'));
+              await tester.tap(find.text('Review order'));
               await tester.pumpAndSettle();
               expect(h.commerce.checkout.canPlace, isTrue);
               await tester.ensureVisible(find.text('Place COD order'));

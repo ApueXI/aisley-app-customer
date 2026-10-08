@@ -25,18 +25,26 @@ class BuyerShell extends StatelessWidget {
     builder: (context, _) => !session.active
         ? const SizedBox.shrink()
         : Scaffold(
-            appBar: AppBar(
-              title: const Text('AISLEY'),
-              actions: [
-                IconButton(
-                  tooltip: 'Terms and privacy',
-                  icon: const Icon(Icons.policy_outlined),
-                  onPressed: () => context.push('/policies/terms_of_service'),
-                ),
-              ],
+            appBar: marketplaceAppBar(
+              context,
+              marketplaceDesktop(context)
+                  ? null
+                  : AppBar(
+                      title: const Text('AISLEY'),
+                      actions: [
+                        IconButton(
+                          tooltip: 'Terms and privacy',
+                          icon: const Icon(Icons.policy_outlined),
+                          onPressed: () =>
+                              context.push('/policies/terms_of_service'),
+                        ),
+                      ],
+                    ),
             ),
             body: SafeArea(child: ContentViewport(child: navigation)),
-            bottomNavigationBar: MediaQuery.viewInsetsOf(context).bottom > 0
+            bottomNavigationBar:
+                marketplaceDesktop(context) ||
+                    MediaQuery.viewInsetsOf(context).bottom > 0
                 ? null
                 : NavigationBar(
                     selectedIndex: navigation.currentIndex,
@@ -186,11 +194,9 @@ class ApprovalScreen extends StatelessWidget {
     onCancel: () => context.go('/login'),
     children: [
       const Text(
-        'Your registration is pending Admin approval. No sign-in session has been created.',
+        'Your registration has been submitted for approval. You can sign in once your account is approved.',
       ),
-      const Text(
-        'Try signing in after approval. Approval tracking and resubmission are unavailable in Buyer.',
-      ),
+      const Text('Try signing in after approval.'),
       FilledButton(
         onPressed: () => context.go('/login'),
         child: const Text('Return to sign in'),

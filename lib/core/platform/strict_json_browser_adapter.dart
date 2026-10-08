@@ -99,7 +99,10 @@ class StrictJsonBrowserAdapter implements HttpClientAdapter {
               'cache': 'no-store',
               'referrerPolicy':
                   publicMapProvider &&
-                      options.uri.origin == 'https://api.geoapify.com'
+                      const {
+                        'https://api.geoapify.com',
+                        'https://maps.geoapify.com',
+                      }.contains(options.uri.origin)
                   ? 'strict-origin-when-cross-origin'
                   : 'no-referrer',
               'redirect': 'error',

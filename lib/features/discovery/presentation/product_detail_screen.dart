@@ -3,10 +3,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
 import '../../../core/ui/responsive_layout.dart';
+import '../../../core/ui/marketplace_widgets.dart';
 import '../data/product_detail_model.dart';
-import 'catalog_widgets.dart';
 import 'product_controller.dart';
+import 'product_choices.dart';
 import 'product_information.dart';
+import 'product_gallery.dart';
 import 'product_purchase_actions.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -28,7 +30,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     widget.productId,
   );
   bool _recorded = false, _statusRequested = false;
-  final _galleryKey = GlobalKey(), _contentKey = GlobalKey();
+  final _galleryKey = GlobalKey(),
+      _contentKey = GlobalKey(),
+      _actionsKey = GlobalKey();
 
   @override
   void initState() {
@@ -49,43 +53,60 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => ShoppingPage(
-    appBar: AppBar(title: const Text('Product')),
-    body: ListenableBuilder(
-      listenable: _controller,
-      builder: (context, _) {
-        final product = _controller.product;
-        if (_controller.loading && product == null) {
-          return const Center(
-            child: CircularProgressIndicator(
-              semanticsLabel: 'Loading Product detail',
-            ),
-          );
-        }
-        if (_controller.error != null && product == null) {
-          return _unavailable(_controller.error!);
-        }
-        if (product == null) {
-          return _unavailable('Product detail is unavailable.');
-        }
-        if (!_recorded) {
-          _recorded = true;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) _recordView(product.id);
-          });
-        }
-        if (!_statusRequested && widget.dependencies.session.active) {
-          _statusRequested = true;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) {
-              widget.dependencies.savedStatus!.loadStatuses([product.id]);
-            }
-          });
-        }
-        return _detail(context, product);
-      },
+  Widget build(BuildContext context) => ListenableBuilder(
+    listenable: _controller,
+    builder: (context, _) => ShoppingPage(
+      appBar: AppBar(title: const Text('Product')),
+      body: _loaded(context),
+      bottomBar: !_wide(context) && _controller.product != null
+          ? PurchaseBar(child: _purchaseActions())
+          : null,
     ),
   );
+
+  bool _wide(BuildContext context) =>
+      (MediaQuery.sizeOf(context).width.clamp(0, 1200) -
+              pageSpacing(context) * 2) >=
+          840 &&
+      catalogTextScale(context) <= 1.5;
+
+  Widget _purchaseActions() => ProductPurchaseActions(
+    key: _actionsKey,
+    dependencies: widget.dependencies,
+    product: _controller,
+  );
+
+  Widget _loaded(BuildContext context) {
+    final product = _controller.product;
+    if (_controller.loading && product == null) {
+      return const Center(
+        child: CircularProgressIndicator(
+          semanticsLabel: 'Loading Product detail',
+        ),
+      );
+    }
+    if (_controller.error != null && product == null) {
+      return _unavailable(_controller.error!);
+    }
+    if (product == null) {
+      return _unavailable('Product detail is unavailable.');
+    }
+    if (!_recorded) {
+      _recorded = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _recordView(product.id);
+      });
+    }
+    if (!_statusRequested && widget.dependencies.session.active) {
+      _statusRequested = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          widget.dependencies.savedStatus!.loadStatuses([product.id]);
+        }
+      });
+    }
+    return _detail(context, product);
+  }
 
   Future<void> _recordView(String id) async {
     final session = widget.dependencies.session;
@@ -123,8 +144,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget _detail(BuildContext context, ProductDetail product) => LayoutBuilder(
     builder: (context, constraints) {
       final padding = pageSpacing(context);
-      final width = (constraints.maxWidth - padding * 2).clamp(0.0, 1120.0);
+      final width = (constraints.maxWidth - padding * 2).clamp(0.0, 1200.0);
       final wide = width >= 840 && catalogTextScale(context) <= 1.5;
+      final originalPrice = _controller.selectedVariant == null
+          ? product.originalPrice
+          : _controller.selectedVariant!.originalPrice;
       final content = Column(
         key: _contentKey,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -159,11 +183,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                if (product.originalPrice != null &&
-                    product.originalPrice! >
-                        (_controller.currentPrice ?? product.price))
+                if (originalPrice != null &&
+                    originalPrice > (_controller.currentPrice ?? product.price))
                   Text(
-                    'Was ₱${product.originalPrice!.toStringAsFixed(2)}',
+                    'Was ₱${originalPrice.toStringAsFixed(2)}',
                     style: const TextStyle(
                       decoration: TextDecoration.lineThrough,
                     ),
@@ -174,10 +197,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     child: Text(product.shortDescription!),
                   ),
                 const SizedBox(height: 16),
-                if (product.optionGroups.isNotEmpty) _options(product),
-                const SizedBox(height: 12),
-                _availability(product),
-                _quantity(context, product),
+                ProductChoices(
+                  product: product,
+                  controller: _controller,
+                  showOptions: false,
+                ),
                 const SizedBox(height: 12),
                 ListenableBuilder(
                   listenable: widget.dependencies.savedStatus!,
@@ -189,32 +213,42 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           child: Text(widget.dependencies.savedStatus!.error!),
                         ),
                 ),
-                ProductPurchaseActions(
-                  dependencies: widget.dependencies,
-                  product: _controller,
-                ),
+                if (wide) _purchaseActions(),
                 const SizedBox(height: 20),
+                Text('Shop', style: Theme.of(context).textTheme.titleLarge),
+                const SizedBox(height: 8),
                 _shopCard(context, product),
                 if (widget.dependencies.communication != null)
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      TextButton(
-                        onPressed: () =>
-                            context.push('/products/${product.id}/questions'),
-                        child: const Text('Questions & answers'),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Reviews and questions',
+                        style: Theme.of(context).textTheme.titleLarge,
                       ),
-                      TextButton(
-                        onPressed: () =>
-                            context.push('/products/${product.id}/reviews'),
-                        child: const Text('Reviews'),
-                      ),
-                      TextButton(
-                        onPressed: () => context.push(
-                          '/messages/shops/new/${product.shop.id}?context_type=product&context_id=${product.id}',
-                        ),
-                        child: const Text('Message Shop'),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          TextButton(
+                            onPressed: () => context.push(
+                              '/products/${product.id}/questions',
+                            ),
+                            child: const Text('Questions & answers'),
+                          ),
+                          TextButton(
+                            onPressed: () =>
+                                context.push('/products/${product.id}/reviews'),
+                            child: const Text('Reviews'),
+                          ),
+                          TextButton(
+                            onPressed: () => context.push(
+                              '/messages/shops/new/${product.shop.id}?context_type=product&context_id=${product.id}',
+                            ),
+                            child: const Text('Message Shop'),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -232,7 +266,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         padding: EdgeInsets.all(padding),
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1120),
+            constraints: const BoxConstraints(maxWidth: 1200),
             child: wide
                 ? Padding(
                     padding: const EdgeInsets.only(top: 16),
@@ -257,45 +291,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     },
   );
 
-  Widget _gallery(ProductDetail product) {
-    final variant = _controller.selectedVariant;
-    final selected = variant == null
-        ? product.media
-        : product.media
-              .where(
-                (media) =>
-                    media.variantId == null ||
-                    media.variantId == variant.id ||
-                    media.id == variant.primaryMediaId,
-              )
-              .toList();
-    final media = selected.isEmpty ? product.media : selected;
-    return LayoutBuilder(
-      key: _galleryKey,
-      builder: (context, constraints) => SizedBox(
-        height: constraints.maxWidth.clamp(180.0, 480.0),
-        child: PageView.builder(
-          key: PageStorageKey('gallery-${product.id}'),
-          itemCount: media.length,
-          itemBuilder: (context, index) => Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: CatalogImage(
-                url: media[index].url,
-                discovery: widget.dependencies.discovery!,
-                width: double.infinity,
-                fit: BoxFit.contain,
-                label: media[index].altText.isEmpty
-                    ? product.title
-                    : media[index].altText,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  Widget _gallery(ProductDetail product) => ProductGallery(
+    key: _galleryKey,
+    product: product,
+    variant: _controller.selectedVariant,
+    discovery: widget.dependencies.discovery!,
+  );
 
   Widget _wishlistButton(BuildContext context, String productId) {
     final session = widget.dependencies.session;
@@ -335,85 +336,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               : Icon(saved ? Icons.favorite : Icons.favorite_border),
         );
       },
-    );
-  }
-
-  Widget _options(ProductDetail product) => Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      for (final group in product.optionGroups)
-        Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: DropdownButtonFormField<String?>(
-            initialValue: _controller.selectedValues[group.id],
-            isExpanded: true,
-            itemHeight: null,
-            decoration: InputDecoration(labelText: group.name),
-            items: [
-              DropdownMenuItem<String?>(
-                value: null,
-                child: Text('Choose ${group.name}'),
-              ),
-              for (final value in group.values)
-                DropdownMenuItem<String?>(
-                  value: value.id,
-                  enabled: _controller.canChoose(group.id, value.id),
-                  child: Text(value.value),
-                ),
-            ],
-            onChanged: (value) {
-              if (value != null) _controller.choose(group.id, value);
-            },
-          ),
-        ),
-      if (_controller.selectedValues.isNotEmpty)
-        TextButton(
-          onPressed: _controller.resetChoices,
-          child: const Text('Clear choices'),
-        ),
-    ],
-  );
-
-  Widget _availability(ProductDetail product) {
-    if (_controller.requiresVariantSelection && !_controller.selectionValid) {
-      return const Text('Choose one available option from each group.');
-    }
-    final variant = _controller.selectedVariant;
-    if (variant != null && !variant.inStock ||
-        variant == null && !product.availability.inStock) {
-      return const Text('Currently unavailable');
-    }
-    final stock = _controller.availableStock;
-    return Text(stock == null ? 'Available' : '$stock available');
-  }
-
-  Widget _quantity(BuildContext context, ProductDetail product) {
-    final stock = _controller.availableStock;
-    return Wrap(
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        const Text('Quantity'),
-        const SizedBox(width: 12),
-        IconButton(
-          tooltip: 'Decrease quantity',
-          onPressed: _controller.quantity > 1 ? _controller.decrement : null,
-          icon: const Icon(Icons.remove_circle_outline),
-        ),
-        Semantics(
-          label: 'Quantity ${_controller.quantity}',
-          child: Text('${_controller.quantity}'),
-        ),
-        IconButton(
-          tooltip: 'Increase quantity',
-          onPressed:
-              stock != null &&
-                  _controller.quantity < stock &&
-                  _controller.available
-              ? _controller.increment
-              : null,
-          icon: const Icon(Icons.add_circle_outline),
-        ),
-      ],
     );
   }
 

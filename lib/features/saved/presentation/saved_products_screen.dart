@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/app_dependencies.dart';
 import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/form_page.dart';
+import '../../../core/ui/marketplace_widgets.dart';
 import '../../discovery/presentation/catalog_widgets.dart';
 import 'saved_products_controller.dart';
 
@@ -85,12 +86,47 @@ class _SavedProductsScreenState extends State<SavedProductsScreen> {
               ),
             ),
           for (final item in _controller.items)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
+            ProductBoundaryCard(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final scale = MediaQuery.textScalerOf(context).scale(1);
+                  final wide = constraints.maxWidth >= 560 * scale;
+                  final removing = _controller.pending.contains(
+                    item.product.id,
+                  );
+                  final details = Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.product.title,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      Text(
+                        '₱${item.product.price.toStringAsFixed(2)} · ${item.product.shop.name}',
+                      ),
+                      Text(
+                        '${_history ? 'Viewed' : 'Saved'} ${item.date.toLocal().toString().split('.').first}',
+                      ),
+                    ],
+                  );
+                  final actions = [
+                    TextButton(
+                      onPressed: () =>
+                          context.push('/products/${item.product.id}'),
+                      child: const Text('View product'),
+                    ),
+                    TextButton(
+                      onPressed: removing ? null : () => _remove(item),
+                      child: Text(
+                        removing
+                            ? 'Removing…'
+                            : _history
+                            ? 'Remove from history'
+                            : 'Remove from wishlist',
+                      ),
+                    ),
+                  ];
+                  final image = SizedBox(
                     width: 80,
                     height: 80,
                     child: CatalogImage(
@@ -98,39 +134,45 @@ class _SavedProductsScreenState extends State<SavedProductsScreen> {
                       discovery: widget.dependencies.discovery!,
                       label: item.product.title,
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
+                  );
+                  if (wide) {
+                    return Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        TextButton(
-                          onPressed: () =>
-                              context.push('/products/${item.product.id}'),
-                          child: Text(item.product.title),
-                        ),
-                        Text(
-                          '₱${item.product.price.toStringAsFixed(2)} · ${item.product.shop.name}',
-                        ),
-                        Text(
-                          '${_history ? 'Viewed' : 'Saved'} ${item.date.toLocal().toString().split('.').first}',
-                        ),
-                        TextButton.icon(
-                          onPressed:
-                              _controller.pending.contains(item.product.id)
-                              ? null
-                              : () => _remove(item),
-                          icon: const Icon(Icons.delete_outline),
-                          label: Text(
-                            _controller.pending.contains(item.product.id)
-                                ? 'Removing…'
-                                : 'Remove',
+                        image,
+                        const SizedBox(width: 12),
+                        Expanded(child: details),
+                        const SizedBox(width: 16),
+                        SizedBox(
+                          width: 210,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: actions,
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                ],
+                    );
+                  }
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          image,
+                          const SizedBox(width: 12),
+                          Expanded(child: details),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        alignment: WrapAlignment.end,
+                        spacing: 4,
+                        children: actions,
+                      ),
+                    ],
+                  );
+                },
               ),
             ),
           if (_controller.pageError != null) Text(_controller.pageError!),

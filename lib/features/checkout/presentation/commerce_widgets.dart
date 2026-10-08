@@ -6,21 +6,44 @@ import '../data/commerce_address.dart';
 class TotalsView extends StatelessWidget {
   const TotalsView(this.totals, {super.key});
   final CommerceTotals totals;
+  Widget _amount(
+    BuildContext context,
+    String label,
+    Money value, {
+    bool total = false,
+  }) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Wrap(
+      alignment: WrapAlignment.spaceBetween,
+      spacing: 16,
+      runSpacing: 4,
+      children: [
+        Text(
+          '$label:',
+          style: total ? Theme.of(context).textTheme.titleMedium : null,
+        ),
+        Text(
+          value.display(totals.currency),
+          style: total
+              ? Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontWeight: FontWeight.w700,
+                )
+              : null,
+        ),
+      ],
+    ),
+  );
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      Text('Items: ${totals.merchandise.display(totals.currency)}'),
-      Text('Shipping: ${totals.shipping.display(totals.currency)}'),
-      Text('Item discount: ${totals.discount.display(totals.currency)}'),
-      Text(
-        'Shipping discount: ${totals.shippingDiscount.display(totals.currency)}',
-      ),
-      const SizedBox(height: 8),
-      Text(
-        'Payable: ${totals.payable.display(totals.currency)}',
-        style: Theme.of(context).textTheme.titleLarge,
-      ),
+      _amount(context, 'Items', totals.merchandise),
+      _amount(context, 'Shipping', totals.shipping),
+      _amount(context, 'Item discount', totals.discount),
+      _amount(context, 'Shipping discount', totals.shippingDiscount),
+      const Divider(),
+      _amount(context, 'Payable', totals.payable, total: true),
     ],
   );
 }

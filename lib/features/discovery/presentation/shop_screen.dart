@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -5,6 +7,7 @@ import '../../../app/app_dependencies.dart';
 import '../../../core/ui/responsive_layout.dart';
 import '../data/catalog_models.dart';
 import 'catalog_widgets.dart';
+import 'product_purchase_flow.dart';
 import 'shop_controllers.dart';
 
 class ShopScreen extends StatefulWidget {
@@ -143,6 +146,14 @@ class _ShopScreenState extends State<ShopScreen> {
                         product: product,
                         discovery: widget.dependencies.discovery!,
                         onTap: () => context.push('/products/${product.id}'),
+                        onAddToCart: () => unawaited(
+                          beginProductPurchase(
+                            context: context,
+                            dependencies: widget.dependencies,
+                            productId: product.id,
+                            action: ProductPurchaseAction.addToCart,
+                          ),
+                        ),
                       ),
                   ],
                 ),
@@ -161,7 +172,7 @@ class _ShopScreenState extends State<ShopScreen> {
       children: [
         if (shop.bannerUrl != null)
           ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(8),
             child: CatalogImage(
               url: shop.bannerUrl,
               discovery: widget.dependencies.discovery!,

@@ -1,6 +1,6 @@
 # Buyer Flutter architecture
 
-Phases 1–4 implement this blueprint with partial acceptance. See [Phase 4 evidence](references/phase-4-verification.md) and [Phase 3 evidence](references/phase-3-verification.md). Android is the delivery target; browser support is for local testing at localhost:8766. Existing repositories must merge these choices with their own instructions and record material differences before implementation. Backend contracts were inspected at checkout `57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50`; the historical baseline remains in provenance.
+Phases 1–4 implement this blueprint with partial acceptance. See [Phase 4 evidence](references/phase-4-verification.md) and [Phase 3 evidence](references/phase-3-verification.md). Android is the delivery target; responsive web includes desktop browsers, tested locally at localhost:8766. Existing repositories must merge these choices with their own instructions and record material differences before implementation. Backend contracts were inspected at checkout `57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50`; the historical baseline remains in provenance.
 
 ## Composition and dependencies
 
@@ -68,8 +68,15 @@ Store uncertain supported operations as immutable `PendingMutation(key, payload,
 
 image_picker supplies XFile bytes/stream abstractions. Keep dart:io confined to conditional native adapters; web cannot use a native path. `retrieveLostData` must not attach a recovered file to a changed account/parent. Private images use authenticated byte fetch and in-memory display; only public review images use returned public URLs.
 
-PSGC assets ship in this bundle; the typed reader preserves actual hierarchy and manual fallback. Optional pinning uses flutter_map/latlong2 with an isolated Geoapify client; geolocator runs only after explicit user action/permission. Provider/GPS failure keeps text addresses usable. No background GPS or live Courier tracking. See [addresses/maps](maps-location-api.md).
+PSGC assets ship in this bundle; the typed reader preserves actual hierarchy and manual fallback. Optional pinning uses MapLibre with an isolated Geoapify client; geolocator runs only after explicit user action/permission. Provider/GPS failure keeps text addresses usable. No background GPS or live Courier tracking. See [addresses/maps](maps-location-api.md).
 
 ## Setup and verification
 
 [Fresh project setup](setup.md) contains exact SDK/package pins, asset declarations, environment and Android/web commands. Historical package metadata inspection is separate from the executed Phase 1 dependency, test and build evidence linked above. [Verification](verification.md) defines the tests needed to graduate each pending feature. Deployment/CORS/map credentials are external inputs, not bundled server settings.
+
+
+## Marketplace presentation
+
+Shared `MarketplaceScope` receives only verified-access and Cart badge display values from app composition. `MarketplaceHeader`, `ShoppingPage`, `FormPage`, `ContentViewport`, `PurchaseBar` and account context own presentation, not API/session decisions. Phone/tablet and desktop use the breakpoints/bounds in [Buyer design](design-buyer.md). GlobalKeys keep gallery, purchase controls and form content mounted when columns change. One scaffold/safe-area/keyboard owner prevents reserved actions from overlaying content.
+
+Optional Cart Shop metadata is a private lifecycle-aware display view model using the existing Product-detail repository: unique Product IDs, four concurrent reads, ungrouped failure fallback and obsolete-session rejection. Cart/checkout controllers retain financial and mutation authority. Three message channels remain independent; desktop inbox panes mount on first desktop exposure, stay mounted across resizing and poll only while visible. No wire contract, dependency or backend change accompanies the marketplace redesign.

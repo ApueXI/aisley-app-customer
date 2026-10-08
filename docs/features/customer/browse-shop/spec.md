@@ -57,6 +57,8 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 - Page beyond last offers first-page recovery, not a conclusion that the Shop has no Products.
 - Display a placeholder for missing logo/banner and meaningful Shop name; omit unprovided
   ratings/following.
+- Keep 16px between directory search and category controls, 24px before results and 12px between
+  Shop cards, including narrow layouts.
 - Product Detail opens valid Product UUID, retaining the Shop filter state on Back.
 - Shop chat receives public Shop ID and optional Product context only through its own
   repository/eligibility.

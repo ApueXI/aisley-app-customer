@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -5,6 +8,7 @@ import 'package:aisley_mobile_buyer/app/app_dependencies.dart';
 import 'package:aisley_mobile_buyer/app/communication_state.dart';
 import 'package:aisley_mobile_buyer/app/theme.dart';
 import 'package:aisley_mobile_buyer/core/ui/responsive_layout.dart';
+import 'package:aisley_mobile_buyer/core/ui/marketplace_widgets.dart';
 import 'package:aisley_mobile_buyer/features/account/presentation/account_home_screen.dart';
 import 'package:aisley_mobile_buyer/features/account/presentation/profile_screen.dart';
 import 'package:aisley_mobile_buyer/features/account/presentation/photo_screen.dart';
@@ -46,13 +50,15 @@ import '../support/communication_harness.dart';
 import '../support/account_fake.dart';
 import '../support/fakes.dart';
 
-const phoneTabletSizes = [
+const marketplaceSizes = [
   Size(320, 640),
   Size(360, 800),
   Size(390, 844),
   Size(412, 915),
   Size(600, 960),
   Size(800, 1280),
+  Size(1024, 768),
+  Size(1440, 900),
 ];
 
 Map<String, dynamic> longFixture(String feature, String operation) {
@@ -123,7 +129,7 @@ void main() {
     'ticket',
   ]) {
     testWidgets(
-      '$feature survives mounted phone/tablet, landscape, keyboard and text resizing',
+      '$feature survives mounted phone/tablet/desktop, landscape, keyboard and text resizing',
       (tester) async {
         SharedPreferences.setMockInitialValues({});
         final h = CommerceHarness();
@@ -172,7 +178,18 @@ void main() {
             return jsonReply(longFixture('order-status', 'op-032'));
           }
           if (path.endsWith('/home')) {
-            return jsonReply(longFixture('customer-homepage', 'op-047'));
+            final home = longFixture('customer-homepage', 'op-047');
+            final category = (home['categories'] as List).first as Map;
+            home['categories'] = [
+              {...category, 'name': 'Books'},
+              {
+                ...category,
+                'id': '22222222-2222-4222-8222-222222222222',
+                'name': 'Home and kitchen accessories',
+                'imageUrl': 'https://untrusted.invalid/category.png',
+              },
+            ];
+            return jsonReply(home);
           }
           if (path.endsWith('/products/search')) {
             return jsonReply(longFixture('search', 'op-019'));
@@ -187,10 +204,10 @@ void main() {
             return jsonReply(longFixture('browse-shop', 'op-023'));
           }
           if (path.endsWith('/wishlist')) {
-            return jsonReply(longFixture('wishlist', 'op-039'));
+            return jsonReply(longFixture('wishlist', 'op-037'));
           }
           if (path.endsWith('/recently-viewed')) {
-            return jsonReply(longFixture('recently-viewed-items', 'op-042'));
+            return jsonReply(longFixture('recently-viewed-items', 'op-041'));
           }
           if (path.contains('conversations') ||
               path.contains('support-tickets') ||
@@ -205,10 +222,6 @@ void main() {
           h.commerce.checkout.begin(
             CheckoutIntent.buyNow(BuyNowItem(customerId, null, 1)),
           );
-          await tester.runAsync(() async {
-            await h.commerce.checkout.loadAddresses();
-            await h.commerce.checkout.getQuote();
-          });
         }
         final screen = switch (feature) {
           'login' => LoginScreen(session: h.session),
@@ -300,18 +313,167 @@ void main() {
           builder: (context, child) => MediaQuery(
             data: MediaQuery.of(context)
                 .copyWith(textScaler: TextScaler.linear(scale)),
-            child: child!,
+            child: MarketplaceScope(
+              active: ![
+                'login',
+                'register',
+                'recovery',
+                'consent',
+                'policy',
+              ].contains(feature),
+              cartCount: h.commerce.cart.badge,
+              child: child!,
+            ),
           ),
           home: screen,
         );
         tester.view.devicePixelRatio = 1;
-        tester.view.physicalSize = phoneTabletSizes.first;
+        tester.view.physicalSize = marketplaceSizes.first;
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
         addTearDown(tester.view.resetViewInsets);
         await tester.pumpWidget(app());
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
+        if (feature == 'checkout') {
+          await tester.ensureVisible(find.text('Review order'));
+          await tester.tap(find.text('Review order'));
+          await tester.pumpAndSettle();
+          expect(h.commerce.checkout.quote, isNotNull);
+        }
+        if (feature == 'checkout' ||
+            feature == 'wishlist' ||
+            feature == 'history') {
+          final productCards = find.byType(ProductBoundaryCard);
+          expect(productCards, findsWidgets);
+          final outlinedCard = tester.widget<Card>(
+            find
+                .descendant(of: productCards.first, matching: find.byType(Card))
+                .first,
+          );
+          expect(
+            (outlinedCard.shape! as RoundedRectangleBorder).side.color,
+            const Color(0xFF8B8188),
+          );
+          if (feature == 'checkout') {
+            final firstItem =
+                h.commerce.checkout.quote!.groups.first.items.first;
+            expect(
+              find.descendant(
+                of: productCards.first,
+                matching: find.text(
+                  '${firstItem.name} × ${firstItem.quantity}',
+                ),
+              ),
+              findsOneWidget,
+            );
+          } else {
+            expect(
+              find.descendant(
+                of: productCards.first,
+                matching: find.text('View product'),
+              ),
+              findsOneWidget,
+            );
+            expect(
+              find.descendant(
+                of: productCards.first,
+                matching: find.text(
+                  feature == 'wishlist'
+                      ? 'Remove from wishlist'
+                      : 'Remove from history',
+                ),
+              ),
+              findsOneWidget,
+            );
+          }
+        }
+        if (feature == 'home') {
+          if (find.text('Show all').evaluate().isNotEmpty) {
+            await tester.ensureVisible(find.text('Show all'));
+            await tester.tap(find.text('Show all'));
+            await tester.pumpAndSettle();
+          }
+        }
+        if (feature == 'cart') {
+          expect(find.text('View product'), findsWidgets);
+          expect(find.text('Edit cart item'), findsWidgets);
+          final removal = find.text('Remove cart item').first;
+          final removeButton = find.ancestor(
+            of: removal,
+            matching: find.byType(TextButton),
+          );
+          expect(
+            tester.getSize(removeButton.first).height,
+            greaterThanOrEqualTo(48),
+          );
+          await tester.ensureVisible(removal);
+          await tester.pumpAndSettle();
+          final pending = Completer<ResponseBody>();
+          final previousReply = h.reply!;
+          h.reply = (request) =>
+              request.method == 'DELETE' &&
+                  request.uri.path.contains('/customer/cart/items/')
+              ? pending.future
+              : previousReply(request);
+          await tester.tap(removal);
+          await tester.pumpAndSettle();
+          expect(find.text('Remove item?'), findsOneWidget);
+          await tester.tap(find.text('Remove'));
+          await tester.pump();
+          expect(find.text('Removing…'), findsOneWidget);
+          pending.complete(jsonReply(h.cartJson));
+          await tester.pumpAndSettle();
+        } else if (feature == 'wishlist' || feature == 'history') {
+          final removeLabel = feature == 'wishlist'
+              ? 'Remove from wishlist'
+              : 'Remove from history';
+          expect(find.text('View product'), findsWidgets);
+          final removal = find.text(removeLabel).first;
+          final removeButton = find.ancestor(
+            of: removal,
+            matching: find.byType(TextButton),
+          );
+          expect(
+            tester.getSize(removeButton.first).height,
+            greaterThanOrEqualTo(48),
+          );
+          await tester.ensureVisible(removal);
+          await tester.pumpAndSettle();
+          final pending = Completer<ResponseBody>();
+          final previousReply = h.reply!;
+          h.reply = (request) =>
+              request.method == 'DELETE' &&
+                  request.uri.path.contains(
+                    feature == 'wishlist'
+                        ? '/customer/wishlist/'
+                        : '/customer/recently-viewed/',
+                  )
+              ? pending.future
+              : previousReply(request);
+          await tester.tap(removal);
+          await tester.pumpAndSettle();
+          expect(
+            find.text(
+              feature == 'wishlist'
+                  ? 'Remove from Wishlist?'
+                  : 'Remove from history?',
+            ),
+            findsOneWidget,
+          );
+          await tester.tap(find.text('Remove'));
+          await tester.pump();
+          expect(find.text('Removing…'), findsOneWidget);
+          pending.complete(
+            jsonReply(
+              fixture(
+                feature == 'wishlist' ? 'wishlist' : 'recently-viewed-items',
+                feature == 'wishlist' ? 'op-040' : 'op-043',
+              ),
+            ),
+          );
+          await tester.pumpAndSettle();
+        }
         TextField? input;
         FocusNode? inputFocus;
         if (find.byType(TextFormField).evaluate().isNotEmpty) {
@@ -330,8 +492,11 @@ void main() {
             find.descendant(of: field, matching: find.byType(TextField)).first,
           );
         }
+        // The desktop message pane is loaded once when first opened, then retained.
+        tester.view.physicalSize = const Size(1440, 900);
+        await tester.pumpAndSettle();
         final requests = h.adapter.requests.length;
-        for (final size in phoneTabletSizes) {
+        for (final size in marketplaceSizes) {
           for (final actual in [size, Size(size.height, size.width)]) {
             for (final textScale in [1.0, 1.5, 2.0]) {
               scale = textScale;
@@ -346,11 +511,45 @@ void main() {
                 isNull,
                 reason: '$feature $actual text $scale',
               );
+              if (feature == 'checkout') {
+                expect(
+                  find.byType(ProductBoundaryCard),
+                  findsWidgets,
+                  reason: '$feature $actual text $scale',
+                );
+              }
+              if (feature == 'home') {
+                if (find.text('Show all').evaluate().isNotEmpty) {
+                  await tester.ensureVisible(find.text('Show all'));
+                  await tester.tap(find.text('Show all'));
+                  await tester.pumpAndSettle();
+                }
+                final cards = ['Books', 'Home and kitchen accessories']
+                    .map(
+                      (label) => find
+                          .ancestor(
+                            of: find.text(label),
+                            matching: find.byType(Card),
+                          )
+                          .first,
+                    )
+                    .toList();
+                expect(tester.getSize(cards.first), tester.getSize(cards.last));
+              }
             }
           }
         }
         // Cross both breakpoints repeatedly while retaining the mounted screen.
-        for (final width in [599.0, 600.0, 839.0, 840.0, 900.0, 400.0]) {
+        for (final width in [
+          599.0,
+          600.0,
+          839.0,
+          840.0,
+          1023.0,
+          1024.0,
+          1440.0,
+          400.0,
+        ]) {
           tester.view.physicalSize = Size(width, 700);
           await tester.pumpAndSettle();
           expect(tester.takeException(), isNull);
@@ -364,6 +563,7 @@ void main() {
           requests,
           reason: 'Resizing must not refetch or write.',
         );
+        if (feature == 'checkout') h.commerce.checkout.invalidateQuote();
         await tester.pumpWidget(const SizedBox());
       },
     );

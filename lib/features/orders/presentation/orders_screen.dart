@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
 import '../../../core/ui/responsive_layout.dart';
+import '../../../core/ui/marketplace_widgets.dart';
 import '../data/order_models.dart';
 import 'orders_controller.dart';
 
@@ -61,21 +62,14 @@ class _OrdersScreenState extends State<OrdersScreen>
         padding: pagePadding(context),
         children: [
           if (_controller.tabs.isNotEmpty)
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
+            MarketTabs<String?>(
+              values: {
                 for (final tab in _controller.tabs)
-                  ChoiceChip(
-                    label: Text(tab.label),
-                    selected: _controller.group == tab.value,
-                    onSelected:
-                        tab.value == null || orderGroups.contains(tab.value)
-                        ? (_) => _controller.filter(tab.value)
-                        : null,
-                    materialTapTargetSize: MaterialTapTargetSize.padded,
-                  ),
-              ],
+                  if (tab.value == null || orderGroups.contains(tab.value))
+                    tab.value: tab.label,
+              },
+              selected: _controller.group,
+              onSelected: _controller.filter,
             ),
           if (_controller.loading)
             const LinearProgressIndicator(semanticsLabel: 'Loading Orders'),
@@ -90,18 +84,52 @@ class _OrdersScreenState extends State<OrdersScreen>
               _controller.items.isEmpty)
             const Text('No Orders in this group.'),
           for (final order in _controller.items)
-            Card(
-              margin: const EdgeInsets.only(top: 12),
-              child: ListTile(
-                title: Text('${order.shop.name}\n${order.reference}'),
-                subtitle: Text(
-                  '${order.statusLabel} · ${order.groupLabel}\n${order.item?.name ?? '${order.lineCount} configurations'}\n${order.itemCount} items · ${order.totals.payable.display(order.totals.currency)}',
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: MarketSection(
+                title: order.shop.name,
+                action: Text(
+                  order.statusLabel,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.secondary,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () async {
-                  await context.push('/orders/${order.id}');
-                  if (mounted) await _controller.load();
-                },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      order.reference,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      order.item?.name ?? '${order.lineCount} items',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    if (order.item?.variantName != null)
+                      Text(order.item!.variantName!),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${order.itemCount} items · ${order.totals.payable.display(order.totals.currency)}',
+                    ),
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: OutlinedButton(
+                        onPressed: () async {
+                          await context.push('/orders/${order.id}');
+                          if (mounted) await _controller.load();
+                        },
+                        child: Text(
+                          order.group == 'completed' && order.actions.canReview
+                              ? 'View order and review'
+                              : 'View order / tracking',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           if (_controller.pageError != null) Text(_controller.pageError!),

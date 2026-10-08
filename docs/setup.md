@@ -10,6 +10,41 @@ are reported as blocked with a nonzero exit. Focused reruns use `--checks`.
 See [Phase 5 evidence and acceptance runbook](references/phase-5-verification.md)
 for report format, commands, signing limitations and remaining owner/device gates.
 
+## Responsive marketplace browser verification
+
+Android and responsive web share one Flutter app; phone/tablet/desktop layouts follow
+[Buyer design](design-buyer.md). No extra UI package, font or backend change is required.
+With the Buyer web server above running on localhost:8766, run the isolated synthetic smoke:
+
+```sh
+BUYER_SCREENSHOT_DIR=build/verification/marketplace-screenshots python3 tool/browser_smoke.py --synthetic-only
+```
+
+This mode intercepts every API path before app startup (including reloads), verifies
+signed-out guards and synthetic mobile/desktop shopping/quote journeys, and sends no
+synthetic credential or write to Laravel. Unknown API requests fail locally. It does not
+certify deployed CORS, real-account commerce or installed-device acceptance. The existing
+live browser mode remains separate and needs the authorized API already running.
+
+## MapLibre address maps — 2026-10-08
+
+Current optional map dependencies are `maplibre_gl: 0.27.1` and the existing
+`geolocator` constraint/lock. MapLibre replaces `flutter_map` and `latlong2`; the
+original table below remains historical compatibility evidence. JDK 21 is required
+for the MapLibre plugin; retain the project's current Flutter/Gradle/AGP stack.
+Web requires WebGL2 and the default plugin's pinned JS/CSS/worker host `unpkg.com`;
+no manual scripts are needed in `web/index.html`.
+
+Geoapify still supplies both forward geocoding and light raster tiles. Enable only
+with `--dart-define=MAPS_ENABLED=true` and an approved public
+`--dart-define=GEOAPIFY_PUBLIC_API_KEY=<public-key>`; these are public build inputs.
+Missing inputs keep maps disabled and manual address saving available. See
+[map guidance](maps-location-api.md) and [verification](references/maplibre-verification.md).
+
+The smoke harness accepts `--live-geoapify` for real public-landmark lookup/tiles
+while keeping Laravel responses synthetic. Use a public-key build and allow the
+exact local origin in the provider settings. See [live-key results](references/geoapify-live-verification.md).
+
 ## Current Phases 1–4 local development
 
 The ten approved package pins support implemented auth, discovery/account, commerce and communication.
@@ -88,9 +123,8 @@ dependencies:
   shared_preferences: 2.5.3
   url_launcher: 6.3.2
   flutter_markdown_plus: 1.0.12
-  # Optional pinning only; omit these three for a text-only delivery.
-  flutter_map: 8.2.2
-  latlong2: 0.9.1
+  # Optional pinning only; omit these two for a text-only delivery.
+  maplibre_gl: 0.27.1
   geolocator: 14.0.2
 flutter:
   uses-material-design: true

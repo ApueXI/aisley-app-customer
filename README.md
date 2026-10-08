@@ -141,9 +141,11 @@ and storefront origins.
 
 All build configuration is public. Keep passwords, bearer tokens, backend/storage
 credentials and private map-provider keys out of defines, assets and source control.
-Maps remain optional: offline address selectors and manual address entry work with
-maps disabled. See the [map requirements](docs/maps-location-api.md) before supplying
-a public provider key.
+Maps remain optional. Offline PSGC locality selectors work without maps; locality values
+must be selected from the searchable lists. Recipient, contact, street/building,
+unit/additional line and postal code stay editable text fields. Missing address data
+shows Retry and blocks saving. See the [map requirements](docs/maps-location-api.md)
+before supplying a public provider key.
 
 ## Build artifacts
 
@@ -237,3 +239,12 @@ for controlled authenticated and installed-device verification.
 - [Verification and remaining acceptance gates](docs/verification.md)
 - [Integration gaps](docs/references/integration-gaps.md)
 - [Progress history](docs/PROGRESS.md)
+
+
+The Buyer marketplace now adapts to Android phones/tablets and desktop browsers in the
+same Flutter app. See [design](docs/design-buyer.md) and [marketplace evidence](docs/references/marketplace-verification.md).
+
+Optional address maps use MapLibre for rendering and Geoapify for address lookup
+and light raster tiles. `MAPS_ENABLED` defaults to false; enable it with an approved
+`GEOAPIFY_PUBLIC_API_KEY`. Coordinate entry and manual address saving remain available.
+See [map setup](docs/maps-location-api.md) and [verification](docs/references/maplibre-verification.md).

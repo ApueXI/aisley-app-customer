@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aisley_mobile_buyer/core/networking/api_failure.dart';
 import 'package:aisley_mobile_buyer/core/security/session_controller.dart';
+import 'package:aisley_mobile_buyer/app/router_guard.dart';
 import 'package:aisley_mobile_buyer/features/auth/data/auth_models.dart';
 import 'package:aisley_mobile_buyer/features/policies/data/policy_models.dart';
 
@@ -101,6 +102,42 @@ void main() {
     expect(storage.writes, 1);
     expect(auth.meCalls, 1);
     expect(session.active, true);
+  });
+  test('background checks deduplicate and keep an active route through offline failure', () async {
+    storage.token = 'synthetic-test-token';
+    await session.bootstrap();
+    final pending = Completer<CustomerIdentity>();
+    auth.onMe = (_) => pending.future;
+    final first = session.revalidate();
+    final second = session.revalidate();
+    await Future<void>.delayed(Duration.zero);
+    expect(session.active, isTrue);
+    expect(guardRoute(session, Uri.parse('/products/$customerId')), isNull);
+    pending.complete(auth.identity);
+    await Future.wait([first, second]);
+    expect(auth.meCalls, 2);
+    expect(policies.statusCalls, 2);
+
+    auth.onMe = (_) async => throw const ApiFailure(FailureKind.offline);
+    await session.revalidate();
+    expect(session.active, isTrue);
+    expect(session.customer?.id, customerId);
+    expect(session.revalidationFailure?.kind, FailureKind.offline);
+    expect(guardRoute(session, Uri.parse('/products/$customerId')), isNull);
+  });
+  test('late background identity response is ignored after logout', () async {
+    storage.token = 'synthetic-test-token';
+    await session.bootstrap();
+    final pending = Completer<CustomerIdentity>();
+    auth.onMe = (_) => pending.future;
+    final background = session.revalidate();
+    await Future<void>.delayed(Duration.zero);
+    await session.signOut();
+    pending.complete(auth.identity);
+    await background;
+    expect(session.phase, SessionPhase.signedOut);
+    expect(session.customer, isNull);
+    expect(session.revalidationFailure, isNull);
   });
   test(
     'required consent retains identity and token without private access',

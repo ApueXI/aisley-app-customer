@@ -1,10 +1,14 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
 import '../../../core/ui/responsive_layout.dart';
+import '../../../core/ui/marketplace_widgets.dart';
 import '../data/catalog_models.dart';
 import 'catalog_widgets.dart';
+import 'product_purchase_flow.dart';
 import 'search_controller.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -90,20 +94,16 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
         ),
         const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final mode in SearchMode.values)
-              ChoiceChip(
-                label: Text(mode == SearchMode.products ? 'Products' : 'Shops'),
-                selected: _controller.mode == mode,
-                onSelected: (_) {
-                  _controller.setMode(mode);
-                  _updateRoute(context, page: null);
-                },
-              ),
-          ],
+        MarketTabs<SearchMode>(
+          values: const {
+            SearchMode.products: 'Products',
+            SearchMode.shops: 'Shops',
+          },
+          selected: _controller.mode,
+          onSelected: (mode) {
+            _controller.setMode(mode);
+            _updateRoute(context, page: null);
+          },
         ),
         const SizedBox(height: 8),
         FilledButton.icon(
@@ -215,7 +215,10 @@ class _SearchScreenState extends State<SearchScreen> {
   ) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      Text('${pagination.total} Products'),
+      Text(
+        '${pagination.total} Products for “${widget.query}”',
+        style: Theme.of(context).textTheme.titleMedium,
+      ),
       CatalogGrid(
         children: [
           for (final product in items)
@@ -224,6 +227,14 @@ class _SearchScreenState extends State<SearchScreen> {
               product: product,
               discovery: widget.dependencies.discovery!,
               onTap: () => context.push('/products/${product.id}'),
+              onAddToCart: () => unawaited(
+                beginProductPurchase(
+                  context: context,
+                  dependencies: widget.dependencies,
+                  productId: product.id,
+                  action: ProductPurchaseAction.addToCart,
+                ),
+              ),
             ),
         ],
       ),
@@ -238,7 +249,10 @@ class _SearchScreenState extends State<SearchScreen> {
   ) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      Text('${pagination.total} Shops'),
+      Text(
+        '${pagination.total} Shops for “${widget.query}”',
+        style: Theme.of(context).textTheme.titleMedium,
+      ),
       for (final shop in items)
         ShopCardTile(
           shop: shop,

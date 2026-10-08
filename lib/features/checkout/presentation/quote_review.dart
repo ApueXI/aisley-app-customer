@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/ui/marketplace_widgets.dart';
 import '../data/quote_models.dart';
 import 'checkout_controller.dart';
 import 'commerce_widgets.dart';
@@ -16,12 +17,12 @@ class QuoteReview extends StatelessWidget {
         'Review your COD order',
         style: Theme.of(context).textTheme.titleLarge,
       ),
-      Text('Quote expires ${quote.expiresAt.toLocal()}'),
+      Text('Review valid until ${quote.expiresAt.toLocal()}'),
       if (controller.expired)
         const Text(
-          'This quote expired. Get a new quote and review it before placing.',
+          'This review expired. Review your order again before placing.',
         ),
-      AddressSnapshotView(quote.address),
+
       for (final group in quote.groups)
         Card(
           margin: const EdgeInsets.only(top: 16),
@@ -34,9 +35,9 @@ class QuoteReview extends StatelessWidget {
                   group.shop.name,
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
+                const SizedBox(height: 12),
                 for (final item in group.items)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
+                  ProductBoundaryCard(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -54,9 +55,7 @@ class QuoteReview extends StatelessWidget {
                   ),
                 const Divider(),
                 TotalsView(group.totals),
-                Text(
-                  'Serviceable shipping · Rate version ${group.shipping.version}',
-                ),
+                const Text('Delivery is available for this address.'),
                 for (final voucher in group.applied)
                   Text(
                     'Applied ${voucher.code}: ${voucher.discount.display(group.totals.currency)}',
@@ -91,7 +90,7 @@ class QuoteReview extends StatelessWidget {
         ),
       const SizedBox(height: 16),
       Text('${quote.orderCount} separate Shop Orders'),
-      TotalsView(quote.summary),
+
       const Text(
         'Pay the confirmed total on delivery. Vouchers used are not restored by cancellation.',
       ),

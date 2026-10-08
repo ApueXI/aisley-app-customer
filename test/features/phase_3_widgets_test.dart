@@ -52,21 +52,69 @@ void main() {
   testWidgets(
     'Cart selection estimates unavailable lines and 48px actions fit narrow doubled text',
     (tester) async {
-      await show(tester, CartScreen(dependencies: dependencies));
-      expect(tester.takeException(), isNull);
-      await tester.scrollUntilVisible(find.byType(Checkbox), 150);
-      await tester.pumpAndSettle();
-      await tester.tap(find.byType(Checkbox));
-      await tester.pumpAndSettle();
-      expect(h.commerce.cart.selection, {customerId});
-      await tester.scrollUntilVisible(find.text('Checkout selected (1)'), 200);
-      await tester.pumpAndSettle();
-      final button = find.widgetWithText(FilledButton, 'Checkout selected (1)');
-      expect(tester.getSize(button).height, greaterThanOrEqualTo(48));
-      expect(tester.widget<FilledButton>(button).onPressed, isNotNull);
-      expect(tester.takeException(), isNull);
-      h.commerce.checkout.invalidateQuote();
-      await tester.pumpWidget(const SizedBox());
+      final semantics = tester.ensureSemantics();
+      try {
+        await show(tester, CartScreen(dependencies: dependencies));
+        expect(tester.takeException(), isNull);
+        expect(h.commerce.cart.cart!.items.single.selectable, isTrue);
+        expect(h.commerce.cart.selectAllValue, isFalse);
+        final scrollable = find
+            .descendant(
+              of: find.byType(ListView),
+              matching: find.byType(Scrollable),
+            )
+            .first;
+        final selectAllLabel = find.text('Select all available items');
+        await tester.scrollUntilVisible(
+          selectAllLabel,
+          200,
+          scrollable: scrollable,
+        );
+        await tester.pumpAndSettle();
+        expect(
+          find.widgetWithText(CheckboxListTile, 'Select all available items'),
+          findsOneWidget,
+        );
+        expect(
+          tester
+              .getSemantics(find.byType(CheckboxListTile))
+              .getSemanticsData()
+              .label,
+          contains('Select all available items'),
+        );
+        final itemCheckbox = find.byWidgetPredicate(
+          (widget) =>
+              widget is Checkbox &&
+              widget.semanticLabel ==
+                  'Select ${h.commerce.cart.cart!.items.single.productName}',
+        );
+        await tester.scrollUntilVisible(
+          itemCheckbox,
+          200,
+          scrollable: scrollable,
+        );
+        await tester.pumpAndSettle();
+        expect(
+          tester.getSemantics(itemCheckbox).getSemanticsData().label,
+          'Select ${h.commerce.cart.cart!.items.single.productName}',
+        );
+        await tester.tap(itemCheckbox);
+        await tester.pumpAndSettle();
+        expect(h.commerce.cart.selection, {customerId});
+        await tester.ensureVisible(find.text('Checkout selected (1)'));
+        await tester.pumpAndSettle();
+        final button = find.widgetWithText(
+          FilledButton,
+          'Checkout selected (1)',
+        );
+        expect(tester.getSize(button).height, greaterThanOrEqualTo(48));
+        expect(tester.widget<FilledButton>(button).onPressed, isNotNull);
+        expect(tester.takeException(), isNull);
+        h.commerce.checkout.invalidateQuote();
+        await tester.pumpWidget(const SizedBox());
+      } finally {
+        semantics.dispose();
+      }
     },
   );
   testWidgets('checkout with no intent returns to Cart and cannot place', (
@@ -88,8 +136,8 @@ void main() {
         CheckoutIntent.buyNow(BuyNowItem(customerId, null, 1)),
       );
       await show(tester, CheckoutScreen(dependencies: dependencies));
-      await tester.ensureVisible(find.text('Get current quote'));
-      await tester.tap(find.text('Get current quote'));
+      await tester.ensureVisible(find.text('Review order'));
+      await tester.tap(find.text('Review order'));
       await tester.pumpAndSettle();
       expect(h.commerce.checkout.canPlace, true);
       expect(tester.takeException(), isNull);

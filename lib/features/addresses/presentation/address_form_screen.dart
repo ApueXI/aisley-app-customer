@@ -213,27 +213,64 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
                   'Unit or additional address (optional)',
                   optional: true,
                 ),
-                ExpansionTile(
-                  title: const Text('Choose locality from offline PSGC data'),
-                  initiallyExpanded: widget.addressId == null,
-                  children: [
-                    PsgcFields(
-                      onChange: (values) => setState(() {
-                        for (final entry in values.entries) {
-                          _fields[entry.key]!.text = entry.value;
-                        }
-                        _pin = null;
-                        _dirty = true;
-                      }),
+                PsgcFields(
+                  initialValues: {
+                    for (final key in const [
+                      'region',
+                      'province',
+                      'city_municipality',
+                      'barangay',
+                    ])
+                      key: _fields[key]!.text,
+                  },
+                  fieldErrors: _controller.fieldErrors,
+                  onHydrated: (values) {
+                    for (final entry in values.entries) {
+                      _fields[entry.key]!.text = entry.value;
+                    }
+                  },
+                  onChange: (values) => setState(() {
+                    for (final entry in values.entries) {
+                      _fields[entry.key]!.text = entry.value;
+                      _controller.fieldErrors = {..._controller.fieldErrors}
+                        ..remove(entry.key);
+                    }
+                    _pin = null;
+                    _dirty = true;
+                  }),
+                ),
+                _field('postal_code', 'Postal code', max: 10),
+                DropdownButtonFormField<String>(
+                  isExpanded: true,
+                  initialValue: _fields['country']!.text == 'Philippines'
+                      ? 'Philippines'
+                      : null,
+                  decoration: InputDecoration(
+                    labelText: 'Country',
+                    helperText:
+                        _fields['country']!.text.isNotEmpty &&
+                            _fields['country']!.text != 'Philippines'
+                        ? 'Saved country “${_fields['country']!.text}” is unsupported. Choose Philippines to save.'
+                        : null,
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'Philippines',
+                      child: Text('Philippines'),
                     ),
                   ],
+                  validator: (value) => value == null
+                      ? _controller.fieldErrors['country'] ??
+                            'Choose Philippines for this address.'
+                      : _controller.fieldErrors['country'],
+                  onChanged: (value) => setState(() {
+                    _fields['country']!.text = value ?? '';
+                    _pin = null;
+                    _dirty = true;
+                    _controller.fieldErrors = {..._controller.fieldErrors}
+                      ..remove('country');
+                  }),
                 ),
-                _field('region', 'Reviewed region'),
-                _field('province', 'Reviewed province / compatibility text'),
-                _field('city_municipality', 'Reviewed city / municipality'),
-                _field('barangay', 'Reviewed barangay'),
-                _field('postal_code', 'Postal code', max: 10),
-                _field('country', 'Country'),
               ],
             ),
           ),
@@ -335,16 +372,14 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
       );
       return;
     }
-    final pin = await showDialog<GeoCandidate>(
+    final pin = await showAddressPinDialog(
       context: context,
-      builder: (_) => MapPinDialog(
-        dependencies: widget.dependencies,
-        initial: _pin,
-        addressText: _locationKeys
-            .map((key) => _fields[key]!.text.trim())
-            .where((value) => value.isNotEmpty)
-            .join(', '),
-      ),
+      dependencies: widget.dependencies,
+      initial: _pin,
+      addressText: _locationKeys
+          .map((key) => _fields[key]!.text.trim())
+          .where((value) => value.isNotEmpty)
+          .join(', '),
     );
     if (mounted && pin != null && widget.dependencies.session.active) {
       setState(() {

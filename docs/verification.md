@@ -18,7 +18,7 @@ For each phase record backend commit/configuration, target/origin, Flutter SDK/a
 - [ ] Registration collects only supported keys, returns pending/no token, handles duplicate/normalization/throttling, and avoids claiming address/evidence/email/status-polling features. Storefront recovery and reset-token invalidation are verified.
 - [ ] Public Products/Shops/Home omit hidden/restricted/vacation/inactive content; variant choices, literal wildcard search, pagination/end/error and public/private cache isolation behind verified app navigation match current APIs.
 - [ ] Shopping widgets never mount/fetch before verified identity/consent. Recently Viewed records account history only, never writes/merges guest hints, and removes only the legacy key without blocking sign-in.
-- [ ] PSGC JSON manifest/hierarchy and Region→Province→City/Municipality→Barangay cascading work offline with manual fallback. Optional pin/GPS uses approved provider/adapter, clears stale coordinates and handles denial/failure/attribution without blocking text save.
+- [ ] PSGC JSON manifest/hierarchy and searchable Region→Province→City/Municipality→Barangay selections work offline; unselected text, exact typed matches, unavailable mappings and failed assets block saving with Retry. Optional pin/GPS uses the approved provider/adapter, clears stale coordinates and handles denial/failure/attribution without blocking the locality selectors.
 - [ ] Profile/password/preference fields are allow-listed; current bearer survives account password change, other tokens are revoked, reset revokes all tokens; email remains read-only. Private avatar bytes cannot leak to another account/cache.
 - [ ] Android/browser multipart uses `photo`/`image`, exact under-10-MiB limit and allowed types; cancel/permission/corruption/spoof/size/throttle/consent/storage failure and uncertain response reconciliation work; review partial photos are not duplicated blindly.
 - [ ] Cart same-configuration merge/increment, separate variants, variation replacement/merge, server stock/visibility conflicts and unavailable lines work; uncertain additive writes do not auto-replay.
@@ -50,3 +50,19 @@ Use the pinned SDK/packages and target commands in [setup](setup.md). The local 
 Completed documentation-only checks are recorded in [documentation validation](references/documentation-validation.md).
 Phase-specific application evidence is linked above; broad criteria that combine
 synthetic and live/device acceptance remain unchecked until the whole criterion passes.
+
+
+Responsive marketplace implementation and exact-viewport synthetic browser evidence are
+recorded in [marketplace verification](references/marketplace-verification.md), including
+mobile/desktop screenshots. Broad live/device/production criteria above remain open.
+
+## Shopping boundaries and checkout initialization — 2026-10-05
+
+Regression coverage measures equal category cards with short/long labels and image/fallback
+states across 320–1440px, landscape and text scales 1/1.5/2. Checkout mount/reopen coverage
+keeps an existing controller listener mounted to detect build-phase notifications.
+Product dividers span the complete item, below wrapped actions. Manual localhost:8766
+browser inspection and installed Android/TalkBack remain unverified for this change.
+The user-reported quote HTTP 500 is a missing backend table, recorded in the
+[integration gaps](references/integration-gaps.md#reported-checkout-deployment-failure--2026-10-05).
+Builds and synthetic checks do not establish successful live quotes or COD placement.

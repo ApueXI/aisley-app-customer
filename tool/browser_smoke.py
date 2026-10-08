@@ -16,7 +16,11 @@ import urllib.request
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--synthetic-shopping', action='store_true', help='Also inject synthetic identity/API responses for shopping layout checks.')
+    parser.add_argument('--synthetic-only', action='store_true', help='Intercept every API request before startup; requires only the Buyer server, never Laravel.')
+    parser.add_argument('--synthetic-journey-only', action='store_true', help='Focus on intercepted purchase journeys after a verified resize matrix.')
     args = parser.parse_args()
+    if args.synthetic_journey_only:
+        args.synthetic_only = True
     driver = shutil.which('chromedriver')
     browser = shutil.which('chromium')
     if not driver or not browser:
@@ -48,7 +52,7 @@ def main():
             except urllib.error.URLError:
                 time.sleep(0.1)
         session = call('/session', {'capabilities': {'alwaysMatch': {
-            'browserName': 'chrome', 'goog:chromeOptions': {'binary': browser, 'args': [
+            'browserName': 'chrome', 'goog:loggingPrefs': {'browser':'ALL'}, 'goog:chromeOptions': {'binary': browser, 'args': [
                 '--headless=new', '--no-sandbox', '--disable-dev-shm-usage', '--window-size=390,844',
                 '--user-data-dir=' + profile.name]}}}})['sessionId']
         prefix = '/session/' + session
@@ -56,14 +60,31 @@ def main():
         def script(source):
             return call(prefix + '/execute/sync', {'script': source, 'args': []})
 
+        def resize(width, height):
+            # CDP sets the content viewport exactly, avoiding headless window
+            # minimums and browser chrome deductions in narrow/landscape cases.
+            call(prefix + '/goog/cdp/execute', {'cmd':'Emulation.setDeviceMetricsOverride',
+                'params':{'width':width,'height':height,'deviceScaleFactor':1,'mobile':False}})
+            for _ in range(20):
+                viewport = script('return {width:innerWidth,height:innerHeight};')
+                if viewport == {'width':width,'height':height}:
+                    time.sleep(.25)
+                    return
+                time.sleep(.1)
+            raise AssertionError('Browser did not adopt the requested content viewport.')
+
         def wait_text(expected):
             for _ in range(100):
                 script("document.querySelector('flt-semantics-placeholder')?.click();")
-                if script("return document.body.innerText + '\\n' + Array.from(document.querySelectorAll('[aria-label]')).map(e => e.getAttribute('aria-label')).join('\\n');").find(expected) >= 0:
+                if script("return document.body.innerText + '\\n' + Array.from(document.querySelectorAll('[aria-label]')).map(e => e.getAttribute('aria-label')).join('\\n');").replace('\n', ' ').find(expected) >= 0:
                     return
                 time.sleep(0.2)
             raise AssertionError('Expected public screen did not render: ' + expected)
 
+        if args.synthetic_only:
+            from browser_synthetic import bootstrap_script
+            call(prefix + '/goog/cdp/execute', {'cmd': 'Page.addScriptToEvaluateOnNewDocument',
+                 'params': {'source': bootstrap_script()}})
         call(prefix + '/url', {'url': 'http://localhost:8766'})
         wait_text('Sign in with your approved Buyer account.')
         # Reload a real page and navigate browser history before instrumenting Fetch.
@@ -73,8 +94,8 @@ def main():
         wait_text('Sign in with your approved Buyer account.')
         call(prefix + '/back', {})
         wait_text('Sign in with your approved Buyer account.')
-        for width, height in [(320, 640), (360, 800), (390, 844), (412, 915), (600, 960), (800, 1280), (640, 320), (800, 360), (844, 390), (915, 412), (960, 600), (1280, 800)]:
-            call(prefix + '/window/rect', {'width': width, 'height': height})
+        for width, height in [(320, 640), (360, 800), (390, 844), (412, 915), (600, 960), (800, 1280), (640, 320), (800, 360), (844, 390), (915, 412), (960, 600), (1024, 768), (1440, 900)]:
+            resize(width, height)
             wait_text('Sign in with your approved Buyer account.')
             assert script('return document.documentElement.scrollWidth <= window.innerWidth;'), 'Sign-in page must fit browser width.'
         script("""
@@ -121,51 +142,53 @@ def main():
         transport = script('return window.buyerFetchCalls;')
         assert all('/platform/policies/' in item['path'] for item in transport), 'Shopping must not fetch before sign-in.'
         assert len(transport) >= 2 and all(item['credentials'] == 'omit' and item['redirect'] == 'error' for item in transport)
-        result = call(prefix + '/execute/async', {'script': """
-          const done = arguments[arguments.length - 1];
-          Promise.all(['terms_of_service', 'privacy_policy'].map(async type => {
-            const response = await fetch('http://localhost:8000/api/v1/platform/policies/' + type,
-              {credentials: 'omit', headers: {Accept: 'application/json'}});
-            const body = await response.json();
-            return {status: response.status, type: body.data.type,
-              version: body.data.version.version,
-              retryAfterExposed: response.headers.has('Retry-After')};
-          })).then(done).catch(() => done({error: 'Browser API exchange failed'}));
-        """, 'args': []})
-        assert isinstance(result, list) and len(result) == 2
-        assert all(item['status'] == 200 and isinstance(item['version'], int) for item in result)
-        denial = call(prefix + '/execute/async', {'script': """
-          const done = arguments[arguments.length - 1];
-          fetch('http://localhost:8000/api/v1/customer/auth/me',
-            {credentials: 'omit', headers: {Accept: 'application/json', Authorization: 'Bearer invalid-smoke-test'}})
-            .then(response => done({status: response.status})).catch(() => done({status: 0}));
-        """, 'args': []})
-        assert denial['status'] == 401  # Also exercises a real Authorization preflight.
-        commerce_denial = call(prefix + '/execute/async', {'script': """
-          const done = arguments[arguments.length - 1];
-          Promise.all([
-            ['POST', 'customer/checkout/place'],
-            ['PATCH', 'customer/orders/11111111-1111-4111-8111-111111111111/modification']
-          ].map(async ([method, path]) => {
-            const response = await fetch('http://127.0.0.1:8000/api/v1/' + path,
-              {method, credentials:'omit', redirect:'error', body:'{}', headers:{
-                Accept:'application/json', 'Content-Type':'application/json',
-                Authorization:'Bearer invalid-smoke-test',
-                'Idempotency-Key':'11111111-1111-4111-8111-111111111111'}});
-            return response.status;
-          })).then(done).catch(() => done([]));
-        """, 'args': []})
-        assert commerce_denial == [401, 401], 'Commerce idempotency-header preflights must allow denial responses.'
+        if not args.synthetic_only:
+            result = call(prefix + '/execute/async', {'script': """
+              const done = arguments[arguments.length - 1];
+              Promise.all(['terms_of_service', 'privacy_policy'].map(async type => {
+                const response = await fetch('http://localhost:8000/api/v1/platform/policies/' + type,
+                  {credentials: 'omit', headers: {Accept: 'application/json'}});
+                const body = await response.json();
+                return {status: response.status, type: body.data.type,
+                  version: body.data.version.version,
+                  retryAfterExposed: response.headers.has('Retry-After')};
+              })).then(done).catch(() => done({error: 'Browser API exchange failed'}));
+            """, 'args': []})
+            assert isinstance(result, list) and len(result) == 2
+            assert all(item['status'] == 200 and isinstance(item['version'], int) for item in result)
+            denial = call(prefix + '/execute/async', {'script': """
+              const done = arguments[arguments.length - 1];
+              fetch('http://localhost:8000/api/v1/customer/auth/me',
+                {credentials: 'omit', headers: {Accept: 'application/json', Authorization: 'Bearer invalid-smoke-test'}})
+                .then(response => done({status: response.status})).catch(() => done({status: 0}));
+            """, 'args': []})
+            assert denial['status'] == 401  # Also exercises a real Authorization preflight.
+            commerce_denial = call(prefix + '/execute/async', {'script': """
+              const done = arguments[arguments.length - 1];
+              Promise.all([
+                ['POST', 'customer/checkout/place'],
+                ['PATCH', 'customer/orders/11111111-1111-4111-8111-111111111111/modification']
+              ].map(async ([method, path]) => {
+                const response = await fetch('http://127.0.0.1:8000/api/v1/' + path,
+                  {method, credentials:'omit', redirect:'error', body:'{}', headers:{
+                    Accept:'application/json', 'Content-Type':'application/json',
+                    Authorization:'Bearer invalid-smoke-test',
+                    'Idempotency-Key':'11111111-1111-4111-8111-111111111111'}});
+                return response.status;
+              })).then(done).catch(() => done([]));
+            """, 'args': []})
+            assert commerce_denial == [401, 401], 'Commerce idempotency-header preflights must allow denial responses.'
         script("window.location.hash = '/';")
         wait_text('Sign in with your approved Buyer account.')
-        if args.synthetic_shopping:
+        if args.synthetic_shopping or args.synthetic_only:
             from browser_synthetic import check_shopping
-            check_shopping(call, prefix, script, wait_text)
+            check_shopping(call, prefix, script, wait_text, resize, matrix=not args.synthetic_journey_only)
         screenshot = os.environ.get('BUYER_SCREENSHOT')
         if screenshot:
             with open(screenshot, 'wb') as output:
                 output.write(base64.b64decode(call(prefix + '/screenshot')))
-        print('PASS: reload/Back, phone/tablet portrait/landscape sign-in, authentication/policy layouts, every shopping guard without catalog fetch, idempotency preflights, live policies, cookie/redirect isolation, CORS and invalid-bearer denial.')
+        if not args.synthetic_only:
+            print('PASS: reload/Back, phone/tablet portrait/landscape sign-in, authentication/policy layouts, every shopping guard without catalog fetch, idempotency preflights, live policies, cookie/redirect isolation, CORS and invalid-bearer denial.')
     finally:
         if session:
             try:

@@ -204,7 +204,19 @@ class DiscoveryRepository {
 
   Future<Uint8List> publicMedia(String url) {
     final location = _apiLocation(url);
-    return api.requestBytes(location.$1, queryParameters: location.$2);
+    final query = Uri(queryParameters: location.$2).query;
+    final cacheKey = 'media:${location.$1}?$query';
+    final cached = _public.get(cacheKey);
+    if (cached is Uint8List) return Future.value(cached);
+    if (cached is Future<Uint8List>) return cached;
+    final request = api.requestBytes(location.$1, queryParameters: location.$2);
+    // Keep in-flight and failed reads in the bounded short-lived cache too,
+    // so a layout remount does not retry the same image immediately.
+    _public.put(cacheKey, request);
+    return request.then((bytes) {
+      _public.put(cacheKey, bytes);
+      return bytes;
+    });
   }
 
   Future<Uint8List> privateMedia(String url, SessionLease lease) {

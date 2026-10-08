@@ -55,6 +55,7 @@ class _ShopDirectoryScreenState extends State<ShopDirectoryScreen> {
             icon: const Icon(Icons.search),
             label: const Text('Search Shops'),
           ),
+          const SizedBox(height: 16),
           if (result != null && result.categories.isNotEmpty)
             DropdownButtonFormField<String?>(
               initialValue:
@@ -77,6 +78,7 @@ class _ShopDirectoryScreenState extends State<ShopDirectoryScreen> {
               ],
               onChanged: (value) => _replaceRoute(context, value, 1),
             ),
+          const SizedBox(height: 24),
           if (_controller.loading)
             const LinearProgressIndicator(semanticsLabel: 'Loading Shops'),
           if (_controller.error != null) _error(_controller.error!),
@@ -92,10 +94,13 @@ class _ShopDirectoryScreenState extends State<ShopDirectoryScreen> {
               const Text('No Shops are listed in this category.')
             else
               for (final shop in result.items)
-                ShopCardTile(
-                  shop: shop,
-                  discovery: widget.dependencies.discovery!,
-                  onTap: () => context.push('/shops/${shop.slug}'),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: ShopCardTile(
+                    shop: shop,
+                    discovery: widget.dependencies.discovery!,
+                    onTap: () => context.push('/shops/${shop.slug}'),
+                  ),
                 ),
             _pagination(
               context,

@@ -3,10 +3,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
 import '../../../core/ui/responsive_layout.dart';
-import '../../../core/ui/form_page.dart';
+import '../../../core/ui/marketplace_widgets.dart';
 import '../../checkout/domain/checkout_intent.dart';
 import '../data/cart_models.dart';
-import 'cart_line_editor.dart';
+import 'cart_item_row.dart';
+import 'cart_shop_metadata.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key, required this.dependencies});
@@ -16,145 +17,153 @@ class CartScreen extends StatefulWidget {
 }
 
 class _CartScreenState extends State<CartScreen> {
+  late final _metadata = CartShopMetadata(
+    widget.dependencies.session,
+    readProduct: (id) => widget.dependencies.discovery!.product(id),
+  );
   @override
   void initState() {
     super.initState();
+    widget.dependencies.commerce!.cart.addListener(_resolve);
     widget.dependencies.commerce!.cart.load();
+    _resolve();
+  }
+
+  void _resolve() {
+    final lines = widget.dependencies.commerce!.cart.cart?.items;
+    if (lines != null && widget.dependencies.discovery != null) {
+      _metadata.resolve(lines);
+    } else if (lines == null) {
+      _metadata.clearPrivate();
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.dependencies.commerce!.cart.removeListener(_resolve);
+    _metadata.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final commerce = widget.dependencies.commerce!, cart = commerce.cart;
     return ListenableBuilder(
-      listenable: Listenable.merge([cart, commerce.checkout]),
+      listenable: Listenable.merge([cart, commerce.checkout, _metadata]),
       builder: (context, _) {
         if (!widget.dependencies.session.active) return const SizedBox.shrink();
-        return ListView(
-          padding: pagePadding(context),
+        final groups = <String?, List<CartLine>>{};
+        for (final line in cart.cart?.items ?? <CartLine>[]) {
+          (groups[_metadata.shops[line.productId]?.id] ??= []).add(line);
+        }
+        return Column(
           children: [
-            Text('Your Cart', style: Theme.of(context).textTheme.headlineSmall),
-            TextButton.icon(
-              onPressed: cart.loading || cart.writing || cart.coolingDown
-                  ? null
-                  : cart.load,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Refresh Cart'),
+            Expanded(
+              child: ListView(
+                padding: pagePadding(context),
+                children: [
+                  Text(
+                    'Your Cart',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  TextButton.icon(
+                    onPressed: cart.loading || cart.writing || cart.coolingDown
+                        ? null
+                        : cart.load,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Refresh Cart'),
+                  ),
+                  if (cart.loading || cart.writing)
+                    const LinearProgressIndicator(
+                      semanticsLabel: 'Updating Cart',
+                    ),
+                  if (cart.stale && cart.cart != null)
+                    const Text(
+                      'This Cart view needs a refresh before you continue.',
+                    ),
+                  if (cart.error != null)
+                    Semantics(liveRegion: true, child: Text(cart.error!)),
+                  if (commerce.checkout.pending != null) ...[
+                    const Text(
+                      'An order is unconfirmed. Check its outcome in checkout.',
+                    ),
+                    TextButton(
+                      onPressed: () => context.push('/checkout'),
+                      child: const Text('Return to checkout'),
+                    ),
+                  ],
+                  if (cart.cart != null) Text('${cart.cart!.itemCount} items'),
+                  if (cart.cart?.items.any((line) => line.selectable) == true)
+                    Material(
+                      color: Colors.transparent,
+                      child: CheckboxListTile(
+                        contentPadding: EdgeInsets.zero,
+                        tristate: true,
+                        value: cart.selectAllValue,
+                        onChanged: cart.canEdit
+                            ? (_) => cart.toggleSelectAllEligible()
+                            : null,
+                        title: const Text('Select all available items'),
+                      ),
+                    ),
+                  if (cart.cart?.items.isEmpty == true && !cart.loading) ...[
+                    const SizedBox(height: 24),
+                    const Text('Your Cart is empty.'),
+                    TextButton(
+                      onPressed: () => context.go('/'),
+                      child: const Text('Browse Products'),
+                    ),
+                  ],
+                  for (final group in groups.entries)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: MarketSection(
+                        title: group.key == null
+                            ? 'Cart items'
+                            : _metadata
+                                  .shops[group.value.first.productId]!
+                                  .name,
+                        child: Column(
+                          children: [
+                            for (final line in group.value)
+                              CartItemRow(
+                                key: ValueKey(line.id),
+                                line: line,
+                                dependencies: widget.dependencies,
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
-            if (cart.loading || cart.writing)
-              const LinearProgressIndicator(semanticsLabel: 'Updating Cart'),
-            if (cart.stale && cart.cart != null)
-              const Text(
-                'Saved view is stale. Refresh before changing or checking out.',
+            PurchaseBar(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text(
+                    'Shipping and discounts are confirmed when you review your order.',
+                  ),
+                  const SizedBox(height: 8),
+                  FilledButton(
+                    onPressed: cart.canEdit && cart.selection.isNotEmpty
+                        ? () {
+                            if (commerce.checkout.begin(
+                              CheckoutIntent.cart(cart.selection),
+                            )) {
+                              context.push('/checkout');
+                            }
+                          }
+                        : null,
+                    child: Text('Checkout selected (${cart.selection.length})'),
+                  ),
+                ],
               ),
-            if (cart.error != null)
-              Semantics(liveRegion: true, child: Text(cart.error!)),
-            if (commerce.checkout.pending != null) ...[
-              const Text(
-                'A placement is unresolved. Return to checkout to check its outcome.',
-              ),
-              TextButton(
-                onPressed: () => context.push('/checkout'),
-                child: const Text('Return to checkout'),
-              ),
-            ],
-            if (cart.cart != null)
-              Text(
-                '${cart.cart!.itemCount} items · ${cart.cart!.distinctItemCount} configurations',
-              ),
-            if (cart.cart?.items.isEmpty == true && !cart.loading)
-              const Text('Your Cart is empty. Browse Products to add items.'),
-            for (final line in cart.cart?.items ?? <CartLine>[]) _line(line),
-            const SizedBox(height: 16),
-            const Text(
-              'Prices shown in Cart are estimates. Checkout provides the current shipping, discounts and COD total.',
-            ),
-            FilledButton(
-              onPressed: cart.canEdit && cart.selection.isNotEmpty
-                  ? () {
-                      if (commerce.checkout.begin(
-                        CheckoutIntent.cart(cart.selection),
-                      )) {
-                        context.push('/checkout');
-                      }
-                    }
-                  : null,
-              child: Text('Checkout selected (${cart.selection.length})'),
             ),
           ],
         );
       },
-    );
-  }
-
-  Widget _line(CartLine line) {
-    final cart = widget.dependencies.commerce!.cart;
-    return Card(
-      margin: const EdgeInsets.only(top: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            CheckboxListTile(
-              contentPadding: EdgeInsets.zero,
-              title: Text(line.productName),
-              value: cart.selection.contains(line.id),
-              onChanged: cart.canEdit && line.selectable
-                  ? (value) => cart.select(line.id, value == true)
-                  : null,
-            ),
-            Text(
-              line.options
-                  .map((option) => '${option.group}: ${option.value}')
-                  .join(', '),
-            ),
-            Text(
-              'Quantity ${line.quantity} · ₱${line.unitPrice.toStringAsFixed(2)} each · ₱${line.subtotal.toStringAsFixed(2)}',
-            ),
-            Text(line.availabilityLabel),
-            Wrap(
-              spacing: 8,
-              children: [
-                TextButton(
-                  onPressed: () async {
-                    await context.push('/products/${line.productId}');
-                    if (mounted) await cart.load();
-                  },
-                  child: const Text('View Product'),
-                ),
-                TextButton(
-                  onPressed: cart.canEdit
-                      ? () => showDialog<void>(
-                          context: context,
-                          builder: (_) => CartLineEditor(
-                            dependencies: widget.dependencies,
-                            line: line,
-                          ),
-                        )
-                      : null,
-                  child: const Text('Edit'),
-                ),
-                TextButton(
-                  onPressed: cart.canEdit
-                      ? () async {
-                          if (await confirmAction(
-                            context,
-                            title: 'Remove item?',
-                            message:
-                                'Remove ${line.productName} from your Cart?',
-                            action: 'Remove',
-                          )) {
-                            await cart.remove(line.id);
-                          }
-                        }
-                      : null,
-                  child: const Text('Remove'),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

@@ -17,8 +17,8 @@ Baseline reviewed 2026-10-03. Phases 1–4 are implemented with verification rec
 | G03 | Reset mail URL targets configured storefront; native links not configured | Use trusted storefront recovery; approve native app-link/reset handoff separately | Auth/deployment; 1 |
 | G04 | Historical CORS default omitted Buyer; local API now permits localhost:8766, verified 2026-10-04. Exposed headers remain absent | Public browser reads and Authorization preflight pass; backend owner must expose Retry-After. Authenticated cookie isolation remains a target gate | API/deployment; 1/5 |
 | G05 | Fresh-project SDK/package/architecture choices supplied and Phase 1 dependencies resolved | Flutter 3.47.2 / Dart 3.13.2, locked dependencies, Phase 1 analysis/tests and Android/web builds pass; installed-device and real-account gates remain open | Flutter; 1/5 |
-| G06 | All 19 source-identical PSGC assets/manifest copied/registered; Phase 2 Dart loaders and manual fallback implemented | Source checksums and all regional hierarchies pass; deployed NCR shipping coverage and installed-device acceptance remain open | Flutter/data; 2 |
-| G07 | Optional flutter_map/latlong2/geolocator chosen; native public credential suitability still external | Geoapify intentional pin only; keep text-only if credential/permission/provider gate unresolved | Maps/deployment; 2/5 |
+| G06 | All 19 source-identical PSGC assets/manifest copied/registered; Phase 2 Dart loaders implemented. Address forms require listed locality selections; failed/incomplete data shows Retry and blocks save. Street/contact/postal fields remain manual. | Source checksums and all regional hierarchies pass; deployed NCR shipping coverage and installed-device acceptance remain open | Flutter/data; 2 |
+| G07 | MapLibre address renderer with Geoapify lookup/tiles and foreground geolocator implemented; native public credential suitability still external | Geoapify intentional pin only; keep text-only if credential/permission/provider gate unresolved | Maps/deployment; 2/5 |
 | G08 | Portable Cart/Product contracts reconciled against source; historical canonical contradictions preserved upstream | Use local typed operations/specs; no backend/runtime fix implied | Documentation resolved; Flutter 3 |
 | G09 | Portable checkout/fulfillment context reconciled with implemented downstream workflow | Seller chooses Logistics; Buyer reads safe tracking and never selects providers | Documentation resolved; Flutter 3 |
 | G10 | Homepage configured shortcuts include unavailable vouchers/listings; Bazaar/MoneyFest deferred | Omit enabled destinations without approved implemented result; Category cards are keyword search, not exact global Category filter | Discovery/product; 2 |
@@ -37,12 +37,31 @@ Baseline reviewed 2026-10-03. Phases 1–4 are implemented with verification rec
 Unavailable APIs must not be mocked into production success. Test fixtures may model future/denied states clearly, but future endpoint proposals need separate backend authorization and acceptance.
 
 
+## Reported checkout provider failure — updated 2026-10-05
+
+The user first reported that storefront checkout worked while Buyer Flutter quote returned
+HTTP 500 / PostgreSQL SQLSTATE 42P01 because `shop_logistics_providers` was missing from
+the database handling that Flutter request. The user now reports the storefront also fails,
+showing: “No shipping provider can quote this Shop order right now. Refresh checkout to try
+again.” This newer report supersedes the earlier storefront-success observation. Flutter's
+reported 500 and the storefront's provider-quote failure are evidence of checkout problems
+across client paths over time, not a mobile-only gap. The exact current API/database state
+and whether both paths share the same cause remain unverified; the two responses differ.
+
+Keep COD placement disabled until a valid server quote succeeds. Backend owner follow-up:
+inspect the current quote service, `shop_logistics_providers` migration/schema and enabled
+Shop-provider configuration in the database each client reaches; compare API origins and
+deployed revisions, then verify a quote through both paths. Do not present the issue as
+resolved or generally attribute it to Flutter. These are user-reported responses, not an
+agent-run live test. No migration or backend repair was part of the Flutter work; never
+surface SQL, identifiers or traces in the app.
+
 ## Newly inspected contracts — checkout 57e9eb2
 
 | ID | New finding / treatment | Release evidence |
 | --- | --- | --- |
 | G22 | Support detail cursor uses Laravel’s global request-bound resolver; source confirms traversal is available. | Verify advancing older-event pages and no-progress guard with controlled live records; no backend gap claimed. |
-| G23 | NCR has direct cities/no Province nodes, but saved Address province remains required text. Flutter offers a reviewed compatibility suggestion, never a fictional PSGC Province. | Verify exact saved-text shipping coverage for NCR/direct cities with deployment data. |
+| G23 | NCR has direct cities/no Province nodes, but saved Address province remains required text. Flutter offers the `National Capital Region (NCR)` compatibility option, never a fictional PSGC Province; other direct cities without a real Province mapping cannot be saved. | Verify exact saved-text shipping coverage for NCR; unsupported direct-city mappings remain blocked. |
 | G24 | Registration Resource exposes profile_photo_path (normally null); discard this field. No evidence upload endpoint exists. | Backend owner assesses privacy of any non-null path; Flutter never constructs URLs from it. |
 
 Corrected portable contract details: Account uses account envelope; Quote Address has label but no coordinates; Support write replay preserves201 and Customer reply automatically reopens waiting/resolved tickets. These were source inspections, not live exchanges. No additional routes or backend fixes are authorized.

@@ -44,6 +44,11 @@ class ProductDetailController extends ChangeNotifier with RequestCooldown {
   bool get available =>
       selectionValid &&
       (selectedVariant?.inStock ?? product?.availability.inStock ?? false);
+  bool get canPurchaseQuantity {
+    final stock = availableStock;
+    return available && quantity > 0 && (stock == null || quantity <= stock);
+  }
+
   bool canChoose(String groupId, String valueId) =>
       product?.variants.any(
         (variant) =>
@@ -102,7 +107,40 @@ class ProductDetailController extends ChangeNotifier with RequestCooldown {
       return;
     }
     _selectedValues[groupId] = valueId;
-    quantity = availableStock == 0 ? 0 : 1;
+    // A quantity belongs to one exact option combination. Start with one
+    // after any option changes so stale stock from the previous choice cannot
+    // leave the new selection in an invalid state.
+    quantity = 1;
+    notifyListeners();
+  }
+
+  bool chooseVariantId(String? variantId) {
+    if (variantId == null) return false;
+    final current = product;
+    if (current == null) return false;
+    ProductVariant? match;
+    for (final variant in current.variants) {
+      if (variant.id == variantId) match = variant;
+    }
+    if (match == null) return false;
+    _selectedValues.clear();
+    for (final group in current.optionGroups) {
+      final value = group.values.where(
+        (value) => match!.optionValueIds.contains(value.id),
+      );
+      if (value.length != 1) {
+        _selectedValues.clear();
+        return false;
+      }
+      _selectedValues[group.id] = value.first.id;
+    }
+    notifyListeners();
+    return selectedVariant?.id == variantId;
+  }
+
+  void setQuantity(int value) {
+    if (value < 1) return;
+    quantity = value;
     notifyListeners();
   }
 

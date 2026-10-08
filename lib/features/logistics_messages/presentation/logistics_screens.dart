@@ -3,13 +3,19 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
 import '../../../core/ui/foreground_poll.dart';
+import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/form_page.dart';
 import '../../messaging/presentation/message_views.dart';
 import 'logistics_thread_controller.dart';
 
 class LogisticsInboxScreen extends StatefulWidget {
-  const LogisticsInboxScreen({super.key, required this.dependencies});
+  const LogisticsInboxScreen({
+    super.key,
+    required this.dependencies,
+    this.embedded = false,
+  });
   final AppDependencies dependencies;
+  final bool embedded;
   @override
   State<LogisticsInboxScreen> createState() => _LogisticsInboxScreenState();
 }
@@ -25,13 +31,18 @@ class _LogisticsInboxScreenState extends State<LogisticsInboxScreen> {
   @override
   Widget build(BuildContext context) => ForegroundPoll(
     refresh: controller.load,
-    paused: () => controller.offline || !widget.dependencies.session.active,
+    visible: () => !widget.embedded || marketplaceDesktop(context),
+    paused: () =>
+        controller.offline ||
+        !widget.dependencies.session.active ||
+        widget.embedded && !marketplaceDesktop(context),
     child: ListenableBuilder(
       listenable: Listenable.merge([controller, widget.dependencies.session]),
       builder: (context, _) => !widget.dependencies.session.active
           ? const SizedBox.shrink()
           : MessageInboxView(
               title: 'Logistics messages',
+              embedded: widget.embedded,
               rows: [
                 for (final e in controller.items)
                   InboxRow(e.id, e.label, e.preview, e.unread, !e.sendAllowed),
@@ -85,6 +96,12 @@ class _LogisticsThreadScreenState extends State<LogisticsThreadScreen> {
         builder: (context, _) => !widget.dependencies.session.active
             ? const SizedBox.shrink()
             : MessageThreadView(
+                inbox: widget.dependencies.communication == null
+                    ? null
+                    : LogisticsInboxScreen(
+                        dependencies: widget.dependencies,
+                        embedded: true,
+                      ),
                 title: c.conversation?.label ?? 'Logistics message',
                 rows: [
                   for (final e in c.messages)

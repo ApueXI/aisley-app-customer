@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 
+import 'marketplace_chrome.dart';
+export 'marketplace_chrome.dart';
+
 double pageSpacing(BuildContext context) =>
-    MediaQuery.sizeOf(context).width < 600 ? 16 : 24;
+    MediaQuery.sizeOf(context).width < 600
+    ? 16
+    : MediaQuery.sizeOf(context).width < 1024
+    ? 24
+    : 32;
 
 EdgeInsets pagePadding(BuildContext context) =>
     EdgeInsets.all(pageSpacing(context));
@@ -11,13 +18,20 @@ double catalogTextScale(BuildContext context) =>
 
 /// Constrains the viewport, leaving scrolling and input state with the child.
 class ContentViewport extends StatelessWidget {
-  const ContentViewport({super.key, required this.child, this.maxWidth = 1120});
+  const ContentViewport({
+    super.key,
+    required this.child,
+    this.maxWidth = 1200,
+    this.shrinkWrap = false,
+  });
   final Widget child;
   final double maxWidth;
+  final bool shrinkWrap;
 
   @override
   Widget build(BuildContext context) => Align(
     alignment: Alignment.topCenter,
+    heightFactor: shrinkWrap ? 1 : null,
     child: ConstrainedBox(
       constraints: BoxConstraints(maxWidth: maxWidth),
       child: SizedBox(width: double.infinity, child: child),
@@ -27,14 +41,26 @@ class ContentViewport extends StatelessWidget {
 
 /// Shopping routes outside the bottom-navigation shell own one scaffold.
 class ShoppingPage extends StatelessWidget {
-  const ShoppingPage({super.key, this.appBar, required this.body});
+  const ShoppingPage({
+    super.key,
+    this.appBar,
+    required this.body,
+    this.bottomBar,
+  });
   final PreferredSizeWidget? appBar;
   final Widget body;
+  final Widget? bottomBar;
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: appBar,
+    appBar: marketplaceAppBar(context, appBar),
     body: SafeArea(child: ContentViewport(child: body)),
+    bottomNavigationBar: bottomBar == null
+        ? null
+        : SafeArea(
+            top: false,
+            child: ContentViewport(shrinkWrap: true, child: bottomBar!),
+          ),
   );
 }
 
@@ -50,13 +76,31 @@ class CatalogGrid extends StatelessWidget {
       final minimum = 160 * catalogTextScale(context);
       final columns = ((constraints.maxWidth + gap) / (minimum + gap))
           .floor()
-          .clamp(1, 4);
+          .clamp(1, 6);
       final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
-      return Wrap(
-        spacing: gap,
-        runSpacing: gap,
+      return Column(
         children: [
-          for (final child in children) SizedBox(width: width, child: child),
+          for (var start = 0; start < children.length; start += columns)
+            Padding(
+              padding: EdgeInsets.only(
+                bottom: start + columns < children.length ? gap : 0,
+              ),
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (
+                      var offset = 0;
+                      offset < columns && start + offset < children.length;
+                      offset++
+                    ) ...[
+                      if (offset > 0) const SizedBox(width: gap),
+                      SizedBox(width: width, child: children[start + offset]),
+                    ],
+                  ],
+                ),
+              ),
+            ),
         ],
       );
     },

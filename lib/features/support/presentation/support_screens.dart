@@ -46,78 +46,80 @@ class _TicketInboxScreenState extends State<TicketInboxScreen> {
                   ),
                 ],
               ),
-              body: SafeArea(
-                child: ListView(
-                  padding: pagePadding(context),
-                  children: [
-                    FilledButton.icon(
-                      onPressed: () async {
-                        await context.push('/support-tickets/new');
-                        if (mounted) controller.load();
-                      },
-                      icon: const Icon(Icons.add),
-                      label: const Text('Create support ticket'),
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      key: ValueKey('status/${controller.status}'),
-                      initialValue: controller.status,
-                      isExpanded: true,
-                      itemHeight: null,
-                      decoration: const InputDecoration(labelText: 'Status'),
-                      items: [
-                        const DropdownMenuItem(
-                          value: null,
-                          child: Text('All statuses'),
+              body: ListView(
+                padding: pagePadding(context),
+                children: [
+                  FilledButton.icon(
+                    onPressed: () async {
+                      await context.push('/support-tickets/new');
+                      if (mounted) controller.load();
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text('Create support ticket'),
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    key: ValueKey('status/${controller.status}'),
+                    initialValue: controller.status,
+                    isExpanded: true,
+                    itemHeight: null,
+                    decoration: const InputDecoration(labelText: 'Status'),
+                    items: [
+                      const DropdownMenuItem(
+                        value: null,
+                        child: Text('All statuses'),
+                      ),
+                      for (final s in ticketStatuses)
+                        DropdownMenuItem(
+                          value: s,
+                          child: Text(s.replaceAll('_', ' ')),
                         ),
-                        for (final s in ticketStatuses)
-                          DropdownMenuItem(
-                            value: s,
-                            child: Text(s.replaceAll('_', ' ')),
-                          ),
-                      ],
-                      onChanged: (v) => controller.filter(
-                        status: v,
-                        category: controller.category,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<String>(
-                      key: ValueKey('category/${controller.category}'),
-                      initialValue: controller.category,
-                      isExpanded: true,
-                      itemHeight: null,
-                      decoration: const InputDecoration(labelText: 'Category'),
-                      items: [
-                        const DropdownMenuItem(
-                          value: null,
-                          child: Text('All categories'),
-                        ),
-                        for (final s in ticketCategories)
-                          DropdownMenuItem(value: s, child: Text(s)),
-                      ],
-                      onChanged: (v) => controller.filter(
-                        status: controller.status,
-                        category: v,
-                      ),
-                    ),
-                    if (controller.loading)
-                      const LinearProgressIndicator(
-                        semanticsLabel: 'Loading tickets',
-                      ),
-                    if (controller.error != null) ...[
-                      Text(controller.error!),
-                      TextButton(
-                        onPressed: controller.coolingDown
-                            ? null
-                            : controller.load,
-                        child: const Text('Retry'),
-                      ),
                     ],
-                    if (controller.loaded && controller.items.isEmpty)
-                      const Text('No tickets in these filters.'),
-                    for (final item in controller.items)
-                      ListTile(
+                    onChanged: (v) => controller.filter(
+                      status: v,
+                      category: controller.category,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    key: ValueKey('category/${controller.category}'),
+                    initialValue: controller.category,
+                    isExpanded: true,
+                    itemHeight: null,
+                    decoration: const InputDecoration(labelText: 'Category'),
+                    items: [
+                      const DropdownMenuItem(
+                        value: null,
+                        child: Text('All categories'),
+                      ),
+                      for (final s in ticketCategories)
+                        DropdownMenuItem(value: s, child: Text(s)),
+                    ],
+                    onChanged: (v) => controller.filter(
+                      status: controller.status,
+                      category: v,
+                    ),
+                  ),
+                  if (controller.loading)
+                    const LinearProgressIndicator(
+                      semanticsLabel: 'Loading tickets',
+                    ),
+                  if (controller.error != null) ...[
+                    Text(controller.error!),
+                    TextButton(
+                      onPressed: controller.coolingDown
+                          ? null
+                          : controller.load,
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                  if (controller.loaded && controller.items.isEmpty)
+                    const Text('No tickets in these filters.'),
+                  for (final item in controller.items)
+                    Card(
+                      child: ListTile(
+                        leading: const Icon(Icons.support_agent),
+                        trailing: const Icon(Icons.chevron_right),
                         minTileHeight: 72,
                         title: Text(item.subject),
                         subtitle: Text(
@@ -128,20 +130,19 @@ class _TicketInboxScreenState extends State<TicketInboxScreen> {
                           if (mounted) controller.load();
                         },
                       ),
-                    if (controller.pageError != null)
-                      Text(controller.pageError!),
-                    if (controller.trail.next != null)
-                      TextButton(
-                        onPressed:
-                            controller.loading ||
-                                controller.paging ||
-                                controller.coolingDown
-                            ? null
-                            : () => controller.load(more: true),
-                        child: const Text('Load more tickets'),
-                      ),
-                  ],
-                ),
+                    ),
+                  if (controller.pageError != null) Text(controller.pageError!),
+                  if (controller.trail.next != null)
+                    TextButton(
+                      onPressed:
+                          controller.loading ||
+                              controller.paging ||
+                              controller.coolingDown
+                          ? null
+                          : () => controller.load(more: true),
+                      child: const Text('Load more tickets'),
+                    ),
+                ],
               ),
             ),
     ),

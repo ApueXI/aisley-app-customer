@@ -79,3 +79,9 @@ Visible online chats poll at15s and on focus/reconnect, preserving pending first
 ## Feature implementation sequence
 
 Implement root configuration/token/session/error/router composition and shared consent first. Then public discovery/Shop/Product DTOs and navigation; account/PSGC addresses/wishlist/account history; Cart/quote/vouchers/place and owned Order projections; independent channels/notifications/Q&A/reviews/support. Each phase uses its own repositories/controllers and tests without importing another role’s screens. Reuse focused presentation widgets only when wire/permission/state ownership stays separate. See [architecture](architecture.md) and [setup](setup.md).
+
+
+Responsive desktop Buyer uses the same Flutter routes/controllers and trusted origin.
+The desktop marketplace header replaces bottom navigation at 1024 pixels when text fits;
+phone/tablet retain Home/Shops/Cart/Account. Shopping bounds are 1200 pixels; forms remain
+560. See [marketplace design](design-buyer.md) and [verification](verification.md).

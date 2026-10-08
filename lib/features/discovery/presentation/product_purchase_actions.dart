@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
-import '../../../core/security/session_controller.dart';
-import '../../checkout/domain/checkout_intent.dart';
 import 'product_controller.dart';
+import 'product_purchase_flow.dart';
 
-class ProductPurchaseActions extends StatelessWidget {
+class ProductPurchaseActions extends StatefulWidget {
   const ProductPurchaseActions({
     super.key,
     required this.dependencies,
@@ -14,28 +13,37 @@ class ProductPurchaseActions extends StatelessWidget {
   });
   final AppDependencies dependencies;
   final ProductDetailController product;
+
+  @override
+  State<ProductPurchaseActions> createState() => _ProductPurchaseActionsState();
+}
+
+class _ProductPurchaseActionsState extends State<ProductPurchaseActions> {
+  bool _preparing = false;
+
   @override
   Widget build(BuildContext context) {
-    final commerce = dependencies.commerce;
+    final commerce = widget.dependencies.commerce;
     if (commerce == null) return const Text('Purchasing is unavailable.');
     return ListenableBuilder(
       listenable: Listenable.merge([
         commerce.cart,
         commerce.checkout,
-        dependencies.session,
+        widget.dependencies.session,
       ]),
       builder: (context, _) {
         final cart = commerce.cart, checkout = commerce.checkout;
+        final currentProduct = widget.product.product;
         final available =
-            product.available &&
-            product.quantity > 0 &&
-            product.product?.shop.isOnVacation != true &&
-            !product.loading;
-        final busy = cart.writing || cart.loading || checkout.placing;
+            currentProduct != null &&
+            currentProduct.shop.isOnVacation != true &&
+            !widget.product.loading;
+        final busy =
+            _preparing || cart.writing || cart.loading || checkout.placing;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (cart.error != null && dependencies.session.active)
+            if (cart.error != null && widget.dependencies.session.active)
               Semantics(liveRegion: true, child: Text(cart.error!)),
             if (cart.uncertain) ...[
               const Text('The Cart needs to be checked before adding again.'),
@@ -56,22 +64,10 @@ class ProductPurchaseActions extends StatelessWidget {
                       !cart.coolingDown &&
                       !cart.uncertain &&
                       checkout.pending == null
-                  ? () async {
-                      if (!_authorized(context)) return;
-                      final success = await cart.add(
-                        product.productId,
-                        product.selectedVariant?.id,
-                        product.quantity,
-                      );
-                      if (context.mounted && success) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Added to Cart')),
-                        );
-                      }
-                    }
+                  ? () => _purchase(ProductPurchaseAction.addToCart)
                   : null,
               icon: const Icon(Icons.add_shopping_cart),
-              label: Text(cart.writing ? 'Adding…' : 'Add to Cart'),
+              label: Text(busy && cart.writing ? 'Adding…' : 'Add to Cart'),
             ),
             const SizedBox(height: 8),
             OutlinedButton(
@@ -80,22 +76,9 @@ class ProductPurchaseActions extends StatelessWidget {
                       !busy &&
                       checkout.pending == null &&
                       !checkout.coolingDown
-                  ? () {
-                      if (!_authorized(context)) return;
-                      if (checkout.begin(
-                        CheckoutIntent.buyNow(
-                          BuyNowItem(
-                            product.productId,
-                            product.selectedVariant?.id,
-                            product.quantity,
-                          ),
-                        ),
-                      )) {
-                        context.push('/checkout');
-                      }
-                    }
+                  ? () => _purchase(ProductPurchaseAction.buyNow)
                   : null,
-              child: const Text('Buy Now'),
+              child: Text(busy && _preparing ? 'Checking Product…' : 'Buy Now'),
             ),
           ],
         );
@@ -103,16 +86,20 @@ class ProductPurchaseActions extends StatelessWidget {
     );
   }
 
-  bool _authorized(BuildContext context) {
-    if (dependencies.session.active) return true;
-    final screen = switch (dependencies.session.phase) {
-      SessionPhase.signedOut || SessionPhase.accountDenied => '/login',
-      SessionPhase.consentRequired => '/consent',
-      _ => '/session',
-    };
-    context.push(
-      '$screen?returnTo=${Uri.encodeComponent('/products/${product.productId}')}',
-    );
-    return false;
+  Future<void> _purchase(ProductPurchaseAction action) async {
+    if (_preparing) return;
+    setState(() => _preparing = true);
+    try {
+      await beginProductPurchase(
+        context: context,
+        dependencies: widget.dependencies,
+        productId: widget.product.productId,
+        action: action,
+        variantId: widget.product.selectedVariant?.id,
+        quantity: widget.product.quantity,
+      );
+    } finally {
+      if (mounted) setState(() => _preparing = false);
+    }
   }
 }

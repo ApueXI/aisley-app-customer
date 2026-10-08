@@ -17,6 +17,12 @@ def verify(root=ROOT):
     links = 0
     for document in [root / 'README.md', *sorted((root / 'docs').rglob('*.md'))]:
         contents = document.read_text()
+        # Required progress archives preserve the original bytes, including links
+        # authored relative to docs/. Other Markdown keeps its own directory base.
+        link_base = document.parent
+        if (document.parent == root / 'docs/logs' and
+                re.fullmatch(r'PROGRESS-\d{4}-\d{2}-\d{2}(?:-\d+)?\.md', document.name)):
+            link_base = root / 'docs'
         # Examples in fenced code are text, not navigable Markdown links.
         contents = re.sub(r'```.*?```', '', contents, flags=re.S)
         for target in re.findall(r'\]\(([^\s)]+)\)', contents):
@@ -24,7 +30,7 @@ def verify(root=ROOT):
             if parts.scheme or parts.netloc or not parts.path:
                 continue
             links += 1
-            if not (document.parent / unquote(parts.path)).exists():
+            if not (link_base / unquote(parts.path)).exists():
                 errors.append(f'{document.relative_to(root)}: missing local link {parts.path}')
     specs = list((root / 'docs/features/customer').glob('*/spec*.md'))
     if len(specs) != 22:

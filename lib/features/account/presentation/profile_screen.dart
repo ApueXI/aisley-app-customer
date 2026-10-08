@@ -5,6 +5,7 @@ import '../../../app/app_dependencies.dart';
 import '../../../core/ui/form_page.dart';
 import '../data/account_models.dart';
 import 'account_controllers.dart';
+import 'photo_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key, required this.dependencies});
@@ -25,6 +26,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _sex, _birthDate;
   String _initial = '';
   bool _hydrated = false, _hydrating = false;
+  bool _photoDraft = false, _photoBusy = false;
 
   static const _sexValues = {
     'male': 'Male',
@@ -65,8 +67,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (account != null && !_hydrated) _hydrate(account);
       return FormPage(
         title: 'Profile',
-        dirty: _hydrated && _snapshot() != _initial,
-        busy: _controller.saving,
+        dirty: (_hydrated && _snapshot() != _initial) || _photoDraft,
+        busy: _controller.saving || _photoBusy,
         children: [
           if (!_hydrated && _controller.loading)
             const LinearProgressIndicator(semanticsLabel: 'Loading profile'),
@@ -95,6 +97,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         requiredText(value) ??
                         _controller.fieldErrors['first_name'],
                   ),
+                  const SizedBox(height: 16),
                   TextFormField(
                     controller: _middle,
                     decoration: const InputDecoration(
@@ -105,6 +108,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ? 'Use at most 255 characters.'
                         : _controller.fieldErrors['middle_name'],
                   ),
+                  const SizedBox(height: 16),
                   TextFormField(
                     controller: _last,
                     decoration: const InputDecoration(labelText: 'Last name'),
@@ -113,6 +117,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         requiredText(value) ??
                         _controller.fieldErrors['last_name'],
                   ),
+                  const SizedBox(height: 16),
                   TextFormField(
                     controller: _contact,
                     decoration: const InputDecoration(
@@ -123,6 +128,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         requiredText(value, max: 32) ??
                         _controller.fieldErrors['contact_number'],
                   ),
+                  const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
                     isExpanded: true,
                     itemHeight: null,
@@ -140,6 +146,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         : _controller.fieldErrors['sex'],
                     onChanged: (value) => setState(() => _sex = value),
                   ),
+                  const SizedBox(height: 16),
                   TextFormField(
                     key: ValueKey(_birthDate),
                     initialValue: _birthDate ?? '',
@@ -175,6 +182,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
               icon: const Icon(Icons.save_outlined),
               label: Text(_controller.saving ? 'Saving…' : 'Save profile'),
             ),
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Profile photo',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 16),
+                  ProfilePhotoSection(
+                    dependencies: widget.dependencies,
+                    onStateChanged: _photoStateChanged,
+                  ),
+                ],
+              ),
+            ),
           ],
         ],
       );
@@ -196,6 +220,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _hydrating = false;
   }
 
+  void _photoStateChanged({required bool dirty, required bool busy}) {
+    if (!mounted || dirty == _photoDraft && busy == _photoBusy) return;
+    setState(() {
+      _photoDraft = dirty;
+      _photoBusy = busy;
+    });
+  }
+
   void _changed() {
     if (_hydrating) return;
     _controller.fieldErrors = const {};
@@ -210,6 +242,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _birthDate = null;
     _initial = '';
     _hydrated = false;
+    _photoDraft = false;
+    _photoBusy = false;
   }
 
   Future<void> _reviewSavedProfile() async {
