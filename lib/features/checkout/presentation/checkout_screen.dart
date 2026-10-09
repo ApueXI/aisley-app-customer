@@ -8,6 +8,7 @@ import '../../../core/ui/marketplace_widgets.dart';
 import 'checkout_controller.dart';
 import 'commerce_widgets.dart';
 import 'quote_review.dart';
+import 'shipping_options_section.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key, required this.dependencies});
@@ -122,6 +123,8 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                     children: [
                       _addresses(),
                       const SizedBox(height: 16),
+                      ShippingOptionsSection(controller: c),
+                      const SizedBox(height: 16),
                       const MarketSection(
                         title: 'Payment',
                         child: ListTile(
@@ -203,6 +206,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
     'payment_method' => 'Payment',
     'cart_item_ids' => 'Cart items',
     'quote_id' => 'Order review',
+    'logistics_selections' => 'Shipping provider',
     _ => 'Order details',
   };
 

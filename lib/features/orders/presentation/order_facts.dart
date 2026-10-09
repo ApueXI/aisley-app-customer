@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../checkout/presentation/commerce_widgets.dart';
+import '../../checkout/presentation/shipping_details.dart';
 import '../data/order_models.dart';
 
 class OrderFacts extends StatelessWidget {
@@ -36,6 +37,10 @@ class OrderFacts extends StatelessWidget {
         ),
       const Divider(),
       TotalsView(order.totals),
+      ShippingDetails(
+        businessName: order.shippingProvider?.businessName,
+        fee: order.totals.shipping.display(order.totals.currency),
+      ),
       for (final voucher in order.vouchers)
         Padding(
           padding: const EdgeInsets.only(top: 8),

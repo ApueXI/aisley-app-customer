@@ -5,6 +5,7 @@ import '../../../app/app_dependencies.dart';
 import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/marketplace_widgets.dart';
 import '../data/order_models.dart';
+import '../../checkout/presentation/shipping_details.dart';
 import 'orders_controller.dart';
 
 class OrdersScreen extends StatefulWidget {
@@ -103,6 +104,10 @@ class _OrdersScreenState extends State<OrdersScreen>
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     const SizedBox(height: 12),
+                    ShippingDetails(
+                      businessName: order.shippingProvider?.businessName,
+                      fee: order.totals.shipping.display(order.totals.currency),
+                    ),
                     Text(
                       order.item?.name ?? '${order.lineCount} items',
                       style: Theme.of(context).textTheme.titleMedium,

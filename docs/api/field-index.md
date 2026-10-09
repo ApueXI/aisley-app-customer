@@ -1,6 +1,6 @@
 # Typed wire models
 
-Current inspected checkout `22b0a48f9575ead182d03c35ab87345711c23b90`; implemented client adoption `57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50` (G25); synthetic examples, no live captures.
+Current inspected checkout `22b0a48f9575ead182d03c35ab87345711c23b90`; historical general client baseline `57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50`; current shipping client adoption recorded in [G25 evidence](../references/shipping-selection-verification.md), live/device gate open; synthetic examples, no live captures.
 
 Every named type below is an immutable DTO definition. Fields are required unless marked `~`; `?` permits JSON null.
 `UUID` = UUID string; `timestamp` = ISO-8601 UTC string; `date` = YYYY-MM-DD string.

@@ -170,6 +170,7 @@ void main() {
         'vouchers': [
           {'voucher_id': customerId, 'target_shop_id': otherId},
         ],
+        'logistics_selections': [],
         'quote_id': customerId,
       });
       expect(

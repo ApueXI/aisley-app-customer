@@ -37,7 +37,7 @@ def bootstrap_script():
     """ % json.dumps(policies)
 
 
-def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True):
+def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True, shipping_selection=False):
     identity = {'id': ID, 'displayName': 'Synthetic browser Buyer', 'avatarUrl': None,
                 'role': 'customer', 'status': 'active'}
     responses = {
@@ -79,6 +79,10 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True):
                     path = path.replace('{' + parameter + '}', ID)
                 responses[path] = op['response_example']
     responses['/api/v1/customer/cart/items'] = fixture('view-cart', 'op-026')
+    responses['/api/v1/customer/checkout/logistics-options'] = fixture('checkout-order', 'op-096')
+    if shipping_selection:
+        scenarios = json.loads((ROOT / 'docs/api/examples/shipping-selection-scenarios.json').read_text())['scenarios']
+        responses['/api/v1/customer/checkout/logistics-options'] = next(s['expected']['body'] for s in scenarios if s['name'] == 'multiple-provider-options')
     responses['/api/v1/customer/checkout/quote'] = fixture('checkout-order', 'op-029')
     shop = responses['/api/v1/customer/shops']['items'][0]
     slug = shop['slug'] = 'synthetic-shop'
@@ -97,14 +101,27 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True):
         const location = new URL(String(url));
         if (location.pathname.startsWith('/api/v1/')) {
           const path = location.pathname;
-          window.buyerSyntheticCalls.push({path, method: options?.method ?? 'GET'});
+          const requestBody = options?.body && typeof options.body === 'string' ? JSON.parse(options.body) : {};
+          window.buyerSyntheticCalls.push({path, method: options?.method ?? 'GET', selections:requestBody.logistics_selections ?? null});
           let body = window.buyerSyntheticResponses[path];
+          if (path.endsWith('/checkout/logistics-options')) {
+            body.data.address.id = JSON.parse(options.body).address_id;
+          }
           if (path.endsWith('/checkout/quote')) {
             const input = JSON.parse(options.body);
             body = structuredClone(body);
             body.data.expiresAt = new Date(Date.now() + 900000).toISOString();
             body.data.mode = input.mode;
             body.data.address.id = input.address_id;
+            const selection = input.logistics_selections?.[0];
+            if (selection) {
+              const provider = window.buyerSyntheticResponses['/api/v1/customer/checkout/logistics-options'].data.groups[0].options.find(o => o.organizationId === selection.logistics_organization_id);
+              body.data.groups[0].shippingQuote = {serviceable:true,logisticsOrganizationId:provider.organizationId,logisticsBusinessName:provider.businessName,routeStatus:provider.routeStatus,shippingFee:provider.shippingFee};
+              for (const totals of [body.data.groups[0].totals, body.data.summary]) {
+                totals.shippingFee = provider.shippingFee;
+                totals.payable = provider.shippingFee === '120.00' ? '220.00' : '200.00';
+              }
+            }
             const item = body.data.groups[0].items[0];
             if (input.mode === 'cart') {
               body.data.groups[0].items = input.cart_item_ids.map(id => ({...item, cartItemId:id}));
@@ -154,13 +171,26 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True):
 
     def click(label):
         for _ in range(20):
-            if script("const b = Array.from(document.querySelectorAll('[role=button]')).find(e => (e.innerText || e.getAttribute('aria-label') || '').trim() === " + json.dumps(label) + "); if (b) {b.click(); return true;} return false;"):
+            if script("const b = Array.from(document.querySelectorAll('[role=button]')).find(e => (e.innerText || e.getAttribute('aria-label') || '').trim() === " + json.dumps(label) + "); if (b && b.getAttribute('aria-disabled') !== 'true') {b.click(); return true;} return false;"):
                 return
             dimensions = script('return {width:window.innerWidth,height:window.innerHeight};')
             call(prefix + '/actions', {'actions': [{'type':'wheel','id':'journey-scroll','actions':[
                 {'type':'scroll','origin':'viewport','x':dimensions['width']//2,'y':dimensions['height']//2,
                  'deltaX':0,'deltaY':400,'duration':150}]}]})
         raise AssertionError('Shopper action must be reachable: ' + label)
+
+    def choose_shipping(name):
+        for _ in range(20):
+            found = script("const r = Array.from(document.querySelectorAll('[role=radio]')).find(e => (e.innerText || e.getAttribute('aria-label') || '').includes(" + json.dumps(name) + ")); if (r) {r.click(); return true;} return false;")
+            if found:
+                time.sleep(.2)
+                return
+            dimensions = script('return {width:window.innerWidth,height:window.innerHeight};')
+            call(prefix + '/actions', {'actions': [{'type':'wheel','id':'provider-scroll','actions':[
+                {'type':'scroll','origin':'viewport','x':dimensions['width']//2,'y':dimensions['height']//2,
+                 'deltaX':0,'deltaY':300,'duration':100}]}]})
+            time.sleep(.1)
+        raise AssertionError('Shipping provider radio is unavailable: ' + name)
 
     def capture(name):
         directory = os.environ.get('BUYER_SCREENSHOT_DIR')
@@ -192,9 +222,20 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True):
         wait_text('Added to Cart')
         click('Buy Now')
         wait_text('Review order')
+        if shipping_selection:
+            wait_text('Shipping provider')
+            choose_shipping('Synthetic Logistics')
         click('Review order')
         wait_text('Review your COD order')
         wait_text('Place COD order')
+        if shipping_selection:
+            wait_text('Shipping provider: Synthetic Logistics')
+            choose_shipping('Synthetic Alternate Logistics')
+            assert 'Review your COD order' not in script('return document.body.innerText;'), 'Changing provider must clear the reviewed quote.'
+            assert script("return !Array.from(document.querySelectorAll('[role=button]')).some(e => (e.innerText || '').trim() === 'Place COD order' && e.getAttribute('aria-disabled') !== 'true');"), 'Placement must be disabled until renewed review.'
+            click('Review order')
+            wait_text('Shipping provider: Synthetic Alternate Logistics')
+            wait_text('Shipping fee: PHP 120.00')
         capture('checkout-' + str(width))
         click('Place COD order')
         wait_text('Place COD order?')
@@ -210,16 +251,16 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True):
         assert checkbox, 'Cart selection must remain accessible.'
         checked = next((p['value']['value'] for p in checkbox.get('properties',[]) if p['name'] == 'checked'), False)
         if checked not in [True, 'true']:
-            model = call(prefix + '/goog/cdp/execute', {'cmd':'DOM.getBoxModel',
-                         'params':{'backendNodeId':checkbox['backendDOMNodeId']}})['model']['border']
-            x, y = round((model[0]+model[4])/2), round((model[1]+model[5])/2)
-            call(prefix + '/actions', {'actions':[{'type':'pointer','id':'cart-selection','parameters':{'pointerType':'mouse'},
-                 'actions':[{'type':'pointerMove','origin':'viewport','x':x,'y':y},
-                            {'type':'pointerDown','button':0},{'type':'pointerUp','button':0}]}]})
+            # Re-resolve the current semantic element; Flutter can rebuild its
+            # DOM after the accessibility-tree snapshot above.
+            assert script("const checkbox = Array.from(document.querySelectorAll('[role=checkbox]')).find(e => (e.innerText || e.getAttribute('aria-label') || '').startsWith('Select ')); if (!checkbox) return false; checkbox.click(); return true;"), 'Cart checkbox must remain actionable.'
         wait_text('Checkout selected (1)')
         capture('cart-' + str(width))
         click('Checkout selected (1)')
         wait_text('Review order')
+        if shipping_selection:
+            wait_text('Shipping provider')
+            choose_shipping('Synthetic Logistics')
         click('Review order')
         wait_text('Review your COD order')
         wait_text('Place COD order')
@@ -228,7 +269,11 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True):
         capture('messages-' + str(width))
     calls = script('return window.buyerSyntheticCalls;')
     assert sum(item['path'].endswith('/cart/items') for item in calls) == 2
-    assert sum(item['path'].endswith('/checkout/quote') for item in calls) == 4
+    assert sum(item['path'].endswith('/checkout/quote') for item in calls) == (6 if shipping_selection else 4)
+    if shipping_selection:
+        selections = [item['selections'] for item in calls if item['path'].endswith('/checkout/quote')]
+        assert all(len(items) == 1 for items in selections)
+        assert all(item['selections'] is None for item in calls if item['path'].endswith('/logistics-options')), 'Discovery must omit selections.'
     assert not any(item['path'].endswith('/checkout/place') for item in calls)
     assert all(not item['path'].endswith('/merge') for item in calls)
     script("window.location.hash = '/account';")

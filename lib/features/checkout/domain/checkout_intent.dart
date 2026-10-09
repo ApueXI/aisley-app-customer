@@ -53,29 +53,57 @@ class VoucherSelection {
       Map.unmodifiable({'voucher_id': voucherId, 'target_shop_id': shopId});
 }
 
+/// One explicit provider choice for a Shop in the checkout intent.
+class LogisticsSelection {
+  LogisticsSelection(String shopId, String organizationId)
+    : shopId = requireUuid(shopId).toLowerCase(),
+      organizationId = requireUuid(organizationId).toLowerCase();
+  final String shopId, organizationId;
+  Map<String, dynamic> toJson() => Map.unmodifiable({
+    'shop_id': shopId,
+    'logistics_organization_id': organizationId,
+  });
+}
+
 /// The exact reviewed request is immutable, including every nested value.
 class CheckoutInput {
   CheckoutInput(
     this.intent,
     this.addressId,
-    Iterable<VoucherSelection> selections,
-  ) : vouchers = List.unmodifiable(selections) {
+    Iterable<VoucherSelection> selections, {
+    Iterable<LogisticsSelection> logisticsSelections = const [],
+  }) : vouchers = List.unmodifiable(selections),
+       logisticsSelections = List.unmodifiable(
+         logisticsSelections.toList()
+           ..sort((a, b) => a.shopId.compareTo(b.shopId)),
+       ) {
     requireUuid(addressId);
     if (vouchers.length > 20 ||
         vouchers.map((v) => v.voucherId).toSet().length != vouchers.length) {
+      throw const ApiFailure(FailureKind.decode);
+    }
+    if (this.logisticsSelections.length > 50 ||
+        this.logisticsSelections.map((s) => s.shopId).toSet().length !=
+            this.logisticsSelections.length) {
       throw const ApiFailure(FailureKind.decode);
     }
   }
   final CheckoutIntent intent;
   final String addressId;
   final List<VoucherSelection> vouchers;
-  Map<String, dynamic> toJson({String? quoteId}) => Map.unmodifiable({
-    ...intent.toJson(),
-    'address_id': addressId,
-    'payment_method': 'cod',
-    'vouchers': List.unmodifiable(vouchers.map((v) => v.toJson())),
-    if (quoteId != null) 'quote_id': requireUuid(quoteId),
-  });
+  final List<LogisticsSelection> logisticsSelections;
+  Map<String, dynamic> toJson({String? quoteId, bool discovery = false}) =>
+      Map.unmodifiable({
+        ...intent.toJson(),
+        'address_id': addressId,
+        'payment_method': 'cod',
+        'vouchers': List.unmodifiable(vouchers.map((v) => v.toJson())),
+        if (!discovery)
+          'logistics_selections': List.unmodifiable(
+            logisticsSelections.map((s) => s.toJson()),
+          ),
+        if (quoteId != null) 'quote_id': requireUuid(quoteId),
+      });
 }
 
 class PendingPlacement {

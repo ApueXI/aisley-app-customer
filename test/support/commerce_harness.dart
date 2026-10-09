@@ -70,6 +70,9 @@ class CommerceHarness {
     if (path.endsWith('/addresses')) {
       return jsonReply(fixture('address-book', 'op-015'));
     }
+    if (path.endsWith('/checkout/logistics-options')) {
+      return jsonReply(optionsFor(options.data as Map<String, dynamic>));
+    }
     if (path.endsWith('/checkout/quote')) {
       return jsonReply(quoteFor(options.data as Map<String, dynamic>));
     }
@@ -104,6 +107,12 @@ class CommerceHarness {
     return jsonReply({}, status: 404);
   }
 
+  Map<String, dynamic> optionsFor(Map<String, dynamic> input) {
+    final value = fixture('checkout-order', 'op-096');
+    value['data']['address']['id'] = input['address_id'];
+    return value;
+  }
+
   Map<String, dynamic> quoteFor(Map<String, dynamic> input) {
     final value = fixture('checkout-order', 'op-029');
     final data = value['data'] as Map<String, dynamic>;
@@ -122,6 +131,12 @@ class CommerceHarness {
       item['quantity'] = input['buy_now']['quantity'];
     }
     return value;
+  }
+
+  Future<void> settleShipping() async {
+    while (commerce.checkout.shipping.loading) {
+      await Future<void>.delayed(Duration.zero);
+    }
   }
 
   AppDependencies dependencies() => AppDependencies(

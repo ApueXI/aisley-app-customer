@@ -4,6 +4,7 @@ import '../../../core/ui/marketplace_widgets.dart';
 import '../data/quote_models.dart';
 import 'checkout_controller.dart';
 import 'commerce_widgets.dart';
+import 'shipping_details.dart';
 
 class QuoteReview extends StatelessWidget {
   const QuoteReview({super.key, required this.quote, required this.controller});
@@ -55,7 +56,11 @@ class QuoteReview extends StatelessWidget {
                   ),
                 const Divider(),
                 TotalsView(group.totals),
-                const Text('Delivery is available for this address.'),
+                ShippingDetails(
+                  businessName: group.shipping.businessName,
+                  fee: group.shipping.fee.display(group.totals.currency),
+                  routeStatus: group.shipping.routeStatus,
+                ),
                 for (final voucher in group.applied)
                   Text(
                     'Applied ${voucher.code}: ${voucher.discount.display(group.totals.currency)}',

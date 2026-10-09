@@ -3,7 +3,7 @@ feature: order-modification-cancellation
 role: Customer
 platform: Flutter / Dart
 phase: 3
-flutter_status: Implemented at 57e9eb2; current shipping adoption pending G25
+flutter_status: Implemented including 22b0a48 shipping; live/device acceptance partial
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 current_contract_inspected_checkout: 22b0a48f9575ead182d03c35ab87345711c23b90
@@ -16,7 +16,7 @@ current_contract_inspected_checkout: 22b0a48f9575ead182d03c35ab87345711c23b90
 Backend: Eligible placed COD mutations, locked reservations, new address snapshots and replay
 implemented; shipping-rate revalidation gap remains.
 
-Flutter: **implemented against 57e9eb2; newer shipping contract unadopted (G25)**. See [Phase 3 evidence](../../../references/phase-3-verification.md); live-account/device gates remain open.
+Flutter: **implemented including current shipping selection/projections**. See [G25 evidence](../../../references/shipping-selection-verification.md); live-account/device gates remain open.
 
 Owned eligible Order → confirm cancellation or select saved shipping row → locked action → refreshed state/history.
 
@@ -26,7 +26,7 @@ Owned eligible Order → confirm cancellation or select saved shipping row → l
 - On 409 refetch capabilities; freeze uncertain key/payload for exact replay. No quantity/variant/voucher/price/status changes. Address Book edits do not modify Order snapshots.
 
 The current [shipping contract](../../../api/shipping-selection.md) governs provider selection and DTOs;
-earlier parser/operation checks do not complete G25. Upstream paths are optional provenance only.
+current client checks are recorded in [G25 evidence](../../../references/shipping-selection-verification.md). Upstream paths remain optional provenance.
 Use this feature with its prerequisite session/consent boundary and the related shopping or
 communication repositories.
 The Customer client cannot perform Seller/Admin/Logistics/Courier actions. Current Laravel
@@ -184,7 +184,7 @@ require a universal error envelope.
 
 ### Verification scenarios
 
-- [ ] Current nullable provider/shipping projections and related selection effects pass G25 client verification.
+- [x] Current nullable provider/shipping projections and related selection effects pass G25 client verification.
 - [ ] Seller-processing race/stale revision/key replay yield one permissible outcome and release
   stock once.
 - [ ] Correction preserves previous address versions and shows current
@@ -221,5 +221,5 @@ history.
 Follow [architecture](../../../architecture.md), [setup](../../../setup.md) and
 [verification](../../../verification.md).
 
-Contract sync 2026-10-09: earlier Phase 3 checks cover its adopted baseline only. Current
-[shipping selection/DTOs](../../../api/shipping-selection.md) reopen parsing/operation gates under G25.
+Shipping adoption 2026-10-09: [G25 evidence](../../../references/shipping-selection-verification.md) records current client checks.
+Live/device commerce and deployment configuration remain open under G25.

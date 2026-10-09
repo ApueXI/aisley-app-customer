@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
-import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:dio/dio.dart';
@@ -31,17 +29,7 @@ void main() {
         return jsonReply(fixture('customer-homepage', 'op-047'));
       }
       if (r.uri.path.endsWith('/checkout/quote')) {
-        // Keep this UI test on the implemented contract while G25 is pending.
-        final snapshot = jsonDecode(
-          File('test/support/fixtures/checkout_quote_57e9eb2.json')
-              .readAsStringSync(),
-        ) as Map<String, dynamic>;
-        final response = snapshot['response'] as Map<String, dynamic>;
-        response['data']['address']['id'] = r.data['address_id'];
-        response['data']['expiresAt'] = h.now
-            .add(const Duration(minutes: 15))
-            .toIso8601String();
-        return jsonReply(response);
+        return jsonReply(h.quoteFor(r.data as Map<String, dynamic>));
       }
       return h.defaultReply(r);
     };

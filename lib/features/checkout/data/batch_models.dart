@@ -82,11 +82,12 @@ class SnapshotItem {
 class BatchShipping {
   BatchShipping.parse(Object? json) {
     final w = Wire(json);
-    rateId = w.uuid('rateVersionId');
-    version = w.positiveInt('rateVersion');
-    weight = nonnegative(w, 'billableWeightGrams');
-    logisticsCount = nonnegative(w, 'eligibleLogisticsCount');
+    organizationId = nullableUuid(w, 'logisticsOrganizationId');
+    businessName = w.nullableString('logisticsBusinessName');
+    routeStatus = w.string('routeStatus');
+    fee = Money.parse(w.field('shippingFee'));
   }
-  late final String rateId;
-  late final int version, weight, logisticsCount;
+  late final String? organizationId, businessName;
+  late final String routeStatus;
+  late final Money fee;
 }

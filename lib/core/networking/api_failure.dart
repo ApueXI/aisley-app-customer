@@ -65,6 +65,26 @@ class ApiFailure implements Exception {
         'Read and accept the required policies to continue.',
       'POLICY_VERSION_STALE' =>
         'The policy changed. Read the new version and confirm again.',
+      'LOGISTICS_SELECTION_REQUIRED' =>
+        'Choose a shipping provider for each Shop before reviewing.',
+      'LOGISTICS_SELECTION_INVALID' => 'A selected shipping provider is no longer valid. Refresh shipping options and choose again.',
+      'LOGISTICS_PROVIDER_UNAVAILABLE' => 'A selected shipping provider is unavailable. Refresh shipping options before reviewing again.',
+      'SHIPPING_COVERAGE_UNAVAILABLE' => 'No shipping provider can quote this Shop order right now. Try another address or retry later.',
+      'PICKUP_ADDRESS_REQUIRED' => 'The Shop needs to complete its pickup address before shipping can be quoted.',
+      'SHIPPING_RATE_UNAVAILABLE' =>
+        'Shipping rates are unavailable. Try again later.',
+      'LOGISTICS_RATE_NOT_ACCEPTED' => 'The shipping provider cannot use the current shipping rates. Refresh shipping options or try later.',
+      'SHIPPING_DATA_REQUIRED' => 'An item needs shipping details from the Shop before it can be ordered.',
+      'SHIPPING_DIMENSIONS_UNSUPPORTED' =>
+        'An item exceeds the supported parcel dimensions.',
+      'SHIPPING_WEIGHT_UNSUPPORTED' =>
+        'An item exceeds the supported shipping weight.',
+      'ROUTE_RATE_LIMIT_EXCEEDED' => 'This parcel exceeds a shipping route limit. Shipping cannot be quoted.',
+      'QUOTE_INPUT_CHANGED' =>
+        'Your order details changed. Review a new quote before placing.',
+      'QUOTE_EXPIRED' => 'Your quote expired. Review your order again.',
+      'QUOTE_STALE' =>
+        'Prices, stock or shipping changed. Review your order again.',
       _ => switch (status) {
         401 => 'Your session has ended. Sign in again.',
         403 => 'Access to this resource is unavailable.',

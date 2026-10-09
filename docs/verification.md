@@ -70,7 +70,7 @@ Builds and synthetic checks do not establish successful live quotes or COD place
 
 ## New backend contract adoption gates — 2026-10-09
 
-- [ ] Adopt [per-Shop shipping selection](api/shipping-selection.md): options read, explicit choice/single-option fallback, frozen selection hashes, revised shipping DTOs and nullable legacy Order providers. Reverify affected parsers/repositories/UI and controlled commerce (G25).
+- [ ] Verify controlled live/device [per-Shop shipping selection](api/shipping-selection.md). Current options, choice/fallback, frozen recovery and DTO adoption have [synthetic client evidence](references/shipping-selection-verification.md); deployed-provider/commerce and installed Android/TalkBack gates remain open (G25).
 - [ ] Adopt [private chat media](api/chat-media.md): upload/readiness, ordered binding on Send, exact supported retries, authenticated content/preview delivery and private account cleanup. Verify Android/browser file handling and installed-device behavior (G26).
 
 The handoff's reviewed backend revision is separate from current client adoption and the

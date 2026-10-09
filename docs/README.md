@@ -1,6 +1,6 @@
 # Buyer Flutter documentation bundle
 
-Historical baseline: **`7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0`**. Adopted client contract inspection: **2026-10-03**, checkout **`57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50`**. Supplied webapp backend review: **2026-10-09**, **`0a6aaa8096196e2c26822ac0281d5d30675511a8`**; shipping/media adoption remains G25/G26. Buyer Flutter implementation: **Phases 1–4 implemented; live/device acceptance remains partial**. See [Phase 4 evidence](references/phase-4-verification.md), [Phase 3 evidence](references/phase-3-verification.md), [Phase 2 evidence](references/phase-2-verification.md) and [Phase 1 evidence](references/phase-1-verification.md).
+Historical baseline: **`7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0`**. Adopted client contract inspection: **2026-10-03**, checkout **`57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50`**. Supplied webapp backend review: **2026-10-09**, **`0a6aaa8096196e2c26822ac0281d5d30675511a8`**; current shipping is adopted with live/device G25 gates open; media adoption remains G26. Buyer Flutter implementation: **Phases 1–4 implemented; live/device acceptance remains partial**. See [Phase 4 evidence](references/phase-4-verification.md), [Phase 3 evidence](references/phase-3-verification.md), [Phase 2 evidence](references/phase-2-verification.md) and [Phase 1 evidence](references/phase-1-verification.md).
 
 This portable bundle defines a new standalone Flutter/Dart Customer app targeting Android, with the same application tested in a local browser. Laravel, Sanctum, PostgreSQL, and configured blob storage remain the platform backend. `customer` is the only persisted/API role; Buyer is product terminology.
 
@@ -61,3 +61,9 @@ and explicit message binding (G26). Both remain pending Flutter adoption; earlie
 the original client contracts. See [the local sync record](references/webapp-docs-sync-2026-10-09.md)
 and [integration gaps](references/integration-gaps.md). Local implementation history, SDK metadata,
 MapLibre evidence and required sign-in/account-only recency remain the implementation record.
+
+## Shipping client adoption — 2026-10-09
+
+Buyer now implements `22b0a48` shipping options, per-Shop selections, current projections
+and frozen placement recovery. [Verification](references/shipping-selection-verification.md)
+records synthetic client checks; deployed-provider, live commerce and installed-device gates remain open.

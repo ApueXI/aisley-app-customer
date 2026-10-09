@@ -18,7 +18,11 @@ def main():
     parser.add_argument('--synthetic-shopping', action='store_true', help='Also inject synthetic identity/API responses for shopping layout checks.')
     parser.add_argument('--synthetic-only', action='store_true', help='Intercept every API request before startup; requires only the Buyer server, never Laravel.')
     parser.add_argument('--synthetic-journey-only', action='store_true', help='Focus on intercepted purchase journeys after a verified resize matrix.')
+    parser.add_argument('--synthetic-shipping', action='store_true', help='Exercise provider choices and renewed quote review using intercepted synthetic responses.')
     args = parser.parse_args()
+    if args.synthetic_shipping:
+        args.synthetic_only = True
+        args.synthetic_journey_only = True
     if args.synthetic_journey_only:
         args.synthetic_only = True
     driver = shutil.which('chromedriver')
@@ -102,8 +106,7 @@ def main():
           window.buyerFetchCalls = [];
           const originalFetch = window.fetch;
           window.fetch = function(url, options) {
-            if (['http://localhost:8000/api/v1/', 'http://127.0.0.1:8000/api/v1/']
-                .some(base => String(url).startsWith(base))) {
+            if (new URL(String(url), window.location.href).pathname.startsWith('/api/v1/')) {
               window.buyerFetchCalls.push({path: new URL(String(url)).pathname, credentials: options?.credentials, redirect: options?.redirect});
             }
             return originalFetch.apply(this, arguments);
@@ -182,7 +185,7 @@ def main():
         wait_text('Sign in with your approved Buyer account.')
         if args.synthetic_shopping or args.synthetic_only:
             from browser_synthetic import check_shopping
-            check_shopping(call, prefix, script, wait_text, resize, matrix=not args.synthetic_journey_only)
+            check_shopping(call, prefix, script, wait_text, resize, matrix=not args.synthetic_journey_only, shipping_selection=args.synthetic_shipping)
         screenshot = os.environ.get('BUYER_SCREENSHOT')
         if screenshot:
             with open(screenshot, 'wb') as output:
