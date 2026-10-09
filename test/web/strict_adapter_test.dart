@@ -294,4 +294,69 @@ void main() {
       provider.close(force: true);
     },
   );
+  test('upload cancellation aborts only that Fetch and never resends multipart bytes', () async {
+    _evaluate(
+      r"""
+      globalThis.uploadCalls=0; globalThis.uploadAborted=false;
+      globalThis.fetch=(url, options)=>{
+        if(options.method==='POST') {
+          uploadCalls++;
+          return new Promise((resolve,reject)=>options.signal.addEventListener('abort',()=>{
+            uploadAborted=true; reject(new DOMException('Aborted','AbortError'));
+          }));
+        }
+        return Promise.resolve(new Response(JSON.stringify({message:'OK'}),{status:200,headers:{'Content-Type':'application/json'}}));
+      };
+    """
+          .toJS,
+    );
+    final lease = SessionLease('synthetic-token', () => true, (_) {});
+    final cancellation = CancelToken();
+    final sending = client.uploadBytes(
+      'customer/account/profile-photo',
+      fieldName: 'photo',
+      bytes: Uint8List.fromList([1, 2, 3]),
+      filename: 'synthetic.png',
+      mimeType: 'image/png',
+      lease: lease,
+      cancelToken: cancellation,
+    );
+    final assertion = expectLater(
+      sending,
+      throwsA(
+        isA<ApiFailure>().having((e) => e.kind, 'kind', FailureKind.cancelled),
+      ),
+    );
+    for (
+      var i = 0;
+      i < 100 && !(_evaluate('uploadCalls===1'.toJS) as JSBoolean).toDart;
+      i++
+    ) {
+      await Future<void>.delayed(const Duration(milliseconds: 1));
+    }
+    cancellation.cancel();
+    await assertion;
+    await client.request('GET', 'customer/auth/me', lease: lease);
+    await Future<void>.delayed(const Duration(milliseconds: 1));
+    expect(
+      (_evaluate('uploadCalls===1 && uploadAborted'.toJS) as JSBoolean).toDart,
+      true,
+    );
+    expect(lease.cancellation.isCancelled, false);
+    final preCancelled = CancelToken()..cancel();
+    await expectLater(
+      client.uploadBytes(
+        'customer/account/profile-photo',
+        fieldName: 'photo',
+        bytes: Uint8List(1),
+        filename: 'synthetic.png',
+        mimeType: 'image/png',
+        lease: lease,
+        cancelToken: preCancelled,
+      ),
+      throwsA(isA<ApiFailure>()),
+    );
+    expect((_evaluate('uploadCalls===1'.toJS) as JSBoolean).toDart, true);
+    lease.cancellation.cancel();
+  });
 }

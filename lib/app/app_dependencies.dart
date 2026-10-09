@@ -15,6 +15,7 @@ import '../core/security/token_store.dart';
 import '../features/auth/data/auth_repository.dart';
 import '../features/account/data/account_repository.dart';
 import '../features/account/data/photo_picker_adapter.dart';
+import '../features/account/presentation/photo_controller.dart';
 import '../features/addresses/data/address_repository.dart';
 import '../features/addresses/data/map_location_service.dart';
 import '../features/discovery/data/discovery_repository.dart';
@@ -101,6 +102,9 @@ class AppDependencies {
   final TrustedLauncher launcher;
   final DiscoveryRepository? discovery;
   final AccountRepository? accounts;
+  PhotoController? _profilePhoto;
+  PhotoController get profilePhoto =>
+      _profilePhoto ??= PhotoController(session, accounts!);
   final AddressRepository? addresses;
   final WishlistRepository? wishlist;
   final RecentlyViewedRepository? recentlyViewed;
@@ -111,6 +115,7 @@ class AppDependencies {
   final DateTime Function() clock;
   final ApiClient? client;
   void dispose() {
+    _profilePhoto?.dispose();
     communication?.dispose();
     commerce?.dispose();
     savedStatus?.dispose();

@@ -37,7 +37,7 @@ def bootstrap_script():
     """ % json.dumps(policies)
 
 
-def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True, shipping_selection=False, list_recovery=False):
+def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True, shipping_selection=False, list_recovery=False, upload_recovery=False):
     identity = {'id': ID, 'displayName': 'Synthetic browser Buyer', 'avatarUrl': None,
                 'role': 'customer', 'status': 'active'}
     responses = {
@@ -199,6 +199,11 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True, ship
             destination.mkdir(parents=True, exist_ok=True)
             time.sleep(.5)
             (destination / (name + '.png')).write_bytes(base64.b64decode(call(prefix + '/screenshot')))
+
+    if upload_recovery:
+        from browser_upload_recovery import check_uploads
+        check_uploads(call, prefix, script, wait_text, resize, click)
+        return
 
     if list_recovery:
         from browser_list_recovery import check_lists

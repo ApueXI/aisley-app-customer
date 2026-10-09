@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../app/app_dependencies.dart';
 import '../../../core/ui/form_page.dart';
 import '../data/photo_picker_adapter.dart';
+import '../data/photo_validation.dart';
 import 'account_controllers.dart';
 
 class PhotoScreen extends StatelessWidget {
@@ -32,14 +33,14 @@ class ProfilePhotoSection extends StatefulWidget {
 }
 
 class _ProfilePhotoSectionState extends State<ProfilePhotoSection> {
-  late final PhotoController _controller = PhotoController(
-    widget.dependencies.session,
-    widget.dependencies.accounts!,
-  );
+  late final PhotoController _controller = widget.dependencies.profilePhoto;
   PickedBuyerImage? _selected;
   String? _pickerNotice;
   late int _generation;
   bool _reportedDirty = false, _reportedBusy = false;
+  bool _selecting = false, _confirming = false;
+  int _selectionOperation = 0;
+  bool get _busy => _controller.busy || _selecting || _confirming;
 
   @override
   void initState() {
@@ -48,7 +49,7 @@ class _ProfilePhotoSectionState extends State<ProfilePhotoSection> {
     widget.dependencies.session.addListener(_sessionChanged);
     widget.dependencies.session.registerPrivateCleanup(_clearDraft);
     _controller.addListener(_controllerChanged);
-    _controller.load(widget.dependencies.session.customer?.avatarUrl);
+    _controller.load();
     _checkInterruptedSelection();
     _reportStateAfterFrame();
   }
@@ -67,11 +68,13 @@ class _ProfilePhotoSectionState extends State<ProfilePhotoSection> {
     widget.dependencies.session.unregisterPrivateCleanup(_clearDraft);
     _controller.removeListener(_controllerChanged);
     _selected = null;
-    _controller.dispose();
+    _selectionOperation++;
     super.dispose();
   }
 
   void _clearDraft() {
+    _selectionOperation++;
+    _selecting = _confirming = false;
     _selected = null;
     _pickerNotice = null;
     if (mounted) setState(() {});
@@ -89,6 +92,10 @@ class _ProfilePhotoSectionState extends State<ProfilePhotoSection> {
   }
 
   void _controllerChanged() {
+    if (_controller.selectionConsumed &&
+        (_controller.uploading || _controller.requiresReconciliation)) {
+      _selected = null;
+    }
     if (mounted) setState(() {});
     _reportStateAfterFrame();
   }
@@ -97,7 +104,7 @@ class _ProfilePhotoSectionState extends State<ProfilePhotoSection> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final dirty = _selected != null;
-      final busy = _controller.uploading || _controller.removing;
+      final busy = _busy;
       if (dirty == _reportedDirty && busy == _reportedBusy) return;
       _reportedDirty = dirty;
       _reportedBusy = busy;
@@ -106,13 +113,21 @@ class _ProfilePhotoSectionState extends State<ProfilePhotoSection> {
   }
 
   Future<void> _checkInterruptedSelection() async {
-    final lost = await widget.dependencies.photoPicker
-        ?.hasInterruptedSelection();
-    if (lost == true && mounted) {
-      setState(() {
-        _pickerNotice =
-            'A photo selection was interrupted. Pick it again to continue.';
-      });
+    final generation = _controller.featureGeneration;
+    final recovery = await widget.dependencies.photoPicker
+        ?.recoverInterruptedSelection();
+    if (!mounted ||
+        generation != _controller.featureGeneration ||
+        !widget.dependencies.session.active) {
+      return;
+    }
+    if (recovery == PickerRecovery.interrupted ||
+        recovery == PickerRecovery.failed) {
+      setState(
+        () => _pickerNotice = recovery == PickerRecovery.interrupted
+            ? 'A photo selection was interrupted. Pick it again to continue.'
+            : 'The interrupted selection could not be recovered. Choose your photo again.',
+      );
     }
   }
 
@@ -135,14 +150,11 @@ class _ProfilePhotoSectionState extends State<ProfilePhotoSection> {
           const LinearProgressIndicator(
             semanticsLabel: 'Loading private profile photo',
           ),
-        if (_controller.error != null && _selected == null)
-          TextButton(
-            onPressed: _controller.load,
-            child: const Text('Refresh current photo'),
-          ),
-        if (_controller.requiresReconciliation)
+        if (_controller.error != null || _controller.requiresReconciliation)
           OutlinedButton(
-            onPressed: _controller.load,
+            onPressed: _busy || _controller.coolingDown
+                ? null
+                : _controller.load,
             child: const Text('Refresh current photo'),
           ),
         if (_controller.fieldErrors['photo'] != null)
@@ -197,10 +209,32 @@ class _ProfilePhotoSectionState extends State<ProfilePhotoSection> {
               ),
             ],
           ),
+        if (_controller.uploading)
+          TextButton(
+            onPressed: _controller.cancelUpload,
+            child: const Text('Cancel upload'),
+          ),
+        if (_selected != null)
+          TextButton(
+            onPressed: _busy
+                ? null
+                : () {
+                    setState(() {
+                      _selected = null;
+                      _pickerNotice = null;
+                    });
+                    _reportStateAfterFrame();
+                  },
+            child: const Text('Remove selection'),
+          ),
+        if (_selecting)
+          const LinearProgressIndicator(
+            semanticsLabel: 'Reading selected photo',
+          ),
         OutlinedButton.icon(
           onPressed:
               widget.dependencies.photoPicker == null ||
-                  _controller.uploading ||
+                  _busy ||
                   _controller.coolingDown ||
                   _controller.requiresReconciliation
               ? null
@@ -211,7 +245,7 @@ class _ProfilePhotoSectionState extends State<ProfilePhotoSection> {
         if (_selected != null)
           FilledButton.icon(
             onPressed:
-                _controller.uploading ||
+                _busy ||
                     _controller.coolingDown ||
                     _controller.requiresReconciliation
                 ? null
@@ -224,7 +258,7 @@ class _ProfilePhotoSectionState extends State<ProfilePhotoSection> {
         if (_controller.bytes != null || _controller.photoUrl != null)
           OutlinedButton.icon(
             onPressed:
-                _controller.removing ||
+                _busy ||
                     _controller.coolingDown ||
                     _controller.requiresReconciliation
                 ? null
@@ -248,13 +282,25 @@ class _ProfilePhotoSectionState extends State<ProfilePhotoSection> {
   );
 
   Future<void> _viewPhoto() async {
-    final bytes = _selected?.bytes ?? _controller.bytes;
-    if (bytes == null) return;
+    if (_selected == null && _controller.bytes == null) return;
     await showDialog<void>(
       context: context,
       builder: (context) => Dialog(
-        child: InteractiveViewer(
-          child: Image.memory(bytes, fit: BoxFit.contain),
+        child: ListenableBuilder(
+          listenable: Listenable.merge([
+            _controller,
+            widget.dependencies.session,
+          ]),
+          builder: (context, _) {
+            final bytes = widget.dependencies.session.active
+                ? _selected?.bytes ?? _controller.bytes
+                : null;
+            return bytes == null
+                ? const Text('Photo unavailable')
+                : InteractiveViewer(
+                    child: Image.memory(bytes, fit: BoxFit.contain),
+                  );
+          },
         ),
       ),
     );
@@ -262,67 +308,72 @@ class _ProfilePhotoSectionState extends State<ProfilePhotoSection> {
 
   Future<void> _pick() async {
     final picker = widget.dependencies.photoPicker;
-    if (picker == null) return;
-    final generation = _controller.featureGeneration;
+    if (picker == null || _busy || _controller.requiresReconciliation) return;
+    final generation = _controller.featureGeneration,
+        operation = ++_selectionOperation;
+    setState(() {
+      _selecting = true;
+      _pickerNotice = null;
+    });
+    _reportStateAfterFrame();
+    bool current() =>
+        mounted &&
+        operation == _selectionOperation &&
+        generation == _controller.featureGeneration &&
+        widget.dependencies.session.active;
     try {
       final image = await picker.pick();
-      if (!mounted ||
-          image == null ||
-          generation != _controller.featureGeneration ||
-          !widget.dependencies.session.active) {
-        return;
-      }
-      if (image.bytes.isEmpty || image.bytes.lengthInBytes >= 10485760) {
-        setState(() => _pickerNotice = 'Choose a photo smaller than 10 MiB.');
-        return;
-      }
+      if (!current() || image == null) return;
       setState(() {
         _selected = image;
-        _pickerNotice = null;
       });
-      _reportStateAfterFrame();
+    } on BuyerImageValidationException catch (e) {
+      if (current()) setState(() => _pickerNotice = e.message);
     } catch (_) {
-      if (mounted) {
+      if (current()) {
         setState(
-          () => _pickerNotice =
-              'The photo picker is unavailable. You can try again.',
+          () => _pickerNotice = 'The photo could not be read. Check photo access and choose another JPEG, PNG or WebP.',
         );
+      }
+    } finally {
+      if (current()) {
+        setState(() => _selecting = false);
+        _reportStateAfterFrame();
       }
     }
   }
 
   Future<void> _upload() async {
     final image = _selected;
-    if (image == null) return;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Upload this photo?'),
-        content: const Text(
-          'The new image will replace your current profile photo.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Upload'),
-          ),
-        ],
-      ),
+    if (image == null || _busy) return;
+    final generation = _controller.featureGeneration;
+    setState(() => _confirming = true);
+    _reportStateAfterFrame();
+    final confirmed = await confirmAction(
+      context,
+      title: 'Upload this photo?',
+      message: 'The new image will replace your current profile photo.',
+      action: 'Upload',
     );
-    if (confirmed != true || !mounted) return;
+    if (!mounted || generation != _controller.featureGeneration) return;
+    setState(() => _confirming = false);
+    _reportStateAfterFrame();
+    if (confirmed != true ||
+        !identical(image, _selected) ||
+        !widget.dependencies.session.active) {
+      return;
+    }
     final ok = await _controller.upload(
       data: image.bytes,
       filename: image.filename,
       mimeType: image.mimeType,
     );
-    if (!mounted) return;
-    if (ok) {
+    if (!mounted || generation != _controller.featureGeneration) return;
+    if (ok || _controller.selectionConsumed) {
       setState(() => _selected = null);
       _reportStateAfterFrame();
+    }
+    if (ok) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Profile photo updated.')));
@@ -330,15 +381,20 @@ class _ProfilePhotoSectionState extends State<ProfilePhotoSection> {
   }
 
   Future<void> _remove() async {
-    if (!await confirmAction(
-          context,
-          title: 'Remove profile photo?',
-          message: 'Remove your current profile photo?',
-          action: 'Remove',
-        ) ||
-        !mounted) {
-      return;
-    }
+    if (_busy) return;
+    final generation = _controller.featureGeneration;
+    setState(() => _confirming = true);
+    _reportStateAfterFrame();
+    final confirmed = await confirmAction(
+      context,
+      title: 'Remove profile photo?',
+      message: 'Remove your current profile photo?',
+      action: 'Remove',
+    );
+    if (!mounted || generation != _controller.featureGeneration) return;
+    setState(() => _confirming = false);
+    _reportStateAfterFrame();
+    if (!confirmed || !widget.dependencies.session.active) return;
     final ok = await _controller.remove();
     if (!mounted || !ok) return;
     setState(() => _selected = null);

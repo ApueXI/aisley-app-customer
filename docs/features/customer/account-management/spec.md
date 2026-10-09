@@ -5,6 +5,7 @@ platform: Flutter / Dart
 phase: 2
 flutter_status: Implemented; acceptance partial
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
+upload_recovery_revision: 2026-10-10
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 ---
 
@@ -58,9 +59,11 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
   query.
 - Never pass bearer as URL parameter or use unauthenticated Image.network for private avatar.
 - Upload/remove success updates account and navigation snapshots together; invalidates old byte previews.
-- Uncertain photo replacement needs reread before a deliberate new upload; no invented replay key.
-- Android picker recovery must confirm original Customer/form context; web uses bytes rather than native file
-  path.
+- Cancel/uncertain photo writes stay session-owned across navigation; reread current account then photo before another upload.
+- Permission/account-read failure does not confirm absence; preview failure after confirmed upload does not invite replay.
+- Android interrupted files are discarded with select-again feedback; web uses bounded bytes/streams, never an OS path.
+- Picker dismissal preserves a valid selection; explicit removal/cancel/account loss clears previews.
+- [Upload recovery evidence](../../../references/upload-recovery-verification.md) separates synthetic checks from live/device gates.
 - Promotional preference is required boolean, default off and independent of required policy consent.
 - Preference read/update uses snake_case data; opted-in timestamp may be null.
 - Private forms/bytes/pending uploads are disposed on account change/authorization loss.

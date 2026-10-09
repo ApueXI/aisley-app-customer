@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import 'package:dio/dio.dart';
+
 import 'package:aisley_mobile_buyer/core/networking/api_client.dart';
 import 'package:aisley_mobile_buyer/features/account/data/account_models.dart';
 import 'package:aisley_mobile_buyer/features/account/data/account_repository.dart';
@@ -15,6 +17,11 @@ class FakeAccountRepository implements AccountRepository {
   Future<void> Function()? onPassword;
   Future<Uint8List> Function()? onPhoto;
   Future<CustomerAccount> Function()? onUpload;
+  Future<CustomerAccount> Function()? onRemove;
+  CancelToken? uploadCancellation;
+  void Function(int, int)? uploadProgress;
+  String? requestedPhotoUrl;
+  int removals = 0;
   Future<PromotionPreference> Function()? onPreference;
   int accountReads = 0,
       profileWrites = 0,
@@ -53,6 +60,7 @@ class FakeAccountRepository implements AccountRepository {
     String? versionedUrl,
   ) async {
     photoReads++;
+    requestedPhotoUrl = versionedUrl;
     return onPhoto == null ? Uint8List.fromList([1, 2, 3]) : onPhoto!();
   }
 
@@ -63,13 +71,20 @@ class FakeAccountRepository implements AccountRepository {
     required String filename,
     required String mimeType,
     void Function(int sent, int total)? onProgress,
+    CancelToken? cancelToken,
   }) async {
     uploads++;
+    uploadCancellation = cancelToken;
+    uploadProgress = onProgress;
     return onUpload == null ? value : onUpload!();
   }
 
   @override
-  Future<CustomerAccount> removePhoto(SessionLease lease) async => value;
+  Future<CustomerAccount> removePhoto(SessionLease lease) async {
+    removals++;
+    return onRemove == null ? value : onRemove!();
+  }
+
   @override
   Future<PromotionPreference> promotionPreference(SessionLease lease) async =>
       onPreference == null

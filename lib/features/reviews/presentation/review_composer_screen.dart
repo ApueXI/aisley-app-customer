@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
+import '../../account/data/photo_picker_adapter.dart';
 import '../../../core/ui/form_page.dart';
 import '../../../core/communication/text_rules.dart';
 import 'review_composer_controller.dart';
@@ -31,20 +32,25 @@ class _ReviewComposerScreenState extends State<ReviewComposerScreen> {
   }
 
   Future<void> _recover() async {
-    final stamp = widget.dependencies.session.generation;
-    final interrupted = await widget.dependencies.photoPicker!
-        .hasInterruptedSelection();
+    final stamp = widget.controller.epoch;
+    final recovery = await widget.dependencies.photoPicker
+        ?.recoverInterruptedSelection();
     if (mounted &&
-        stamp == widget.dependencies.session.generation &&
-        interrupted) {
+        stamp == widget.controller.epoch &&
+        widget.dependencies.session.active &&
+        (recovery == PickerRecovery.interrupted ||
+            recovery == PickerRecovery.failed)) {
       setState(
-        () => pickerNotice = 'An interrupted image selection needs to be selected again for this Review.',
+        () => pickerNotice = recovery == PickerRecovery.interrupted
+            ? 'An interrupted image selection needs to be selected again for this Review.'
+            : 'The interrupted selection could not be recovered. Choose your photo again.',
       );
     }
   }
 
   @override
   void dispose() {
+    widget.controller.clearSelection(notify: false);
     text.dispose();
     focus.dispose();
     super.dispose();
@@ -160,6 +166,7 @@ class _ReviewComposerScreenState extends State<ReviewComposerScreen> {
                 'JPEG, PNG or WebP under 10 MiB. Up to 8,000 pixels per edge and 40 million pixels.',
               ),
               if (pickerNotice != null) Text(pickerNotice!),
+              if (c.fieldErrors['image'] != null) Text(c.fieldErrors['image']!),
               if (c.photoError != null)
                 Semantics(liveRegion: true, child: Text(c.photoError!)),
               if (c.uncertainPhoto)
@@ -182,14 +189,29 @@ class _ReviewComposerScreenState extends State<ReviewComposerScreen> {
                   child: const Text('Remove selection'),
                 ),
               ],
-              if (c.uploading)
+              if (c.selecting)
+                const LinearProgressIndicator(
+                  semanticsLabel: 'Reading selected photo',
+                ),
+              if (c.uploading) ...[
                 LinearProgressIndicator(
                   value: c.progress,
                   semanticsLabel: 'Uploading Review photo',
                 ),
+                Text(
+                  c.progress != null && c.progress! >= 1
+                      ? 'Upload sent. Waiting for confirmation…'
+                      : 'Uploading photo…',
+                ),
+                TextButton(
+                  onPressed: c.cancelUpload,
+                  child: const Text('Cancel upload'),
+                ),
+              ],
               OutlinedButton(
                 onPressed:
-                    c.locked ||
+                    widget.dependencies.photoPicker == null ||
+                        c.locked ||
                         c.coolingDown ||
                         c.uncertainPhoto ||
                         c.photos.length >= 5
