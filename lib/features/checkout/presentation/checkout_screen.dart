@@ -21,6 +21,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
     with WidgetsBindingObserver {
   CheckoutController get _controller => widget.dependencies.commerce!.checkout;
   final _mainKey = GlobalKey(), _actionsKey = GlobalKey();
+  bool _confirming = false;
   @override
   void initState() {
     super.initState();
@@ -282,7 +283,9 @@ class _CheckoutScreenState extends State<CheckoutScreen>
             onPressed: c.placing || c.coolingDown || c.collision
                 ? null
                 : () => _place(retry: true),
-            child: const Text('Retry exact placement'),
+            child: Text(
+              c.coolingDown ? 'Wait before retrying' : 'Retry exact placement',
+            ),
           )
         else ...[
           if (c.quote != null) ...[
@@ -306,7 +309,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
           ),
           const SizedBox(height: 8),
           FilledButton(
-            onPressed: c.canPlace ? () => _place() : null,
+            onPressed: c.canPlace && !_confirming ? () => _place() : null,
             child: const Text('Place COD order'),
           ),
         ],
@@ -316,18 +319,28 @@ class _CheckoutScreenState extends State<CheckoutScreen>
 
   Future<void> _place({bool retry = false}) async {
     final c = _controller;
-    if (!retry &&
-        !await confirmAction(
+    final reviewed = c.quote;
+    if (!retry) {
+      if (_confirming || !c.canPlace || reviewed == null) return;
+      setState(() => _confirming = true);
+      bool confirmed;
+      try {
+        confirmed = await confirmAction(
           context,
           title: 'Place COD order?',
           message:
-              'Place ${c.quote?.orderCount} Shop Orders for ${c.quote?.summary.payable.display(c.quote!.summary.currency)}? Pay on delivery.',
+              'Place ${reviewed.orderCount} Shop Orders for ${reviewed.summary.payable.display(reviewed.summary.currency)}? Pay on delivery.',
           action: 'Place order',
-        )) {
-      return;
+        );
+      } finally {
+        if (mounted) setState(() => _confirming = false);
+      }
+      if (!confirmed) return;
     }
     if (!mounted) return;
-    final result = retry ? await c.retryPending() : await c.place();
+    final result = retry
+        ? await c.retryPending()
+        : await c.place(confirmedQuote: reviewed);
     if (mounted && result != null) context.go('/checkout/result/${result.id}');
   }
 }

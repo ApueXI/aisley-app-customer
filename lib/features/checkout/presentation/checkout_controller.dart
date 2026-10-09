@@ -38,6 +38,8 @@ class CheckoutController extends CommerceController {
   CheckoutInput? _reviewedInput;
   CheckoutBatch? result;
   PendingPlacement? pending;
+  // A later rejected attempt does not prove an earlier request rolled back.
+  bool _placementUncertain = false;
   List<String> _pendingShopIds = const [];
   bool loadingAddresses = false, quoting = false, placing = false;
   bool addressesFresh = false, collision = false, cartChanged = false;
@@ -304,8 +306,18 @@ class CheckoutController extends CommerceController {
     }
   }
 
-  Future<CheckoutBatch?> place() async {
+  Future<CheckoutBatch?> place({CheckoutQuote? confirmedQuote}) async {
+    if (confirmedQuote != null &&
+        (!identical(confirmedQuote, quote) || expired)) {
+      if (editable) {
+        invalidateQuote();
+        error = 'Your order review changed or expired. Review again before placing.';
+        notifyListeners();
+      }
+      return null;
+    }
     if (!canPlace) return null;
+    _placementUncertain = false;
     pending = PendingPlacement(
       key: requireUuid(uuid()),
       payload: _reviewedInput!.toJson(quoteId: quote!.id),
@@ -331,6 +343,9 @@ class CheckoutController extends CommerceController {
       return null;
     }
     final generation = epoch;
+    final hadUncertainOutcome = _placementUncertain;
+    // Until a current response is classified, an interrupted exchange is unresolved.
+    _placementUncertain = true;
     placing = true;
     error = null;
     fieldErrors = const {};
@@ -353,6 +368,7 @@ class CheckoutController extends CommerceController {
       }
       result = value;
       pending = null;
+      _placementUncertain = false;
       _pendingShopIds = const [];
       intent = null;
       vouchers = const [];
@@ -368,12 +384,32 @@ class CheckoutController extends CommerceController {
         'IDEMPOTENCY_KEY_REUSED',
         'QUOTE_ALREADY_PLACED',
       ].contains(value.code);
-      if (value.uncertain || collision) {
+      final quoteRejected =
+          value.status == 409 &&
+          const [
+            'QUOTE_EXPIRED',
+            'QUOTE_INPUT_CHANGED',
+            'QUOTE_STALE',
+          ].contains(value.code);
+      _placementUncertain = hadUncertainOutcome || value.uncertain;
+      // Resource denial clears projections, not an earlier unresolved request.
+      if (value.status == 403 || value.status == 404) {
+        addresses = const [];
+        addressId = null;
+        addressesFresh = false;
+        vouchers = const [];
+        shipping.reset(preserveUnresolved: false);
+        invalidateQuote();
+      }
+      if (collision || (_placementUncertain && !quoteRejected)) {
         error = collision
             ? 'Placement could not be reconciled. Check Orders; another placement is blocked.'
+            : value.status == 429
+            ? 'The service is limiting requests. Your earlier order is still unconfirmed. Wait before retrying the exact placement; do not place another order.'
             : 'The placement outcome is uncertain. Retry the exact request to check it; do not place another order.';
       } else {
         pending = null;
+        _placementUncertain = false;
         _pendingShopIds = const [];
         invalidateQuote();
         if (shippingFailureCodes.contains(value.code)) shipping.invalidate();
@@ -394,8 +430,12 @@ class CheckoutController extends CommerceController {
     invalidateQuote();
     if (!preserveUnresolved) {
       pending = null;
+      _placementUncertain = false;
       _pendingShopIds = const [];
       collision = false;
+    } else if (pending != null) {
+      // A consent interruption can hide the response of an in-flight request.
+      _placementUncertain = true;
     }
     intent = null;
     addressId = null;
