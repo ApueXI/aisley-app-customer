@@ -52,12 +52,20 @@ class _CheckoutScreenState extends State<CheckoutScreen>
       final c = _controller;
       if (!widget.dependencies.session.active) return const SizedBox.shrink();
       final wide = marketplaceDesktop(context);
+      // Short viewports cannot reserve a bar with a fully visible action target.
+      // Keep actions in the page scroll instead, including with an open keyboard.
+      final inlineActions =
+          !wide &&
+          MediaQuery.sizeOf(context).height -
+                  MediaQuery.viewInsetsOf(context).bottom <
+              500;
       return FormPage(
         title: 'Checkout',
         busy: c.placing,
         compact: true,
         maxWidth: 1200,
-        bottomBar: !wide && (c.intent != null || c.pending != null)
+        bottomBar:
+            !wide && !inlineActions && (c.intent != null || c.pending != null)
             ? PurchaseBar(child: _actions())
             : null,
         children: [
@@ -75,7 +83,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
               const LinearProgressIndicator(
                 semanticsLabel: 'Checking placement',
               ),
-            if (wide) _actions(),
+            if (wide || inlineActions) _actions(),
             TextButton(
               onPressed: () => context.push('/orders'),
               child: const Text('Check Orders'),
@@ -183,6 +191,7 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                 ],
               ],
             ),
+            if (inlineActions) _actions(),
           ],
         ],
       );
@@ -218,6 +227,9 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                 for (final address in c.addresses)
                   RadioListTile<String>(
                     contentPadding: EdgeInsets.zero,
+                    materialTapTargetSize: MaterialTapTargetSize.padded,
+                    visualDensity: VisualDensity.standard,
+                    minTileHeight: 48,
                     title: Text(address.label ?? address.recipientName),
                     subtitle: Text(
                       '${address.recipientName} · ${address.contactNumber}\n${address.addressLine1}, ${address.barangay}, ${address.cityMunicipality}, ${address.province}, ${address.region} ${address.postalCode}, ${address.country}',
