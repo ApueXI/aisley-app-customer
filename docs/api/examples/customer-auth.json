@@ -1,6 +1,6 @@
 {
   "provenance": "Synthetic source-derived examples, not live captures. UUIDs, example.invalid identities and private text are invented. Nullable success fields and empty/replay variants are intentional.",
-  "checkout": "57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50",
+  "checkout": "22b0a48f9575ead182d03c35ab87345711c23b90",
   "operations": [
     {
       "feature": "customer-auth",
@@ -247,5 +247,6 @@
         }
       }
     }
-  ]
+  ],
+  "adopted_client_checkout": "57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50"
 }

@@ -1,6 +1,6 @@
 # Buyer uploads on Android and local web
 
-Flutter transport and profile/Review workflows implemented; [Phase 4 evidence](references/phase-4-verification.md) records partial acceptance. Existing Customer endpoints accept multipart `photo` for profile and `image` for review media. Registration currently has no Customer ID/evidence upload. Shop/Logistics/Courier chat, Product questions and support tickets accept text only. [Upload policy](references/file-upload-requirements.md) owns formats/limits/privacy.
+Flutter transport and profile/Review workflows implemented; [Phase 4 evidence](references/phase-4-verification.md) records partial acceptance. Existing Customer endpoints accept multipart `photo` for profile and `image` for review media. Registration currently has no Customer ID/evidence upload. Current Laravel Shop/Logistics/Courier chat supports [private media](api/chat-media.md); Buyer Flutter adoption remains pending (G26). Product questions and support tickets remain text-only. [Upload policy](references/file-upload-requirements.md) owns formats/limits/privacy.
 
 Use one platform-neutral selected-file model with display filename, measured length and bytes/stream or readable native path. Android may use a tested native path adapter; browser `XFile.path` is not an OS file. Read bounded selected bytes or a supported stream for browser multipart. Isolate `dart:io` through conditional adapters. `XFile` exposes length/read APIs for portable handling. [XFile API](https://pub.dev/documentation/cross_file/latest/cross_file/XFile-class.html)
 
@@ -17,3 +17,12 @@ Test real API preflight/upload/private-read at `http://localhost:8766`; backend 
 ## Selected fresh-project transport
 
 Use image_picker1.2.0 XFile and Dio5.9.0 FormData/MultipartFile through injected adapters from [setup](setup.md). Construct a fresh FormData/byte stream for each deliberate upload; never reuse an exhausted multipart stream or automatically replay an uncertain write. Native retrieveLostData recovery verifies the original Customer/Review/form before restoring selection. Profile mutation envelope is message/account/customer; review-image success is201 data ReviewPhoto. GET profile bytes requires private bearer transport and missing photo404. [Operations](api/operations.md) and [examples](api/examples/README.md) provide synthetic success/validation/denial/partial-recovery inputs. These choices are documented, not executed or device accepted.
+
+## Chat media adoption boundary — G26
+
+Profile/Review image rules above retain their existing fields and uncertain-upload behavior.
+Chat media uses the separate [media contract](api/chat-media.md): images, MP4 and allow-listed
+documents, readiness processing, an upload UUID key and explicit binding on Send. Its exact
+upload replay does not apply to profile/Review writes. Browser selection requires bytes/streams;
+private content and previews need authenticated API reads, account cleanup and scoped memory.
+No chat file picker, image/video/document renderer or attachment action is enabled by this sync.

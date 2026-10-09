@@ -3,7 +3,7 @@ feature: logistics-messaging
 role: Customer
 platform: Flutter / Dart
 phase: 4
-flutter_status: Implemented; acceptance partial
+flutter_status: Text implemented at 57e9eb2; media adoption pending G26
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 ---
@@ -21,7 +21,7 @@ Active owned Order → Order-context first message → current Logistics thread 
 
 - Use logistics-conversations and kind customer_logistics; first message body/context_type:order/context_id plus UUID key. API resolves current organization/hub from Shipment or compatible waybill, never Buyer recipient choice.
 - Payment-wait/placed/preprocessing/terminal and in-transfer/invalid-handler states cannot start/send; API eligibility is authoritative. Ended context retains original participant read-only history; replacement handler never inherits private text.
-- Use operational data/meta, send body only, read last_read_sequence; channel owns its cursor/unread/pending key. Bounded foreground polling/frozen uncertain sends; no attachments/provider picker/task mutations/offline queue.
+- Use operational data/meta, send body only, read last_read_sequence; channel owns its cursor/unread/pending key. Bounded foreground polling/frozen uncertain sends; media pending G26; no provider picker/task mutations/offline queue.
 
 The local bundle supplies the implementation contract. Upstream paths are optional provenance only.
 Use this feature with its prerequisite session/consent boundary and the related shopping or
@@ -56,7 +56,7 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 - Poll visible online every 15s; pause background/offline and reject old Customer/session responses.
 - Keep pending first-send context during refresh and reachable older cursor when foreground gap
   appears.
-- Text only1–2000; no attachments, GPS sharing, Order mutation, delivery proof or cash collection
+- Text-only body1–2000; ready media permits optional caption under G26. No GPS sharing, Order mutation, delivery proof or cash collection
   permission.
 - Retention/abuse policy and operational race/live exchange verification remain release gates.
 - Test owned active handler vs foreign/terminal/missing custody, handler replacement and read-only
@@ -75,7 +75,7 @@ authority.
   Request: cursor opaque≤2048; limit1–50 default 20.
   Replay: Read retry after bounded backoff; reject obsolete session/query generations.
 - `POST /api/v1/customer/logistics-conversations` → HTTP 201; `{conversation:LogisticsConversation,message:OperationalMessage}`.
-  Request: context_type order; context_id owned Order UUID; body trimmed1–2000; UUID header; server resolves counterparty.
+  Request: context_type order; context_id owned Order UUID; body trimmed≤2000, optional with ready attachment_ids; UUID header; server resolves counterparty.
   Replay: UUID Idempotency-Key required. Freeze payload/key; exact retry only after uncertain outcome. Changed intent uses a new key after reconciliation.
 - `GET /api/v1/customer/logistics-conversations/{conversation}` → HTTP 200; `{data:LogisticsConversation}`.
   Request: No parameters.
@@ -84,7 +84,7 @@ authority.
   Request: cursor opaque≤2048; limit1–50 default 20.
   Replay: Read retry after bounded backoff; reject obsolete session/query generations.
 - `POST /api/v1/customer/logistics-conversations/{conversation}/messages` → HTTP 201; `{conversation:LogisticsConversation,message:OperationalMessage}`.
-  Request: body trimmed1–2000; UUID header; Shop allows optional validated product|order context_type/context_id; operational sends body only.
+  Request: body trimmed≤2000, optional with attachments; text-only body1–2000; UUID header; ordered distinct attachment_ids UUID[]≤5, ready/same scope/≤50 MiB.
   Replay: UUID Idempotency-Key required. Freeze payload/key; exact retry only after uncertain outcome. Changed intent uses a new key after reconciliation.
 - `POST /api/v1/customer/logistics-conversations/{conversation}/read` → HTTP 200; `{data:LogisticsConversation}`.
   Request: last_read_sequence required int≥1, cannot exceed committed history; monotonic.
@@ -94,6 +94,8 @@ Full per-operation access/status notes and synthetic bodies are in
 [operations](../../../api/operations.md) and
 [this feature’s examples](../../../api/examples/logistics-messaging.json).
 Examples are source-derived synthetic fixtures, not live captures or usable test accounts.
+
+Current media requests accept ordered distinct `attachment_ids:UUID[]`≤5, ready/same scope/≤50 MiB; at least text or attachments is required (G26).
 
 ### Response fields and nesting
 
@@ -112,7 +114,7 @@ actions.
 | DTO | Wire fields and types |
 | --- | --- |
 | `LogisticsConversation` | `id: UUID`, `kind: string`, `order_id: UUID?`, `order_reference: string?`, `counterparty_role: string`, `counterparty_label: string`, `last_message_preview: string?`, `last_message_at: timestamp?`, `last_sequence: int`, `last_read_sequence: int`, `unread_count: int`, `send_allowed: bool`, `read_only_reason: string?` |
-| `OperationalMessage` | `id: UUID`, `conversation_id: UUID`, `sequence: int`, `sender_role: string`, `mine: bool`, `body: string`, `created_at: timestamp?` |
+| `OperationalMessage` | `id: UUID`, `conversation_id: UUID`, `sequence: int`, `sender_role: string`, `mine: bool`, `body: string`, `created_at: timestamp?`, `attachments: ChatAttachment[]~` |
 
 ### Errors, ownership and recovery
 
@@ -218,3 +220,7 @@ Append actual implementation/test outcomes to [Progress](../../../PROGRESS.md) a
 history.
 Follow [architecture](../../../architecture.md), [setup](../../../setup.md) and
 [verification](../../../verification.md).
+
+## Additive media contract — 2026-10-06; synced 2026-10-09
+
+The implemented Laravel [private media API](../../../api/chat-media.md) adds ordered `attachment_ids` to start/reply and `attachments` to messages. Optional captions and existing scoped history rules apply. This scoped addition supersedes earlier text-only media exclusions without changing existing Flutter implementation/acceptance status; Buyer media adoption remains pending (G26).

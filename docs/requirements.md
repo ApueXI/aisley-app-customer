@@ -14,7 +14,7 @@ The app must expose a server-backed notification inbox, allowed destinations and
 
 Registration currently accepts profile and credentials only, creates a pending User/Application and grants no token. The reference requirement for address and ID evidence is a backend gap. Display derived age as guidance when possible; never submit client age. Pending/rejected applicants cannot use protected Customer APIs or bypass approval with support tickets.
 
-Laravel owns current prices, stock/variant eligibility, serviceable shipping/rate versions, vouchers, total COD, payment/status fields, snapshots and transitions. One checkout creates one Order per Shop; Seller chooses Logistics downstream. Buyer cannot select a Courier/provider, advance tracking, alter prices, claim delivery completion, collect COD, or mutate another role's resources.
+Laravel owns current prices, stock/variant eligibility, serviceable shipping/rate versions, vouchers, total COD, payment/status fields, snapshots and transitions. One checkout creates one Order per Shop; Customer selects one Seller-enabled Logistics provider, and Seller pickup enforces it. Buyer cannot select a Courier, advance tracking, alter prices, claim delivery completion, collect COD, or mutate another role's resources.
 
 Acceptable first delivery includes Android and a fixed-origin local Flutter web test target, truthful failure/retry states, secure token restoration and cleanup, accessible navigation/forms, optional location fallback, and verified authenticated uploads. [Integration gaps](references/integration-gaps.md) remain visible; existing source-test coverage is not new mobile certification.
 
@@ -37,7 +37,7 @@ Bazaar/MoneyFest placeholders, guest Cart/Wishlist merge, voucher claiming/walle
 
 ## Fulfillment and financial context
 
-Seller approves/prepares their own Orders, selects Logistics downstream, requests pickup and participates in first-mile handoff. Logistics controls hub custody, dispatch and associated Courier approval. Courier is external mobile-only: accepted first/final-mile work, private evidence and COD collection are outside Buyer. Customer sees safe Order/tracking/contact projections only and cannot call those role endpoints.
+Seller approves/prepares their own Orders, requests pickup from each Order’s checkout-selected provider and participates in first-mile handoff. Logistics controls hub custody, dispatch and associated Courier approval. Courier is external mobile-only: accepted first/final-mile work, private evidence and COD collection are outside Buyer. Customer sees safe Order/tracking/contact projections only and cannot call those role endpoints.
 
 Quote/batch/Order totals are PHP money strings; Product/Cart numeric prices are display information. No mobile total is submitted as authority. Placement commits all Shop Orders, pricing/address/voucher snapshots, reservations/redemptions and selected Cart cleanup atomically. COD initially remains pending and delivery/COD recognition comes from the server workflows. Commission does not add a Buyer surcharge. Cancellation releases eligible reservations once but does not currently restore voucher capacity. Address correction lacks demonstrated current-rate/coverage recalculation and remains a release gate.
 
@@ -50,3 +50,11 @@ Phases 1–4 Customer features and shared consent have implementation evidence; 
 ## Explicit deferred inventory
 
 Do not infer implementation from enum values, public shortcut URLs or historical planned spec wording. Missing registration evidence/status polling, native reset app links, exact global notification badges, push, guest Cart/Wishlist merge, wallet/claim/code vouchers, online payments/refunds/returns, live GPS/ETA, account session controls and support attachments/fanout remain unavailable. Pin assistance is optional and gated on suitable public credentials, permission and provider terms. Support detail cursor traversal relies on Laravel’s request-bound resolver and needs explicit integration verification.
+
+## Current platform shipping contract
+
+Customers select one Seller-enabled provider per Shop Order using [options/quote/place](api/shipping-selection.md); the server freezes its provider, route and final shipping fee. Seller pickup enforces that provider. Required sign-in/account-only history are Flutter presentation decisions; public API and storefront guest browsing/recency remain available. The implemented client adoption baseline remains `57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50`; newer shipping selection/projections are unadopted pending G25.
+
+## Flutter presentation and pending contract adoption
+
+This Buyer project implements [marketplace layouts](references/marketplace-verification.md) on phone/tablet/desktop in one Flutter app, stable mounted pages during temporary background revalidation errors, mouse/text shopping controls and embedded Profile-photo operations. PSGC fields require explicit hierarchical selections; typed matches do not select, NCR uses a compatibility choice, unsupported Province mappings/failed assets block save with Retry. Street/contact/postal fields remain manual, and optional pin failure does not block valid locality saving. These Flutter choices preserve storefront behavior and API validation. [Private chat media](api/chat-media.md) is implemented in Laravel; Flutter adoption remains G26 alongside provider selection G25. Dated historical checkout failures retain unverified current resolution.

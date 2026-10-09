@@ -1,6 +1,6 @@
 # Verified Buyer endpoint inventory
 
-Historical enumeration was at `7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0`. Re-enumerated before editing on 2026-10-03 at `57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50` using `php src/api/artisan route:list --path=api/v1 --json`; all 95 relevant method/path records remain available. [Restricted route snapshot](../references/routes-inspected.json) preserves current role/middleware evidence. This was read-only route inspection, not authenticated API execution. Every endpoint below is implemented in this Laravel checkout; Phases 1–4 Buyer integrations are implemented with [partial runtime acceptance](../references/phase-4-verification.md).
+Historical enumeration was at `7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0`. Re-enumerated before editing on 2026-10-03 at `57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50` using `php src/api/artisan route:list --path=api/v1 --json`; all 95 historical relevant method/path records remain available. Current 2026-10-04 enumeration at `22b0a48f9575ead182d03c35ab87345711c23b90` adds checkout logistics-options (96 total); [current routes](../references/routes-current.json) preserve middleware. [Restricted route snapshot](../references/routes-inspected.json) preserves historical role/middleware evidence. This was read-only route inspection, not authenticated API execution. The supplied source inspection reports the endpoints below as implemented; the Buyer implements Phases 1–4 integrations against its older adoption baseline, with G25 still open and [partial runtime acceptance](../references/phase-4-verification.md).
 
 **Public** needs no token. **Public/optional identity** personalizes only an active Customer, with any authenticated Home response private/no-store. **Active Customer** composes Sanctum and persisted role/status gate. **Active Customer + consent** adds the server policy gate and resource ownership. **Active policy actor** uses shared Sanctum/active-role policy authorization and remains exempt from consent blocking. Route/controller authorization and business rules still apply beyond middleware. GET routes also accept framework HEAD; the table shows the intended GET consumer method.
 
@@ -64,6 +64,7 @@ Customer feature routes generally include `throttle:120,1`; focused throttles ar
 | Method | Existing path | Access | Throttle | Controller/action |
 | --- | --- | --- | --- | --- |
 | `POST` | `/api/v1/customer/checkout/place` | Active Customer + consent | 120,1 | `Customer\CheckoutController@place` |
+| `POST` | `/api/v1/customer/checkout/logistics-options` | Active Customer + consent | 120,1 | `Customer\CheckoutController@logisticsOptions` |
 | `POST` | `/api/v1/customer/checkout/quote` | Active Customer + consent | 120,1 | `Customer\CheckoutController@quote` |
 | `GET` | `/api/v1/customer/checkout/{batch}` | Active Customer + consent | 120,1 | `Customer\CheckoutController@show` |
 
@@ -246,4 +247,10 @@ Customer feature routes generally include `throttle:120,1`; focused throttles ar
 - There is no Buyer push-device registration, notification unread-count/read-all, voucher wallet/claim/code-entry, native-reset-link, applicant-status, live-location, delivery-POD, online-payment, returns/refunds or arbitrary-user messaging API promised by this inventory.
 - Customer methods differ from other roles: account password is PATCH, avatar part is photo, review part image, Q&A part question, support description part body, Shop read sequence versus operational read last_read_sequence.
 
-The current [95 typed operation records](operation-index.json) cover all inventory methods with synthetic JSON or binary metadata examples. Auxiliary address-options remain optional; media consumes returned URLs. [Standalone requests/envelopes](operations.md) are authoritative local definitions, with no monorepo reading dependency.
+The current [103 typed operation records](operation-index.json) cover the 95 historical operations, logistics-options and seven chat-media operations with synthetic JSON or binary metadata examples. Auxiliary address-options remain optional; media consumes returned URLs. [Standalone requests/envelopes](operations.md) are authoritative local definitions, with no monorepo reading dependency.
+
+## Additive chat media endpoints — 2026-10-06
+
+[Private media](chat-media.md) defines Customer GET/POST `/api/v1/customer/chat-attachments`, GET/DELETE `/{id}`, POST `/{id}/retry`, GET `/{id}/content` and GET `/{id}/preview`. All three existing chat start/reply routes accept ordered `attachment_ids`; messages add `attachments`. Runtime gated; Buyer Flutter adoption pending.
+
+The 2026-10-09 [supplied route snapshot](../references/routes-2026-10-09.json) includes the media addition. Its review revision is separate from client adoption and the unidentified deployed API revision.

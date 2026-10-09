@@ -20,11 +20,11 @@ Home rails → Products/Shops search or Shop storefront → visible Product Deta
 
 ## Address and checkout
 
-Address Book → Region → Province → City/Municipality → Barangay, manual street/postal fields → optional intentional Pin location → reviewed coordinates → save a shipping/both row. Parent changes clear invalid descendants; edited location text clears stale coordinates. Manual save survives data/provider/GPS failure.
+Address Book → Region → Province → City/Municipality → Barangay, manual street/postal fields → optional intentional Pin location → reviewed coordinates → save a shipping/both row. Parent changes clear invalid descendants; edited location text clears stale coordinates. Localities require explicit listed selections; failed PSGC data blocks saving with Retry. Optional pin/provider/GPS failure still permits saving valid selected locality names and manual street/contact/postal fields.
 
-Buy Now intent or selected Customer-owned Cart item IDs → saved shipping address + COD + optional voucher UUID/target Shop selections → quote → display each Shop's lines, shipping, savings and exact collectible total → explicit Place order → same reviewed intent + `quote_id` + UUID `Idempotency-Key` → atomic server transaction → CheckoutBatch and one Order per Shop → confirmation/Orders.
+Buy Now intent or selected Customer-owned Cart item IDs → saved shipping address + COD + optional voucher UUID/target Shop selections → provider options per Shop → explicit provider choice (single-option server fallback) → quote → display each Shop's lines, shipping, savings and exact collectible total → explicit Place order → same reviewed intent + `quote_id` + UUID `Idempotency-Key` → atomic server transaction → CheckoutBatch and one Order per Shop → confirmation/Orders.
 
-Changing items, address or vouchers requires a fresh quote. A stale quote requires review and another Place action. A timeout after placement is uncertain: retain the exact key/payload and retry/reconcile; do not generate a second key or assume failure. The batch API needs a known batch UUID, so it is not an arbitrary lookup by idempotency key. Purchased selected Cart lines are removed after commit; Buy Now leaves the Cart unchanged.
+Changing items, address, vouchers or logistics selections requires a fresh quote. The provider option/choice and changed DTO flow is a current contract target, not established by earlier Phase 3 client evidence (G25). A stale quote requires review and another Place action. A timeout after placement is uncertain: retain the exact key/payload and retry/reconcile; do not generate a second key or assume failure. The batch API needs a known batch UUID, so it is not an arbitrary lookup by idempotency key. Purchased selected Cart lines are removed after commit; Buy Now leaves the Cart unchanged.
 
 ## Order lifecycle and permitted corrections
 
@@ -80,8 +80,9 @@ Visible online chats poll at15s and on focus/reconnect, preserving pending first
 
 Implement root configuration/token/session/error/router composition and shared consent first. Then public discovery/Shop/Product DTOs and navigation; account/PSGC addresses/wishlist/account history; Cart/quote/vouchers/place and owned Order projections; independent channels/notifications/Q&A/reviews/support. Each phase uses its own repositories/controllers and tests without importing another role’s screens. Reuse focused presentation widgets only when wire/permission/state ownership stays separate. See [architecture](architecture.md) and [setup](setup.md).
 
-
 Responsive desktop Buyer uses the same Flutter routes/controllers and trusted origin.
 The desktop marketplace header replaces bottom navigation at 1024 pixels when text fits;
 phone/tablet retain Home/Shops/Cart/Account. Shopping bounds are 1200 pixels; forms remain
 560. See [marketplace design](design-buyer.md) and [verification](verification.md).
+
+Background revalidation errors preserve the mounted route, scroll, drafts and dialogs with retry feedback; identity loss clears private state and renewed consent gates shopping. Profile includes private photo viewing/selection/upload/removal; `/account/photo` links redirect there. Home categories retain expansion, Cart Select all changes eligible lines once through its controller, and listing/detail purchase controls fetch current Product data before a deliberate write. These are implemented Flutter presentation changes; current provider selection remains an adoption gate (G25).

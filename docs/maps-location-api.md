@@ -1,6 +1,6 @@
 # Buyer addresses, PSGC and optional pinning
 
-The Buyer implements bundled address reference data and optional MapLibre address pinning on Android/web; installed-device and live-provider acceptance remain open. Canonical locality names and Laravel shipping decisions are authoritative; coordinates assist and never prove deliverability. This preserves the platform Geoapify/privacy boundary while adapting its web Leaflet renderer to Flutter.
+The Buyer implements bundled address reference data and optional MapLibre address pinning on Android/web; installed-device, production provider and real-account acceptance remain open; live localhost Geoapify lookup/tiles passed October 8. Canonical locality names and Laravel shipping decisions are authoritative; coordinates assist and never prove deliverability. This preserves the platform Geoapify/privacy boundary while adapting its web Leaflet renderer to Flutter.
 
 ## Exact assets and typed loading
 
@@ -45,7 +45,7 @@ Latitude and longitude are optional, but paired and range-validated: latitude−
 
 Use suitable **public** Geoapify credentials with exact browser origin restrictions, quotas and provider-supported native restrictions. Bundled mobile keys are extractable; browser referrer restrictions do not by themselves secure Android use. If suitable credential/provider deployment cannot be approved, keep MAPS_ENABLED false and deliver text-only addresses. No server proxy/new endpoint is authorized by this handoff.
 
-Check every regional hierarchy, dropdown opening/filtering, exact-match text without selection, parent resets, saved-address hydration, NCR compatibility, unsupported direct-city mappings, failed-asset Retry, coordinate order, denied GPS, provider timeout/quota/empty result, attribution and unchanged Order snapshots. Source checksums and synthetic Flutter loading checks pass; physical GPS, live provider and shipping coverage acceptance remain open. [Setup](setup.md), [Address spec](features/customer/address-book/spec.md), [release gaps](references/integration-gaps.md).
+Check every regional hierarchy, dropdown opening/filtering, exact-match text without selection, parent resets, saved-address hydration, NCR compatibility, unsupported direct-city mappings, failed-asset Retry, coordinate order, denied GPS, provider timeout/quota/empty result, attribution and unchanged Order snapshots. Source checksums and synthetic Flutter loading checks pass; live localhost Geoapify lookup/tiles passed; physical GPS, production provider and real-account shipping coverage acceptance remain open. [Setup](setup.md), [Address spec](features/customer/address-book/spec.md), [release gaps](references/integration-gaps.md).
 
 ## Map renderer lifecycle
 

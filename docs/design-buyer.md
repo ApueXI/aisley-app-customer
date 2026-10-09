@@ -4,7 +4,7 @@ Status: shared marketplace presentation applied to all implemented Buyer feature
 
 Use a light-only Material theme with brand pink `#E6007A`, accessible control/text pink `#B60060`, secondary `#4C1268`, error `#B42318`, and warning `#FF8800`. Neutral surfaces dominate; supporting typography/borders and restrained primary accents follow the brand's 60/30/10 balance. Verify foreground/background contrast and adjust text/surface use where a brand accent is insufficient. Do not rely on color alone for status, selected variants, unread or validation.
 
-Use familiar marketplace patterns: search near discovery, Product images and price prominent, clear variant/quantity controls, Shop-grouped Cart/Checkout, explicit COD total, readable Order milestones, and separate message channels. Native navigation is the Home/Shops/Cart/Account proposal in [workspace](workspace.md). Bazaar/MoneyFest and unavailable workflows need no enabled destinations.
+Use familiar marketplace patterns: search near discovery, Product images and price prominent, clear variant/quantity controls, Shop-grouped Cart/Checkout, explicit COD total, readable Order milestones, and separate message channels. Phone/tablet navigation uses Home/Shops/Cart/Account; desktop navigation follows [workspace](workspace.md). Bazaar/MoneyFest and unavailable workflows need no enabled destinations.
 
 Use one app-wide typography/spacing/theme and compatible shared Flutter widgets. JavaScript `@aisley/ui`, Tailwind, React icons, Next.js layouts, SSR/SEO and dashboard sidebars are upstream implementation details; they cannot be imported into Flutter. Native layouts use logical pixels and platform semantics, not copied CSS.
 
@@ -52,3 +52,5 @@ Category cards share width and measured height, including a uniform 48px image/i
 Cart entries retain full-width neutral dividers below all actions. Wishlist and Recently Viewed
 use grey outlined cards around each Product and its actions. Checkout quote lines use matching
 cards inside Shop groups; Shop totals and voucher controls stay outside the item cards.
+
+Mouse dragging is supported alongside existing scroll devices. Preserve text selection and test Firefox with touch simulation both enabled and disabled; those browser checks remain unverified. Temporary background identity/consent revalidation errors retain the mounted route and safe page state with retry feedback. Identity loss clears private state; renewed required consent gates shopping. Profile embeds independently busy photo controls and legacy `/account/photo` links open Profile.

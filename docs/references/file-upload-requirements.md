@@ -2,6 +2,12 @@
 
 Portable Buyer adaptation of upstream `docs/references/file-upload-requirements.md`. The backend and owning feature retain enforcement authority. Flutter adoption/acceptance pending; [transport guidance](../flutter-file-uploads.md) documents actual fields and targets.
 
+The image rules below cover profile/Review workflows and future registration evidence.
+[Private chat media](../api/chat-media.md) has its own implemented backend contract for images,
+MP4 and documents, with inspection/scanning/runtime controls and supported keyed upload replay.
+Buyer Flutter attachment adoption remains G26; those controls do not establish profile/Review
+scanning or change their image-only fields and uncertain-upload behavior.
+
 - Every source image must be **strictly under 10 MiB (10,485,760 bytes)**. UI may say “10 MB maximum”; reject the exact limit and above. JPEG/JPG (`image/jpeg`), PNG (`image/png`) and WebP (`image/webp`) only.
 - Reject GIF, SVG, AVIF, HEIC/HEIF, TIFF, BMP, PDF, archives and all unlisted types. Filename, extension, picker MIME and size are hints; Laravel inspects MIME/signature, validates matching extension and decodes. Double/multiple extensions and corrupt images are rejected.
 - The feature authorizes its owning Customer and parent resource. No client owner/path may attach media to another account/Review. Public registration evidence is currently unavailable, so no general upload exception is implied.
