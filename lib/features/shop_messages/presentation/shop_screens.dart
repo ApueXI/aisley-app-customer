@@ -30,6 +30,7 @@ class _ShopInboxScreenState extends State<ShopInboxScreen> {
   @override
   Widget build(BuildContext context) => ForegroundPoll(
     refresh: controller.load,
+    busy: () => controller.loading || controller.paging,
     visible: () => !widget.embedded || marketplaceDesktop(context),
     paused: () =>
         controller.offline ||
@@ -47,6 +48,7 @@ class _ShopInboxScreenState extends State<ShopInboxScreen> {
                   InboxRow(e.id, e.label, e.preview, e.unread, !e.sendAllowed),
               ],
               loading: controller.loading,
+              stale: controller.stale,
               loaded: controller.loaded,
               paging: controller.paging,
               more: controller.trail.next != null,

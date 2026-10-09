@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
 import '../../../core/ui/responsive_layout.dart';
+import '../../../core/ui/list_recovery.dart';
 import '../data/catalog_models.dart';
 import '../data/home_models.dart';
 import 'catalog_widgets.dart';
@@ -72,7 +73,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   else if (_controller.error != null && home == null)
                     _errorState(context, _controller.error!)
                   else if (home != null) ...[
-                    if (_controller.error != null) _warning(_controller.error!),
+                    ListRecovery(
+                      stale: _controller.stale,
+                      retry: () => _controller.load(refresh: true),
+                      retained: true,
+                      busy: _controller.loading,
+                      error: _controller.error,
+                      coolingDown: _controller.coolingDown,
+                    ),
                     if (_campaign(home) case final campaign?)
                       _campaignBanner(context, campaign),
                     if (home.categories.isNotEmpty)
@@ -97,30 +105,17 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     if (_controller.recommendations.isNotEmpty)
                       _recommendations(context),
-                    if (_controller.hasMore || _controller.loadingMore)
-                      Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          child: FilledButton.tonal(
-                            onPressed: _controller.loadingMore
-                                ? null
-                                : _controller.loadMore,
-                            child: _controller.loadingMore
-                                ? const SizedBox.square(
-                                    dimension: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Text('Load more recommendations'),
-                          ),
-                        ),
-                      ),
-                    if (_controller.pageError != null)
-                      _retryInline(
-                        _controller.pageError!,
-                        _controller.loadMore,
-                      ),
+                    ListPageAction(
+                      load: _controller.loadMore,
+                      hasMore: _controller.hasMore,
+                      error: _controller.pageError,
+                      busy: _controller.loadingMore,
+                      disabled:
+                          _controller.loading ||
+                          _controller.stale ||
+                          _controller.coolingDown,
+                      label: 'Load more recommendations',
+                    ),
                   ],
                   if (home == null &&
                       !_controller.loading &&
@@ -409,22 +404,12 @@ class _HomeScreenState extends State<HomeScreen> {
         Text(message),
         const SizedBox(height: 12),
         FilledButton(
-          onPressed: () => _controller.load(refresh: true),
+          onPressed: _controller.loading || _controller.coolingDown
+              ? null
+              : () => _controller.load(refresh: true),
           child: const Text('Retry'),
         ),
       ],
     ),
-  );
-
-  Widget _warning(String message) => Padding(
-    padding: const EdgeInsets.only(top: 12),
-    child: Text('Some content could not be refreshed. $message'),
-  );
-
-  Widget _retryInline(String message, VoidCallback retry) => Row(
-    children: [
-      Expanded(child: Text('More items could not be loaded. $message')),
-      TextButton(onPressed: retry, child: const Text('Retry')),
-    ],
   );
 }

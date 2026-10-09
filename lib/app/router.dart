@@ -90,7 +90,15 @@ GoRouter buyerRouter(AppDependencies dependencies) {
                       );
                       return query.valid
                           ? ShopDirectoryScreen(
-                              key: ValueKey(state.uri.toString()),
+                              key: ValueKey((
+                                session.generation,
+                                state.uri.path,
+                                query.category,
+                                query.query,
+                                query.mode,
+                                query.limit,
+                                query.valid,
+                              )),
                               dependencies: dependencies,
                               category: query.category,
                               page: query.page,
@@ -160,7 +168,15 @@ GoRouter buyerRouter(AppDependencies dependencies) {
         builder: (_, state) {
           final query = DiscoveryRouteQuery.parse(state.uri, kind: 'search');
           return SearchScreen(
-            key: ValueKey(state.uri.toString()),
+            key: ValueKey((
+              session.generation,
+              state.uri.path,
+              query.category,
+              query.query,
+              query.mode,
+              query.limit,
+              query.valid,
+            )),
             dependencies: dependencies,
             mode: query.mode == 'shops'
                 ? SearchMode.shops
@@ -197,7 +213,15 @@ GoRouter buyerRouter(AppDependencies dependencies) {
             return const _Unavailable();
           }
           return ShopScreen(
-            key: ValueKey(state.uri.toString()),
+            key: ValueKey((
+              session.generation,
+              state.uri.path,
+              query.category,
+              query.query,
+              query.mode,
+              query.limit,
+              query.valid,
+            )),
             dependencies: dependencies,
             slug: state.pathParameters['slug']!,
             query: query.query,

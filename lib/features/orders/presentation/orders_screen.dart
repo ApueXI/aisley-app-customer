@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
 import '../../../core/ui/responsive_layout.dart';
+import '../../../core/ui/list_recovery.dart';
 import '../../../core/ui/marketplace_widgets.dart';
 import '../data/order_models.dart';
 import '../../checkout/presentation/shipping_details.dart';
@@ -54,7 +55,9 @@ class _OrdersScreenState extends State<OrdersScreen>
         actions: [
           IconButton(
             tooltip: 'Refresh Orders',
-            onPressed: () => _controller.load(),
+            onPressed: _controller.loading || _controller.coolingDown
+                ? null
+                : () => _controller.load(),
             icon: const Icon(Icons.refresh),
           ),
         ],
@@ -80,7 +83,9 @@ class _OrdersScreenState extends State<OrdersScreen>
             ),
           if (_controller.error != null)
             Semantics(liveRegion: true, child: Text(_controller.error!)),
-          if (!_controller.loading &&
+          if (!_controller.stale &&
+              !_controller.loading &&
+              _controller.pageError == null &&
               _controller.error == null &&
               _controller.items.isEmpty)
             const Text('No Orders in this group.'),
@@ -137,17 +142,17 @@ class _OrdersScreenState extends State<OrdersScreen>
                 ),
               ),
             ),
-          if (_controller.pageError != null) Text(_controller.pageError!),
-          if (_controller.hasMore)
-            TextButton(
-              onPressed:
-                  _controller.paging ||
-                      _controller.stale ||
-                      _controller.coolingDown
-                  ? null
-                  : () => _controller.load(more: true),
-              child: Text(_controller.paging ? 'Loading…' : 'Load more Orders'),
-            ),
+          ListPageAction(
+            load: () => _controller.load(more: true),
+            hasMore: _controller.hasMore,
+            error: _controller.pageError,
+            busy: _controller.paging,
+            disabled:
+                _controller.loading ||
+                _controller.stale ||
+                _controller.coolingDown,
+            label: 'Load more Orders',
+          ),
           TextButton(
             onPressed: _controller.loading || _controller.coolingDown
                 ? null

@@ -12,22 +12,26 @@ class LogisticsInboxController extends CommerceController {
   bool loading = false, paging = false, offline = false, loaded = false;
   int unread = 0;
   String? pageError;
+  bool stale = true;
   Future<void> load({bool more = false}) async {
     final credential = lease;
     final cursor = more ? trail.next : null;
     if (credential == null ||
         loading ||
-        paging ||
+        more && paging ||
         coolingDown ||
-        more && cursor == null) {
+        more && (cursor == null || stale)) {
       return;
     }
-    final stamp = epoch;
+    final stamp = more ? epoch : ++epoch;
     if (more) {
       paging = true;
       pageError = null;
     } else {
       loading = true;
+      paging = false;
+      stale = true;
+      pageError = null;
       error = null;
       offline = false;
     }
@@ -37,7 +41,9 @@ class LogisticsInboxController extends CommerceController {
       if (!current(stamp, credential)) return;
       final prior = items.map((e) => e.id).toSet();
       if (!more) {
-        items = page.items;
+        items = List.unmodifiable(
+          {for (final item in page.items) item.id: item}.values,
+        );
         trail.clear();
         trail.seed(page.next);
       } else {
@@ -55,6 +61,8 @@ class LogisticsInboxController extends CommerceController {
       }
       unread = page.unread;
       loaded = true;
+      stale = false;
+      offline = false;
     } on ApiFailure catch (e) {
       if (!current(stamp, credential)) return;
       offline = e.kind == FailureKind.offline || e.kind == FailureKind.timeout;
@@ -64,9 +72,11 @@ class LogisticsInboxController extends CommerceController {
         failure(e);
       }
       if (e.status == 403 || e.status == 404) {
+        unread = 0;
         items = const [];
         trail.clear();
         loaded = false;
+        stale = true;
       }
     } finally {
       if (current(stamp, credential)) {
@@ -83,5 +93,6 @@ class LogisticsInboxController extends CommerceController {
     unread = 0;
     loading = paging = loaded = offline = false;
     pageError = null;
+    stale = true;
   }
 }

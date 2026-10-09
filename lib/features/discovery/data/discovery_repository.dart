@@ -27,9 +27,11 @@ class DiscoveryRepository {
   final SnapshotCache<Object> _privateHome;
 
   int _privateEpoch = 0;
+  final _publicRequests = <String, Object>{};
   void clearPrivate() {
     _privateEpoch++;
     _privateHome.clear();
+    _publicRequests.clear();
   }
 
   void dispose() {
@@ -96,6 +98,7 @@ class DiscoveryRepository {
     required String query,
     int page = 1,
     int limit = 20,
+    bool refresh = false,
   }) => _cached('product-search:${query.trim()}:$page:$limit', () async {
     final body = await api.request(
       'GET',
@@ -105,16 +108,20 @@ class DiscoveryRepository {
     return _decode(() {
       final wire = Wire(body);
       return ProductSearchPage(
-        items: wire.list('items', (value) => ProductCard.parse(value)),
+        items: _unique(
+          wire.list('items', (value) => ProductCard.parse(value)),
+          (e) => e.id,
+        ),
         pagination: Pagination.parse(wire.object('pagination')),
       );
     });
-  });
+  }, refresh: refresh);
 
   Future<ShopSearchPage> searchShops({
     required String query,
     int page = 1,
     int limit = 20,
+    bool refresh = false,
   }) => _cached('shop-search:${query.trim()}:$page:$limit', () async {
     final body = await api.request(
       'GET',
@@ -124,16 +131,17 @@ class DiscoveryRepository {
     return _decode(() {
       final wire = Wire(body);
       return ShopSearchPage(
-        items: wire.list('items', ShopSummary.parse),
+        items: _unique(wire.list('items', ShopSummary.parse), (e) => e.id),
         pagination: Pagination.parse(wire.object('pagination')),
       );
     });
-  });
+  }, refresh: refresh);
 
   Future<ShopDirectoryPage> shops({
     String? category,
     int page = 1,
     int limit = 20,
+    bool refresh = false,
   }) => _cached('shops:$category:$page:$limit', () async {
     final body = await api.request(
       'GET',
@@ -147,20 +155,21 @@ class DiscoveryRepository {
     return _decode(() {
       final wire = Wire(body);
       return ShopDirectoryPage(
-        items: wire.list('items', ShopSummary.parse),
+        items: _unique(wire.list('items', ShopSummary.parse), (e) => e.id),
         categories: wire.list('categories', Category.parse),
         pagination: Pagination.parse(wire.object('pagination')),
       );
     });
-  });
+  }, refresh: refresh);
 
-  Future<ShopSummary> shop(String slug) => _cached('shop:$slug', () async {
-    final body = await api.request(
-      'GET',
-      'customer/shops/${Uri.encodeComponent(slug)}',
-    );
-    return _decode(() => ShopSummary.parse(body['data']));
-  });
+  Future<ShopSummary> shop(String slug, {bool refresh = false}) =>
+      _cached('shop:$slug', () async {
+        final body = await api.request(
+          'GET',
+          'customer/shops/${Uri.encodeComponent(slug)}',
+        );
+        return _decode(() => ShopSummary.parse(body['data']));
+      }, refresh: refresh);
 
   Future<ShopProductPage> shopProducts({
     required String slug,
@@ -168,6 +177,7 @@ class DiscoveryRepository {
     String? category,
     int page = 1,
     int limit = 20,
+    bool refresh = false,
   }) => _cached(
     'shop-products:$slug:${query?.trim()}:$category:$page:$limit',
     () async {
@@ -186,11 +196,15 @@ class DiscoveryRepository {
         return ShopProductPage(
           shop: ShopSummary.parse(wire.object('shop')),
           categories: wire.list('categories', Category.parse),
-          items: wire.list('items', (value) => ProductCard.parse(value)),
+          items: _unique(
+            wire.list('items', (value) => ProductCard.parse(value)),
+            (e) => e.id,
+          ),
           pagination: Pagination.parse(wire.object('pagination')),
         );
       });
     },
+    refresh: refresh,
   );
 
   Future<ProductDetail> product(String id, {bool refresh = false}) =>
@@ -255,10 +269,25 @@ class DiscoveryRepository {
   }) async {
     final existing = refresh ? null : _public.get(key);
     if (existing is T) return existing;
-    final value = await load();
-    _public.put(key, value);
-    return value;
+    final request = Object();
+    _publicRequests[key] = request;
+    try {
+      final value = await load();
+      if (_publicRequests[key] == request) _public.put(key, value);
+      return value;
+    } on ApiFailure catch (failure) {
+      if (_publicRequests[key] == request &&
+          (failure.status == 403 || failure.status == 404)) {
+        _public.remove(key);
+      }
+      rethrow;
+    } finally {
+      if (_publicRequests[key] == request) _publicRequests.remove(key);
+    }
   }
+
+  List<T> _unique<T>(List<T> items, String Function(T) id) =>
+      List.unmodifiable({for (final item in items) id(item): item}.values);
 
   T _decode<T extends Object>(T Function() parse) {
     try {

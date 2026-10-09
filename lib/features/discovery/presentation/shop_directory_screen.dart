@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
 import '../../../core/ui/responsive_layout.dart';
+import '../../../core/ui/list_recovery.dart';
 import 'catalog_widgets.dart';
 import 'shop_controllers.dart';
 
@@ -33,6 +34,15 @@ class _ShopDirectoryScreenState extends State<ShopDirectoryScreen> {
   void initState() {
     super.initState();
     _controller.load();
+  }
+
+  @override
+  void didUpdateWidget(covariant ShopDirectoryScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.page != oldWidget.page) {
+      _controller.page = widget.page;
+      _controller.load();
+    }
   }
 
   @override
@@ -79,11 +89,19 @@ class _ShopDirectoryScreenState extends State<ShopDirectoryScreen> {
               onChanged: (value) => _replaceRoute(context, value, 1),
             ),
           const SizedBox(height: 24),
-          if (_controller.loading)
-            const LinearProgressIndicator(semanticsLabel: 'Loading Shops'),
-          if (_controller.error != null) _error(_controller.error!),
+          ListRecovery(
+            stale: _controller.stale,
+            retry: _controller.retry,
+            error: _controller.error,
+            busy: _controller.loading,
+            coolingDown: _controller.coolingDown,
+            retained: result != null,
+            requestedPage: _controller.page,
+            displayedPage: result?.pagination.currentPage,
+          ),
           if (result != null) ...[
-            if (_controller.page > result.pagination.lastPage) ...[
+            if (!_controller.stale &&
+                _controller.page > result.pagination.lastPage) ...[
               const Text('This page is no longer available.'),
               TextButton(
                 onPressed: () =>
@@ -91,7 +109,11 @@ class _ShopDirectoryScreenState extends State<ShopDirectoryScreen> {
                 child: const Text('Go to first page'),
               ),
             ] else if (result.items.isEmpty)
-              const Text('No Shops are listed in this category.')
+              Text(
+                _controller.stale
+                    ? ''
+                    : 'No Shops are listed in this category.',
+              )
             else
               for (final shop in result.items)
                 Padding(
@@ -113,24 +135,6 @@ class _ShopDirectoryScreenState extends State<ShopDirectoryScreen> {
     },
   );
 
-  Widget _error(String message) => Center(
-    child: Padding(
-      padding: pagePadding(context),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.cloud_off_outlined, size: 40),
-          const Text('Shop directory is unavailable.'),
-          Text(message),
-          FilledButton(
-            onPressed: _controller.retry,
-            child: const Text('Retry'),
-          ),
-        ],
-      ),
-    ),
-  );
-
   Widget _pagination(BuildContext context, int current, int last) => Padding(
     padding: const EdgeInsets.only(bottom: 12),
     child: Wrap(
@@ -139,7 +143,8 @@ class _ShopDirectoryScreenState extends State<ShopDirectoryScreen> {
       children: [
         IconButton(
           tooltip: 'Previous page',
-          onPressed: current > 1
+          onPressed:
+              !_controller.loading && !_controller.coolingDown && current > 1
               ? () => _replaceRoute(context, _controller.category, current - 1)
               : null,
           icon: const Icon(Icons.chevron_left),
@@ -147,7 +152,8 @@ class _ShopDirectoryScreenState extends State<ShopDirectoryScreen> {
         Text('Page $current of $last'),
         IconButton(
           tooltip: 'Next page',
-          onPressed: current < last
+          onPressed:
+              !_controller.loading && !_controller.coolingDown && current < last
               ? () => _replaceRoute(context, _controller.category, current + 1)
               : null,
           icon: const Icon(Icons.chevron_right),
@@ -165,6 +171,10 @@ class _ShopDirectoryScreenState extends State<ShopDirectoryScreen> {
         if (widget.limit != 20) 'limit': '${widget.limit}',
       },
     );
-    context.replace(uri.toString());
+    if (uri.toString() == GoRouterState.of(context).uri.toString()) {
+      _controller.retry();
+    } else {
+      context.replace(uri.toString());
+    }
   }
 }

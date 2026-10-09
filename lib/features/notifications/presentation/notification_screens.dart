@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
 import '../../../core/ui/responsive_layout.dart';
+import '../../../core/ui/list_recovery.dart';
 import '../../../core/ui/marketplace_widgets.dart';
 import '../data/notification_models.dart';
 import 'notification_controllers.dart';
@@ -62,18 +63,20 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
                   selected: controller.status,
                   onSelected: controller.filter,
                 ),
-                if (controller.loading)
-                  const LinearProgressIndicator(
-                    semanticsLabel: 'Loading notifications',
-                  ),
-                if (controller.error != null) ...[
-                  Text(controller.error!),
-                  TextButton(
-                    onPressed: controller.coolingDown ? null : controller.load,
-                    child: const Text('Retry'),
-                  ),
-                ],
-                if (controller.loaded && controller.items.isEmpty)
+                ListRecovery(
+                  stale: controller.stale,
+                  retry: controller.load,
+                  error: controller.error,
+                  retained: controller.items.isNotEmpty,
+                  busy: controller.loading,
+                  coolingDown: controller.coolingDown,
+                ),
+                if (controller.loaded &&
+                    !controller.stale &&
+                    !controller.loading &&
+                    controller.error == null &&
+                    controller.pageError == null &&
+                    controller.items.isEmpty)
                   const Text('No notifications in this filter.'),
                 for (final item in controller.items)
                   ListTile(
@@ -94,17 +97,17 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
                       if (mounted) controller.load();
                     },
                   ),
-                if (controller.pageError != null) Text(controller.pageError!),
-                if (controller.hasMore)
-                  TextButton(
-                    onPressed:
-                        controller.loading ||
-                            controller.paging ||
-                            controller.coolingDown
-                        ? null
-                        : () => controller.load(more: true),
-                    child: const Text('Load more notifications'),
-                  ),
+                ListPageAction(
+                  load: () => controller.load(more: true),
+                  hasMore: controller.hasMore,
+                  error: controller.pageError,
+                  busy: controller.paging,
+                  disabled:
+                      controller.loading ||
+                      controller.stale ||
+                      controller.coolingDown,
+                  label: 'Load more notifications',
+                ),
                 TextButton(
                   onPressed: () => context.push('/account/preferences'),
                   child: const Text('Promotional preferences'),

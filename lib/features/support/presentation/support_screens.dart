@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
 import '../../../core/ui/responsive_layout.dart';
+import '../../../core/ui/list_recovery.dart';
 import '../../../core/ui/form_page.dart';
 import '../../../core/ui/foreground_poll.dart';
 import '../../../core/communication/text_rules.dart';
@@ -28,6 +29,7 @@ class _TicketInboxScreenState extends State<TicketInboxScreen> {
   @override
   Widget build(BuildContext context) => ForegroundPoll(
     refresh: controller.load,
+    busy: () => controller.loading || controller.paging,
     paused: () => controller.offline || !widget.dependencies.session.active,
     child: ListenableBuilder(
       listenable: Listenable.merge([controller, widget.dependencies.session]),
@@ -100,20 +102,20 @@ class _TicketInboxScreenState extends State<TicketInboxScreen> {
                       category: v,
                     ),
                   ),
-                  if (controller.loading)
-                    const LinearProgressIndicator(
-                      semanticsLabel: 'Loading tickets',
-                    ),
-                  if (controller.error != null) ...[
-                    Text(controller.error!),
-                    TextButton(
-                      onPressed: controller.coolingDown
-                          ? null
-                          : controller.load,
-                      child: const Text('Retry'),
-                    ),
-                  ],
-                  if (controller.loaded && controller.items.isEmpty)
+                  ListRecovery(
+                    stale: controller.stale,
+                    retry: controller.load,
+                    error: controller.error,
+                    retained: controller.items.isNotEmpty,
+                    busy: controller.loading,
+                    coolingDown: controller.coolingDown,
+                  ),
+                  if (controller.loaded &&
+                      !controller.stale &&
+                      !controller.loading &&
+                      controller.error == null &&
+                      controller.pageError == null &&
+                      controller.items.isEmpty)
                     const Text('No tickets in these filters.'),
                   for (final item in controller.items)
                     Card(
@@ -131,17 +133,17 @@ class _TicketInboxScreenState extends State<TicketInboxScreen> {
                         },
                       ),
                     ),
-                  if (controller.pageError != null) Text(controller.pageError!),
-                  if (controller.trail.next != null)
-                    TextButton(
-                      onPressed:
-                          controller.loading ||
-                              controller.paging ||
-                              controller.coolingDown
-                          ? null
-                          : () => controller.load(more: true),
-                      child: const Text('Load more tickets'),
-                    ),
+                  ListPageAction(
+                    load: () => controller.load(more: true),
+                    hasMore: controller.trail.next != null,
+                    error: controller.pageError,
+                    busy: controller.paging,
+                    disabled:
+                        controller.loading ||
+                        controller.stale ||
+                        controller.coolingDown,
+                    label: 'Load more tickets',
+                  ),
                 ],
               ),
             ),

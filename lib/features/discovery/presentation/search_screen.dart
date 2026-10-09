@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
 import '../../../core/ui/responsive_layout.dart';
+import '../../../core/ui/list_recovery.dart';
 import '../../../core/ui/marketplace_widgets.dart';
 import '../data/catalog_models.dart';
 import 'catalog_widgets.dart';
@@ -53,6 +54,14 @@ class _SearchScreenState extends State<SearchScreen> {
 
   void _updated() {
     if (mounted) setState(() {});
+  }
+
+  @override
+  void didUpdateWidget(covariant SearchScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.page != oldWidget.page) {
+      _controller.search(widget.query, page: widget.page);
+    }
   }
 
   @override
@@ -123,6 +132,7 @@ class _SearchScreenState extends State<SearchScreen> {
   );
 
   Future<void> _submit(BuildContext context) async {
+    if (_controller.loading || _controller.coolingDown) return;
     _updateRoute(context, page: 1);
   }
 
@@ -137,35 +147,34 @@ class _SearchScreenState extends State<SearchScreen> {
         if (query.isNotEmpty && page != null && page > 1) 'page': '$page',
       },
     );
-    context.replace(uri.toString());
+    if (uri.toString() == GoRouterState.of(context).uri.toString()) {
+      _controller.retry();
+    } else {
+      context.replace(uri.toString());
+    }
   }
 
-  Widget _results(BuildContext context) {
-    if (_controller.loading) {
-      return const Center(
-        child: CircularProgressIndicator(semanticsLabel: 'Searching'),
-      );
-    }
-    if (_controller.error != null) {
-      return Center(
-        child: Padding(
-          padding: pagePadding(context),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.cloud_off_outlined, size: 40),
-              const SizedBox(height: 8),
-              const Text('Search is unavailable.'),
-              Text(_controller.error!),
-              const SizedBox(height: 8),
-              FilledButton(
-                onPressed: _controller.retry,
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
-        ),
-      );
+  Widget _results(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      ListRecovery(
+        stale: _controller.stale,
+        retry: _controller.retry,
+        error: _controller.error,
+        retained: _controller.displayedPage != null,
+        busy: _controller.loading,
+        coolingDown: _controller.coolingDown,
+        requestedPage: _controller.pageNumber,
+        displayedPage: _controller.displayedPage,
+      ),
+      _resultRows(context),
+    ],
+  );
+
+  Widget _resultRows(BuildContext context) {
+    if (_controller.displayedPage == null &&
+        (_controller.loading || _controller.error != null)) {
+      return const SizedBox.shrink();
     }
     if (!_controller.hasQuery ||
         !_autoSearched &&
@@ -173,7 +182,7 @@ class _SearchScreenState extends State<SearchScreen> {
             _controller.shops == null) {
       return const Center(child: Text('Enter a name to search.'));
     }
-    if (_controller.pageOutOfRange) {
+    if (!_controller.stale && _controller.pageOutOfRange) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -190,6 +199,7 @@ class _SearchScreenState extends State<SearchScreen> {
     final products = _controller.products;
     if (products != null) {
       if (products.items.isEmpty) {
+        if (_controller.stale) return const SizedBox.shrink();
         return const Center(
           child: Text('No Products match this search. Try another name.'),
         );
@@ -199,6 +209,7 @@ class _SearchScreenState extends State<SearchScreen> {
     final shops = _controller.shops;
     if (shops != null) {
       if (shops.items.isEmpty) {
+        if (_controller.stale) return const SizedBox.shrink();
         return const Center(
           child: Text('No Shops match this search. Try another name.'),
         );
@@ -271,13 +282,17 @@ class _SearchScreenState extends State<SearchScreen> {
       children: [
         IconButton(
           tooltip: 'Previous page',
-          onPressed: current > 1 ? () => _goToPage(context, current - 1) : null,
+          onPressed:
+              !_controller.loading && !_controller.coolingDown && current > 1
+              ? () => _goToPage(context, current - 1)
+              : null,
           icon: const Icon(Icons.chevron_left),
         ),
         Text('Page $current of $last'),
         IconButton(
           tooltip: 'Next page',
-          onPressed: current < last
+          onPressed:
+              !_controller.loading && !_controller.coolingDown && current < last
               ? () => _goToPage(context, current + 1)
               : null,
           icon: const Icon(Icons.chevron_right),

@@ -19,7 +19,11 @@ def main():
     parser.add_argument('--synthetic-only', action='store_true', help='Intercept every API request before startup; requires only the Buyer server, never Laravel.')
     parser.add_argument('--synthetic-journey-only', action='store_true', help='Focus on intercepted purchase journeys after a verified resize matrix.')
     parser.add_argument('--synthetic-shipping', action='store_true', help='Exercise provider choices and renewed quote review using intercepted synthetic responses.')
+    parser.add_argument('--synthetic-list-recovery', action='store_true', help='Exercise intercepted list refresh and page recovery.')
     args = parser.parse_args()
+    if args.synthetic_list_recovery:
+        args.synthetic_only = True
+        args.synthetic_journey_only = True
     if args.synthetic_shipping:
         args.synthetic_only = True
         args.synthetic_journey_only = True
@@ -185,7 +189,7 @@ def main():
         wait_text('Sign in with your approved Buyer account.')
         if args.synthetic_shopping or args.synthetic_only:
             from browser_synthetic import check_shopping
-            check_shopping(call, prefix, script, wait_text, resize, matrix=not args.synthetic_journey_only, shipping_selection=args.synthetic_shipping)
+            check_shopping(call, prefix, script, wait_text, resize, matrix=not args.synthetic_journey_only, shipping_selection=args.synthetic_shipping, list_recovery=args.synthetic_list_recovery)
         screenshot = os.environ.get('BUYER_SCREENSHOT')
         if screenshot:
             with open(screenshot, 'wb') as output:

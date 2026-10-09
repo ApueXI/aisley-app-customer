@@ -11,6 +11,7 @@ class TicketInboxController extends CommerceController {
   List<SupportTicket> items = const [];
   final trail = CursorTrail();
   bool loading = false, paging = false, loaded = false, offline = false;
+  bool stale = true;
   Future<void> filter({String? status, String? category}) async {
     if (status != null && !ticketStatuses.contains(status) ||
         category != null && !ticketCategories.contains(category)) {
@@ -20,8 +21,12 @@ class TicketInboxController extends CommerceController {
     this.status = status;
     this.category = category;
     items = const [];
+    error = coolingDown ? 'Please wait before retrying this list.' : null;
+    pageError = null;
+    stale = true;
     trail.clear();
     loading = paging = loaded = false;
+    notifyListeners();
     await load();
   }
 
@@ -29,17 +34,20 @@ class TicketInboxController extends CommerceController {
     final credential = lease, cursor = more ? trail.next : null;
     if (credential == null ||
         loading ||
-        paging ||
+        more && paging ||
         coolingDown ||
-        more && cursor == null) {
+        more && (cursor == null || stale)) {
       return;
     }
-    final stamp = epoch;
+    final stamp = more ? epoch : ++epoch;
     if (more) {
       paging = true;
       pageError = null;
     } else {
       loading = true;
+      paging = false;
+      stale = true;
+      pageError = null;
       error = null;
       offline = false;
     }
@@ -71,6 +79,8 @@ class TicketInboxController extends CommerceController {
         trail.seed(value.next);
       }
       loaded = true;
+      stale = false;
+      offline = false;
     } on ApiFailure catch (e) {
       if (!current(stamp, credential)) return;
       offline = e.kind == FailureKind.offline || e.kind == FailureKind.timeout;
@@ -83,6 +93,7 @@ class TicketInboxController extends CommerceController {
         items = const [];
         trail.clear();
         loaded = false;
+        stale = true;
       }
     } finally {
       if (current(stamp, credential)) {
@@ -98,5 +109,6 @@ class TicketInboxController extends CommerceController {
     status = category = pageError = null;
     trail.clear();
     loading = paging = loaded = offline = false;
+    stale = true;
   }
 }

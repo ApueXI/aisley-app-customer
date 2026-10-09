@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
 import '../../../core/ui/responsive_layout.dart';
+import '../../../core/ui/list_recovery.dart';
 import '../../../core/ui/form_page.dart';
 import '../../../core/ui/marketplace_widgets.dart';
 import '../../discovery/presentation/catalog_widgets.dart';
@@ -46,10 +47,19 @@ class _SavedProductsScreenState extends State<SavedProductsScreen> {
     appBar: AppBar(
       title: Text(_history ? 'Recently viewed' : 'Wishlist'),
       actions: [
-        IconButton(
-          tooltip: 'Refresh list',
-          onPressed: () => _controller.load(),
-          icon: const Icon(Icons.refresh),
+        ListenableBuilder(
+          listenable: _controller,
+          builder: (context, _) => IconButton(
+            tooltip: 'Refresh list',
+            onPressed:
+                _controller.loading ||
+                    _controller.coolingDown ||
+                    _controller.clearing ||
+                    _controller.pending.isNotEmpty
+                ? null
+                : () => _controller.load(),
+            icon: const Icon(Icons.refresh),
+          ),
         ),
       ],
     ),
@@ -58,18 +68,18 @@ class _SavedProductsScreenState extends State<SavedProductsScreen> {
       builder: (context, _) => ListView(
         padding: pagePadding(context),
         children: [
-          if (_controller.loading)
-            const LinearProgressIndicator(
-              semanticsLabel: 'Loading saved Products',
-            ),
-          if (_controller.error != null) ...[
-            Semantics(liveRegion: true, child: Text(_controller.error!)),
-            TextButton(
-              onPressed: () => _controller.load(),
-              child: const Text('Refresh'),
-            ),
-          ],
+          ListRecovery(
+            stale: _controller.stale,
+            retry: () => _controller.load(),
+            error: _controller.error,
+            retained: _controller.items.isNotEmpty,
+            busy: _controller.loading,
+            coolingDown: _controller.coolingDown,
+          ),
           if (_controller.loaded &&
+              !_controller.stale &&
+              !_controller.loading &&
+              _controller.pageError == null &&
               _controller.items.isEmpty &&
               _controller.error == null)
             Text(
@@ -175,14 +185,17 @@ class _SavedProductsScreenState extends State<SavedProductsScreen> {
                 },
               ),
             ),
-          if (_controller.pageError != null) Text(_controller.pageError!),
-          if (_controller.nextCursor != null)
-            OutlinedButton(
-              onPressed: _controller.loadingMore
-                  ? null
-                  : () => _controller.load(more: true),
-              child: Text(_controller.loadingMore ? 'Loading…' : 'Load more'),
-            ),
+          ListPageAction(
+            load: () => _controller.load(more: true),
+            hasMore: _controller.nextCursor != null,
+            error: _controller.pageError,
+            busy: _controller.loadingMore,
+            disabled:
+                _controller.loading ||
+                _controller.stale ||
+                _controller.coolingDown,
+            label: 'Load more Products',
+          ),
         ],
       ),
     ),

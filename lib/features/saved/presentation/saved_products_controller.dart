@@ -1,4 +1,5 @@
 import '../../../core/networking/api_failure.dart';
+import '../../../core/networking/cursor_page.dart';
 import '../../../core/security/private_feature_controller.dart';
 import '../../discovery/data/catalog_models.dart';
 import '../data/saved_repository.dart';
@@ -25,7 +26,9 @@ class SavedProductsController extends PrivateFeatureController {
   final RecentlyViewedRepository recent;
   final SavedStatusController savedStatus;
   List<SavedProduct> items = const [];
-  String? nextCursor;
+  final _trail = CursorTrail();
+  String? get nextCursor => _trail.next;
+  bool stale = true;
   bool loading = false, loadingMore = false, clearing = false, loaded = false;
   final pending = <String>{};
   String? pageError;
@@ -36,19 +39,22 @@ class SavedProductsController extends PrivateFeatureController {
         coolingDown ||
         isDisposed ||
         loading ||
-        loadingMore ||
+        more && loadingMore ||
         clearing ||
         pending.isNotEmpty) {
       return;
     }
     final cursor = more ? nextCursor : null;
-    if (more && cursor == null) return;
+    if (more && (cursor == null || stale)) return;
     final epoch = more ? featureGeneration : ++featureGeneration;
     if (more) {
       loadingMore = true;
       pageError = null;
     } else {
       loading = true;
+      loadingMore = false;
+      stale = true;
+      pageError = null;
       error = null;
     }
     notifyListeners();
@@ -70,18 +76,31 @@ class SavedProductsController extends PrivateFeatureController {
         next = page.nextCursor;
       }
       if (!isCurrentEpoch(epoch, lease)) return;
+      final prior = items.map((e) => e.product.id).toSet();
       final unique = <String, SavedProduct>{};
       for (final item in [...(more ? items : <SavedProduct>[]), ...values]) {
-        unique.putIfAbsent(item.product.id, () => item);
+        unique[item.product.id] = item;
       }
       items = List.unmodifiable(unique.values);
-      nextCursor = next == cursor ? null : next;
+      if (more) {
+        _trail.advance(
+          cursor!,
+          next,
+          progressed: values.any((e) => !prior.contains(e.product.id)),
+        );
+      } else {
+        _trail.clear();
+        _trail.seed(next);
+      }
+      stale = false;
       loaded = true;
     } on ApiFailure catch (failure) {
       if (!isCurrentEpoch(epoch, lease)) return;
       if (failure.status == 403 || failure.status == 404) {
         items = const [];
-        nextCursor = null;
+        _trail.clear();
+        stale = true;
+        loaded = false;
       }
       if (more) {
         pageError = describeFailure(failure);
@@ -165,8 +184,10 @@ class SavedProductsController extends PrivateFeatureController {
       await recent.clear(lease);
       if (isCurrentEpoch(epoch, lease)) {
         items = const [];
-        nextCursor = null;
+        _trail.clear();
         loaded = true;
+        stale = false;
+        pageError = null;
       }
     } on ApiFailure catch (failure) {
       if (!isCurrentEpoch(epoch, lease)) return;
@@ -188,11 +209,12 @@ class SavedProductsController extends PrivateFeatureController {
   @override
   void onClear() {
     items = const [];
-    nextCursor = null;
+    _trail.clear();
     pending.clear();
     loading = false;
     loadingMore = false;
     clearing = false;
+    stale = true;
     loaded = false;
     pageError = null;
   }
