@@ -136,7 +136,12 @@ class PsgcLoader {
   Future<List<PsgcRegion>> regions() async {
     if (_regions != null) return _regions!;
     final decoded = jsonDecode(
-      await _bundle.loadString('assets/psgc/list-of-all-regions.json'),
+      // Cache only validated models here. AssetBundle otherwise retains a
+      // successfully read but corrupt string across deliberate retries.
+      await _bundle.loadString(
+        'assets/psgc/list-of-all-regions.json',
+        cache: false,
+      ),
     );
     if (decoded is! List || decoded.length != _allowedRegionalFiles.length) {
       throw const FormatException('Invalid or incomplete PSGC index.');
@@ -165,7 +170,7 @@ class PsgcLoader {
     final existing = _datasets[region.code];
     if (existing != null) return existing;
     final decoded = jsonDecode(
-      await _bundle.loadString('assets/psgc/${region.file}'),
+      await _bundle.loadString('assets/psgc/${region.file}', cache: false),
     );
     final root = _map(decoded);
     final regionJson = root['region'];

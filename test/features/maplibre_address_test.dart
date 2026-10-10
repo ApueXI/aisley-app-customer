@@ -39,6 +39,16 @@ class FakeMaps extends MapLocationService {
   int geocodes = 0, tiles = 0;
   bool tileFails = false, malformedTile = false;
   Completer<List<GeoCandidate>>? lookup;
+  LocationChoiceFailure? gpsFailure;
+  bool settingsFail = false;
+  LocationSettingsAction? openedSettings;
+  @override
+  Future<bool> openLocationSettings(LocationSettingsAction action) async {
+    openedSettings = action;
+    if (settingsFail) throw StateError('Unavailable settings');
+    return true;
+  }
+
   final tilePoints = <GeoCandidate>[];
   @override
   Future<List<GeoCandidate>> geocode(String confirmedAddress) async {
@@ -58,7 +68,10 @@ class FakeMaps extends MapLocationService {
   }
 
   @override
-  Future<GeoCandidate> currentLocation() async => adjusted;
+  Future<GeoCandidate> currentLocation() async {
+    if (gpsFailure != null) throw gpsFailure!;
+    return adjusted;
+  }
 }
 
 class FakeMap implements AddressMapAdapter {
@@ -187,6 +200,65 @@ void main() {
     });
     await tester.pump();
   }
+
+  testWidgets(
+    'lookup failure offers manual fallback without unrelated settings',
+    (tester) async {
+      maps.lookup = Completer<List<GeoCandidate>>();
+      await open(tester);
+      await tap(tester, 'Find this address on the map');
+      maps.lookup!.completeError(const MapProviderFailure());
+      await tester.pumpAndSettle();
+      expect(find.textContaining('save the address manually'), findsOneWidget);
+      expect(find.text('Open location settings'), findsNothing);
+      await tester.enterText(find.byType(TextField).first, '14.6');
+      await tester.enterText(find.byType(TextField).last, '121');
+      await tap(tester, 'Confirm these coordinates');
+      await tester.pumpAndSettle();
+      expect(result!.latitude, 14.6);
+    },
+  );
+
+  testWidgets(
+    'blocked GPS settings failure preserves numeric fallback and cancellation',
+    (tester) async {
+      maps.gpsFailure = const LocationChoiceFailure(
+        'Permission blocked',
+        settings: LocationSettingsAction.app,
+      );
+      maps.settingsFail = true;
+      await open(tester);
+      await tap(tester, 'Use current location');
+      await tap(tester, 'Open location settings');
+      expect(maps.openedSettings, LocationSettingsAction.app);
+      expect(
+        find.textContaining('Could not open location settings'),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+      await tap(tester, 'Cancel pin');
+      await tester.pumpAndSettle();
+      expect(result, isNull);
+    },
+  );
+
+  testWidgets(
+    'ordinary GPS denial needs no settings and a deliberate retry recovers',
+    (tester) async {
+      maps.gpsFailure = const LocationChoiceFailure(
+        'Permission denied. Manual saving remains available.',
+      );
+      await open(tester);
+      await tap(tester, 'Use current location');
+      expect(find.text('Open location settings'), findsNothing);
+      maps.gpsFailure = null;
+      await tap(tester, 'Use current location');
+      expect(find.textContaining('Permission denied'), findsNothing);
+      await tap(tester, 'Confirm these coordinates');
+      await tester.pumpAndSettle();
+      expect(result!.latitude, adjusted.latitude);
+    },
+  );
 
   test(
     'MapLibre style and tile probe use only the Geoapify public origin',

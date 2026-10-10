@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../../core/config/app_config.dart';
@@ -127,7 +128,10 @@ class MapLocationService {
   Future<GeoCandidate> currentLocation() async {
     if (!config.mapsEnabled) throw const MapProviderFailure();
     if (!await _location.serviceEnabled()) {
-      throw const LocationChoiceFailure('Location services are turned off.');
+      throw const LocationChoiceFailure(
+        'Location services are turned off. You can still save a manual address.',
+        settings: LocationSettingsAction.service,
+      );
     }
     var permission = await _location.checkPermission();
     if (permission == LocationPermission.denied) {
@@ -139,12 +143,21 @@ class MapLocationService {
       );
     }
     if (permission == LocationPermission.deniedForever) {
-      throw const LocationChoiceFailure(
-        'Location permission is blocked. Change it in device settings or enter the address manually.',
+      throw LocationChoiceFailure(
+        kIsWeb
+            ? 'Location permission is blocked. Change this site’s permission in your browser or save a manual address.'
+            : 'Location permission is blocked. Change it in device settings or enter the address manually.',
+        settings: LocationSettingsAction.app,
       );
     }
     try {
       final position = await _location.position();
+      if (!position.latitude.isFinite ||
+          !position.longitude.isFinite ||
+          position.latitude.abs() > 90 ||
+          position.longitude.abs() > 180) {
+        throw const MapProviderFailure();
+      }
       return GeoCandidate(
         label: 'Current device location',
         latitude: position.latitude,
@@ -155,6 +168,14 @@ class MapLocationService {
         'Current location is unavailable. You can still enter the address manually.',
       );
     }
+  }
+
+  Future<bool> openLocationSettings(LocationSettingsAction action) async {
+    if (kIsWeb) return false;
+    return switch (action) {
+      LocationSettingsAction.app => Geolocator.openAppSettings(),
+      LocationSettingsAction.service => Geolocator.openLocationSettings(),
+    };
   }
 
   static double? _finiteNumber(Object? value) {
@@ -198,9 +219,12 @@ class MapProviderFailure implements Exception {
   String toString() => 'Address lookup is unavailable.';
 }
 
+enum LocationSettingsAction { app, service }
+
 class LocationChoiceFailure implements Exception {
-  const LocationChoiceFailure(this.message);
+  const LocationChoiceFailure(this.message, {this.settings});
   final String message;
+  final LocationSettingsAction? settings;
   @override
   String toString() => message;
 }

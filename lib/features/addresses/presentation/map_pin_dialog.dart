@@ -1,8 +1,7 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../core/ui/responsive_layout.dart';
-
-import 'package:geolocator/geolocator.dart';
 
 import '../../../app/app_dependencies.dart';
 import '../data/map_location_service.dart';
@@ -57,6 +56,7 @@ class _MapPinDialogState extends State<MapPinDialog> {
   int _epoch = 0, _recenterRevision = 0;
   bool _busy = false, _accessRevoked = false;
   String? _error;
+  LocationSettingsAction? _settings;
 
   bool get _allowed => !_accessRevoked && widget.dependencies.session.active;
 
@@ -85,6 +85,7 @@ class _MapPinDialogState extends State<MapPinDialog> {
     _latitude.clear();
     _longitude.clear();
     _error = null;
+    _settings = null;
     if (mounted) setState(() {});
   }
 
@@ -109,12 +110,12 @@ class _MapPinDialogState extends State<MapPinDialog> {
             ),
             const SizedBox(height: 12),
             OutlinedButton.icon(
-              onPressed: _busy ? null : _geocode,
+              onPressed: _busy || !_allowed ? null : _geocode,
               icon: const Icon(Icons.search),
               label: const Text('Find this address on the map'),
             ),
             OutlinedButton.icon(
-              onPressed: _busy ? null : _gps,
+              onPressed: _busy || !_allowed ? null : _gps,
               icon: const Icon(Icons.my_location),
               label: const Text('Use current location'),
             ),
@@ -122,9 +123,9 @@ class _MapPinDialogState extends State<MapPinDialog> {
               const LinearProgressIndicator(semanticsLabel: 'Finding location'),
             if (_error != null)
               Semantics(liveRegion: true, child: Text(_error!)),
-            if (_error != null)
+            if (_settings != null && !kIsWeb)
               TextButton(
-                onPressed: Geolocator.openAppSettings,
+                onPressed: _busy || !_allowed ? null : _openSettings,
                 child: const Text('Open location settings'),
               ),
             for (final candidate in _candidates)
@@ -172,7 +173,7 @@ class _MapPinDialogState extends State<MapPinDialog> {
             ),
             const SizedBox(height: 16),
             FilledButton(
-              onPressed: _busy ? null : _confirm,
+              onPressed: _busy || !_allowed ? null : _confirm,
               child: const Text('Confirm these coordinates'),
             ),
             TextButton(
@@ -193,6 +194,8 @@ class _MapPinDialogState extends State<MapPinDialog> {
     setState(() {
       _busy = true;
       _error = null;
+      _settings = null;
+      _candidates = const [];
     });
     try {
       final candidates = await widget.dependencies.mapLocations!.geocode(
@@ -225,6 +228,7 @@ class _MapPinDialogState extends State<MapPinDialog> {
     setState(() {
       _busy = true;
       _error = null;
+      _settings = null;
     });
     try {
       final candidate = await widget.dependencies.mapLocations!
@@ -234,7 +238,10 @@ class _MapPinDialogState extends State<MapPinDialog> {
       }
     } on LocationChoiceFailure catch (failure) {
       if (mounted && epoch == _epoch && widget.dependencies.session.active) {
-        setState(() => _error = failure.message);
+        setState(() {
+          _error = failure.message;
+          _settings = failure.settings;
+        });
       }
     } catch (_) {
       if (mounted && epoch == _epoch && widget.dependencies.session.active) {
@@ -249,6 +256,28 @@ class _MapPinDialogState extends State<MapPinDialog> {
     }
   }
 
+  Future<void> _openSettings() async {
+    final action = _settings;
+    if (!_allowed || action == null) return;
+    final epoch = _epoch;
+    setState(() => _busy = true);
+    var opened = false;
+    try {
+      opened = await widget.dependencies.mapLocations!.openLocationSettings(
+        action,
+      );
+    } catch (_) {
+      // Unsupported platform/settings failures must not escape the form.
+    }
+    if (!mounted || epoch != _epoch || !_allowed) return;
+    setState(() {
+      _busy = false;
+      if (!opened) {
+        _error = 'Could not open location settings. Change permission in your device or browser settings, or save a manual address.';
+      }
+    });
+  }
+
   void _writeCoordinates(GeoCandidate candidate) {
     _latitude.text = candidate.latitude.toStringAsFixed(6);
     _longitude.text = candidate.longitude.toStringAsFixed(6);
@@ -258,6 +287,8 @@ class _MapPinDialogState extends State<MapPinDialog> {
     if (!mounted || !_allowed) return;
     setState(() {
       _selected = candidate;
+      _error = null;
+      _settings = null;
       if (moveCamera) _recenterRevision++;
       _writeCoordinates(candidate);
     });
@@ -276,9 +307,10 @@ class _MapPinDialogState extends State<MapPinDialog> {
         !longitude.isFinite ||
         latitude.abs() > 90 ||
         longitude.abs() > 180) {
-      setState(
-        () => _error = 'Enter a finite, valid latitude and longitude pair.',
-      );
+      setState(() {
+        _error = 'Enter a finite, valid latitude and longitude pair.';
+        _settings = null;
+      });
       return;
     }
     Navigator.pop(
