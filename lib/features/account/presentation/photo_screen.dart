@@ -41,6 +41,11 @@ class _ProfilePhotoSectionState extends State<ProfilePhotoSection> {
   bool _selecting = false, _confirming = false;
   int _selectionOperation = 0;
   bool get _busy => _controller.busy || _selecting || _confirming;
+  bool get _exitBusy =>
+      _controller.uploading ||
+      _controller.removing ||
+      _selecting ||
+      _confirming;
 
   @override
   void initState() {
@@ -104,7 +109,7 @@ class _ProfilePhotoSectionState extends State<ProfilePhotoSection> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final dirty = _selected != null;
-      final busy = _busy;
+      final busy = _exitBusy;
       if (dirty == _reportedDirty && busy == _reportedBusy) return;
       _reportedDirty = dirty;
       _reportedBusy = busy;
@@ -231,16 +236,19 @@ class _ProfilePhotoSectionState extends State<ProfilePhotoSection> {
           const LinearProgressIndicator(
             semanticsLabel: 'Reading selected photo',
           ),
-        OutlinedButton.icon(
-          onPressed:
-              widget.dependencies.photoPicker == null ||
-                  _busy ||
-                  _controller.coolingDown ||
-                  _controller.requiresReconciliation
-              ? null
-              : _pick,
-          icon: const Icon(Icons.photo_library_outlined),
-          label: const Text('Choose a photo'),
+        SizedBox(
+          height: 48,
+          child: OutlinedButton.icon(
+            onPressed:
+                widget.dependencies.photoPicker == null ||
+                    _busy ||
+                    _controller.coolingDown ||
+                    _controller.requiresReconciliation
+                ? null
+                : _pick,
+            icon: const Icon(Icons.photo_library_outlined),
+            label: const Text('Choose a photo'),
+          ),
         ),
         if (_selected != null)
           FilledButton.icon(

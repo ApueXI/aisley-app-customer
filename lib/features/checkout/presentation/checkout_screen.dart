@@ -55,12 +55,15 @@ class _CheckoutScreenState extends State<CheckoutScreen>
       if (!widget.dependencies.session.active) return const SizedBox.shrink();
       final wide = marketplaceDesktop(context);
       // Short viewports cannot reserve a bar with a fully visible action target.
-      // Keep actions in the page scroll instead, including with an open keyboard.
+      // Keep actions in the page scroll instead, including with an open keyboard
+      // or enlarged text, so focus order follows the visible checkout content.
+      final availableHeight =
+          MediaQuery.sizeOf(context).height -
+          MediaQuery.viewInsetsOf(context).bottom;
       final inlineActions =
           !wide &&
-          MediaQuery.sizeOf(context).height -
-                  MediaQuery.viewInsetsOf(context).bottom <
-              500;
+          (availableHeight < 500 ||
+              MediaQuery.textScalerOf(context).scale(16) > 24);
       return FormPage(
         title: 'Checkout',
         busy: c.placing,

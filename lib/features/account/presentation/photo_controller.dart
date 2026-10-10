@@ -38,9 +38,6 @@ class PhotoController extends PrivateFeatureController {
         throw const ApiFailure(FailureKind.decode);
       }
       await _readPhoto(account, generation, lease);
-      if (isCurrentEpoch(generation, lease) && !requiresReconciliation) {
-        await session.refreshNavigation();
-      }
     } on ApiFailure catch (failure) {
       if (isCurrentEpoch(generation, lease)) {
         if (failure.status == 403 || failure.status == 404) {

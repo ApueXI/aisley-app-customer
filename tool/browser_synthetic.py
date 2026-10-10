@@ -37,7 +37,7 @@ def bootstrap_script():
     """ % json.dumps(policies)
 
 
-def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True, shipping_selection=False, list_recovery=False, upload_recovery=False):
+def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True, shipping_selection=False, list_recovery=False, upload_recovery=False, accessibility=False, accessibility_route=None):
     identity = {'id': ID, 'displayName': 'Synthetic browser Buyer', 'avatarUrl': None,
                 'role': 'customer', 'status': 'active'}
     responses = {
@@ -147,20 +147,48 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True, ship
         call(prefix + '/element/' + element + '/value', {'text': value})
     script("Array.from(document.querySelectorAll('[role=button]')).find(e => e.innerText.trim() === 'Sign in')?.click();")
     wait_text('Search Products or Shops')
+    routes = [
+        ('/', 'Search Products or Shops'),
+        ('/shops', 'Search Shops'),
+        ('/search?q=sample&mode=products', 'Search'),
+        ('/shops/' + slug, 'Apply filters'),
+        ('/products/' + ID, 'Add to Cart'),
+        ('/cart', 'Your Cart'),
+        ('/checkout', 'Choose Buy Now from a Product or select Cart items to start checkout.'),
+        ('/orders', 'Orders'),
+        ('/orders/' + ID, 'Order'),
+        ('/account', 'Your account'),
+        ('/account/profile', 'Email, role and account status are managed by AISLEY.'),
+        ('/account/password', 'Change password'),
+        ('/account/preferences', 'Promotional messages'),
+        ('/account/addresses', 'Address book'),
+        ('/account/addresses/new', 'Add address'),
+        ('/account/wishlist', 'Wishlist'),
+        ('/account/recently-viewed', 'Recently viewed'),
+        ('/products/' + ID + '/questions', 'Product questions'),
+        ('/products/' + ID + '/reviews', 'Product reviews'),
+        ('/messages/shops/' + ID, 'Refresh conversation'),
+        ('/messages/logistics/' + ID, 'Refresh conversation'),
+        ('/messages/courier/' + ID, 'Refresh conversation'),
+        ('/notifications', 'Notifications'),
+        ('/notifications/' + ID, 'Notification'),
+        ('/support-tickets', 'Support tickets'),
+        ('/support-tickets/new', 'New support ticket'),
+        ('/support-tickets/' + ID, 'Refresh conversation'),
+    ]
+    matrix_routes = [
+        item for item in routes
+        if item[0] in {
+            '/', '/shops', '/search?q=sample&mode=products', '/shops/' + slug,
+            '/products/' + ID, '/cart', '/orders', '/orders/' + ID,
+            '/account', '/account/profile', '/products/' + ID + '/questions',
+            '/products/' + ID + '/reviews', '/messages/shops/' + ID,
+            '/messages/logistics/' + ID, '/messages/courier/' + ID,
+            '/notifications', '/support-tickets/' + ID,
+        }
+    ]
     if matrix:
-        for route, expected in [('/', 'Search Products or Shops'), ('/shops', 'Search Shops'),
-                                ('/search?q=sample&mode=products', 'Search'),
-                                ('/shops/' + slug, 'Apply filters'), ('/products/' + ID, 'Add to Cart'),
-                                ('/cart', 'Your Cart'), ('/orders', 'Orders'),
-                                ('/orders/' + ID, 'Order'), ('/account', 'Your account'),
-                                ('/account/profile', 'Profile'),
-                                ('/products/' + ID + '/questions', 'Product questions'),
-                                ('/products/' + ID + '/reviews', 'Product reviews'),
-                                ('/messages/shops/' + ID, 'Refresh conversation'),
-                                ('/messages/logistics/' + ID, 'Refresh conversation'),
-                                ('/messages/courier/' + ID, 'Refresh conversation'),
-                                ('/notifications', 'Notifications'),
-                                ('/support-tickets/' + ID, 'Refresh conversation')]:
+        for route, expected in matrix_routes:
             print('CHECK: synthetic ' + route, flush=True)
             script('window.location.hash = ' + json.dumps(route) + ';')
             wait_text(expected)
@@ -171,12 +199,23 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True, ship
 
     def click(label):
         for _ in range(20):
-            if script("const b = Array.from(document.querySelectorAll('[role=button]')).find(e => (e.innerText || e.getAttribute('aria-label') || '').trim() === " + json.dumps(label) + "); if (b && b.getAttribute('aria-disabled') !== 'true') {b.click(); return true;} return false;"):
+            if script("const b = Array.from(document.querySelectorAll('[role=button],[role=link],button,a')).find(e => {const name = e.getAttribute('aria-label') || e.innerText || e.title || ''; const lines = name.split(/[\\n,]/).map(value => value.trim()); const wanted = " + json.dumps(label) + "; return lines.includes(wanted) || name.trim() === wanted || name.trim().startsWith(wanted + ',') || name.trim().startsWith(wanted + ' ');}); if (b && b.getAttribute('aria-disabled') !== 'true') {b.click(); return true;} return false;"):
                 return
             dimensions = script('return {width:window.innerWidth,height:window.innerHeight};')
             call(prefix + '/actions', {'actions': [{'type':'wheel','id':'journey-scroll','actions':[
                 {'type':'scroll','origin':'viewport','x':dimensions['width']//2,'y':dimensions['height']//2,
                  'deltaX':0,'deltaY':400,'duration':150}]}]})
+        if accessibility:
+            candidates = script("""
+              const wanted = """ + json.dumps(label) + """;
+              return Array.from(document.querySelectorAll('[role],[aria-label],button,a')).map(e => {
+                const r = e.getBoundingClientRect();
+                return {role:e.getAttribute('role'),label:e.getAttribute('aria-label'),text:(e.innerText || '').slice(0,120),
+                  size:[r.width,r.height]};
+              }).filter(e => ((e.label || '') + ' ' + e.text).includes(wanted)).slice(0,8);
+            """)
+            body = script('return document.body.innerText.slice(0,500);')
+            raise AssertionError('Shopper action must be reachable: ' + label + '; candidates: ' + json.dumps(candidates) + '; page: ' + json.dumps(body))
         raise AssertionError('Shopper action must be reachable: ' + label)
 
     def choose_shipping(name):
@@ -199,6 +238,327 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True, ship
             destination.mkdir(parents=True, exist_ok=True)
             time.sleep(.5)
             (destination / (name + '.png')).write_bytes(base64.b64decode(call(prefix + '/screenshot')))
+
+    def back_to_account():
+        for _ in range(3):
+            current = script('return location.hash.slice(1);')
+            if current == '/account' or not current.startswith('/account/'):
+                break
+            action = 'Cancel' if current in {
+                '/account/profile', '/account/password', '/account/preferences',
+                '/account/addresses/new',
+            } else 'Back'
+            click(action)
+            time.sleep(.2)
+        current = script('return location.hash.slice(1);')
+        if current != '/account':
+            raise AssertionError('Account Back/Cancel did not return to /account: ' + current)
+        wait_text('Your account')
+
+    def open_accessibility_route(route, expected):
+        if route.startswith('/account/'):
+            current = script('return location.hash.slice(1);')
+            if current.startswith('/account/'):
+                back_to_account()
+            elif current != '/account':
+                script("window.location.hash = '/account';")
+                wait_text('Your account')
+            destinations = {
+                '/account/profile': 'Profile',
+                '/account/password': 'Password',
+                '/account/preferences': 'Promotional messages',
+                '/account/addresses': 'Address book',
+                '/account/addresses/new': 'Address book',
+                '/account/wishlist': 'Wishlist',
+                '/account/recently-viewed': 'Recently viewed',
+            }
+            destination = destinations.get(route)
+            if destination:
+                click(destination)
+                if route == '/account/addresses/new':
+                    wait_text('Address book')
+                    click('Add address')
+        else:
+            script('window.location.hash = ' + json.dumps(route) + ';')
+            wait_text(expected)
+
+    accessibility_report = None
+    if accessibility:
+        failures = []
+        journeys = []
+        viewports = (
+            [(320, 640), (390, 844), (640, 320), (1440, 900)]
+            if accessibility_route is not None
+            else [(320, 640), (390, 844), (640, 320), (1440, 900)]
+        )
+        accessibility_routes = matrix_routes
+        if accessibility_route is not None:
+            accessibility_routes = [item for item in routes if item[0] == accessibility_route]
+            if not accessibility_routes:
+                raise ValueError('Unknown accessibility route: ' + accessibility_route)
+        for route, expected in accessibility_routes:
+            print('CHECK: browser accessibility ' + route, flush=True)
+            open_accessibility_route(route, expected)
+            journey = {'route': route, 'viewports': []}
+            for width, height in viewports:
+                stable = 0
+                previous = -1
+                for _ in range(20):
+                    count = script('return window.buyerSyntheticCalls.length;')
+                    stable = stable + 1 if count == previous else 0
+                    if stable >= 3:
+                        break
+                    previous = count
+                    time.sleep(.2)
+                before = script('return window.buyerSyntheticCalls.length;')
+                resize(width, height)
+                stable = 0
+                previous = -1
+                for _ in range(20):
+                    count = script('return window.buyerSyntheticCalls.length;')
+                    stable = stable + 1 if count == previous else 0
+                    if stable >= 3:
+                        break
+                    previous = count
+                    time.sleep(.2)
+                after = script('return window.buyerSyntheticCalls.length;')
+                if after != before:
+                    failures.append({'route': route, 'viewport': [width, height], 'type': 'request-on-resize',
+                                     'requestsBefore': before, 'requestsAfter': after,
+                                     'requests': script('return window.buyerSyntheticCalls.slice(' + str(before) + ');')})
+                if (width, height) == (640, 320):
+                    capture('accessibility-landscape-before-scroll-' + (route.strip('/').replace('/', '-') or 'home'))
+                call(prefix + '/actions', {'actions': [{'type':'wheel','id':'accessibility-scroll','actions':[
+                    {'type':'scroll','origin':'viewport','x':width//2,'y':height//2,
+                     'deltaX':0,'deltaY':-4000,'duration':100}]}]})
+                time.sleep(.15)
+                wait_text(expected)
+                target_signatures = set()
+                stable_scrolls = 0
+                previous_signature = None
+                unique_controls = set()
+                target_sizes = {}
+                for scroll_step in range(40):
+                    metrics = script("""
+                  const selector = '[role=button],[role=checkbox],[role=radio],[role=switch],[role=tab],[role=link],[role=textbox],[role=combobox],button,input,textarea,select';
+                  const controls = Array.from(document.querySelectorAll(selector)).map(el => {
+                    const wrapper = el.closest('flt-semantics');
+                    const rect = (el.tagName.toLowerCase() === 'textarea' && wrapper ? wrapper : el).getBoundingClientRect();
+                    const labelledBy = (el.getAttribute('aria-labelledby') || '').split(/\\s+/).filter(Boolean)
+                      .map(id => document.getElementById(id)?.innerText || '').join(' ');
+                    const wrapperLabel = wrapper?.getAttribute('aria-label') ||
+                      (wrapper?.getAttribute('aria-labelledby') || '').split(/\\s+/).filter(Boolean)
+                        .map(id => document.getElementById(id)?.innerText || '').join(' ') || wrapper?.innerText || '';
+                    const label = el.getAttribute('aria-label') || labelledBy || wrapperLabel ||
+                      (el.labels ? Array.from(el.labels).map(node => node.innerText).join(' ') : '') ||
+                      el.innerText || el.title || el.placeholder || el.value || '';
+                    const style = getComputedStyle(el);
+                    return {role: el.getAttribute('role') || el.tagName.toLowerCase(), label: label.trim(),
+                      tag: el.tagName.toLowerCase(), className: String(el.className || ''),
+                      id: el.id || '',
+                      disabled: !!el.disabled, semanticsProxy: !!el.closest('flt-semantics'),
+                      parent: el.parentElement ? el.parentElement.tagName.toLowerCase() + '.' + String(el.parentElement.className || '') : '',
+                      html: el.outerHTML.slice(0,500),
+                      wrapper: wrapper ? {role:wrapper.getAttribute('role'),label:wrapper.getAttribute('aria-label'),
+                        text:wrapper.innerText,html:wrapper.outerHTML.slice(0,500)} : null,
+                      width: rect.width, height: rect.height, top: rect.top, bottom: rect.bottom,
+                      visible: style.display !== 'none' && style.visibility !== 'hidden' && rect.width > 0 && rect.height > 0};
+                  }).filter(item => item.visible && !(
+                    item.tag === 'textarea' && item.disabled && item.semanticsProxy
+                  ));
+                  return {controls, scrollWidth: document.documentElement.scrollWidth, viewportWidth: innerWidth};
+                """)
+                    if metrics['scrollWidth'] > metrics['viewportWidth']:
+                        signature = ('horizontal-overflow',)
+                        if signature not in target_signatures:
+                            failures.append({'route': route, 'viewport': [width, height], 'type': signature[0],
+                                             'scrollWidth': metrics['scrollWidth']})
+                            target_signatures.add(signature)
+                    for item in metrics['controls']:
+                        unique_controls.add((item['role'], item['label']))
+                        if item['top'] < 0 or item['bottom'] > height:
+                            continue
+                        identity = item['role'] + ':' + item['tag'] + ':' + item['label']
+                        previous_size = target_sizes.get(identity)
+                        if previous_size is None or (
+                            item['width'] >= previous_size['width'] and
+                            item['height'] >= previous_size['height']
+                        ):
+                            target_sizes[identity] = item
+                        elif item['width'] > previous_size['width'] or item['height'] > previous_size['height']:
+                            target_sizes[identity] = {
+                                **previous_size,
+                                'width': max(item['width'], previous_size['width']),
+                                'height': max(item['height'], previous_size['height']),
+                            }
+                    signature = tuple((item['label'], round(item['top']), round(item['bottom']))
+                                      for item in metrics['controls'])
+                    stable_scrolls = stable_scrolls + 1 if signature == previous_signature else 0
+                    if stable_scrolls >= 2:
+                        break
+                    previous_signature = signature
+                    call(prefix + '/actions', {'actions': [{'type':'wheel','id':'accessibility-scroll','actions':[
+                        {'type':'scroll','origin':'viewport','x':width//2,'y':height//2,
+                         'deltaX':0,'deltaY':64,'duration':80}]}]})
+                    time.sleep(.06)
+                for item in target_sizes.values():
+                    if not item['label']:
+                        signature = ('unnamed-control', item['role'], item['tag'], item['id'])
+                        if signature not in target_signatures:
+                            failures.append({'route': route, 'viewport': [width, height], 'type': signature[0],
+                                             'role': item['role'], 'tag': item['tag'],
+                                             'id': item['id'], 'className': item['className'],
+                                             'parent': item['parent'], 'wrapper': item['wrapper']})
+                            target_signatures.add(signature)
+                    if item['width'] < 48 or item['height'] < 48:
+                        signature = ('undersized-target', item['role'], item['label'], item['id'])
+                        if signature not in target_signatures:
+                            failures.append({'route': route, 'viewport': [width, height], 'type': signature[0],
+                                             'role': item['role'], 'label': item['label'][:100],
+                                             'size': [round(item['width'], 1), round(item['height'], 1)],
+                                             'top': round(item['top'], 1), 'bottom': round(item['bottom'], 1),
+                                             'id': item['id'], 'tag': item['tag'],
+                                             'className': item['className'], 'parent': item['parent'],
+                                             'html': item['html']})
+                            target_signatures.add(signature)
+                journey['viewports'].append({
+                    'size': [width, height],
+                    'interactiveControls': len(unique_controls),
+                })
+                if route.endswith('/questions'):
+                    tree = call(prefix + '/goog/cdp/execute', {
+                        'cmd': 'Accessibility.getFullAXTree', 'params': {}})
+                    journey['browserSemantics'] = [
+                        {
+                            'role': node.get('role', {}).get('value'),
+                            'name': node.get('name', {}).get('value'),
+                            'ignored': node.get('ignored', False),
+                            'properties': {
+                                prop.get('name'): prop.get('value', {}).get('value')
+                                for prop in node.get('properties', [])
+                                if prop.get('name')
+                            },
+                        }
+                        for node in tree.get('nodes', [])
+                        if node.get('role', {}).get('value') in {
+                            'button', 'textbox', 'checkbox', 'radio', 'combobox',
+                        }
+                        and not node.get('ignored', False)
+                        and any(
+                            prop.get('name') == 'focusable' and
+                            prop.get('value', {}).get('value') is True
+                            for prop in node.get('properties', [])
+                        )
+                    ]
+                    if not any(
+                        item['role'] == 'textbox' and item['name'] == 'Question'
+                        for item in journey['browserSemantics']
+                    ):
+                        failures.append({
+                            'route': route,
+                            'type': 'missing-question-semantic-label',
+                            'browserSemantics': journey['browserSemantics'],
+                        })
+                if (width, height) == (390, 844):
+                    capture('accessibility-' + (route.strip('/').replace('/', '-') or 'home'))
+                if (width, height) == (640, 320):
+                    capture('accessibility-landscape-' + (route.strip('/').replace('/', '-') or 'home'))
+            journeys.append(journey)
+
+        keyboard = {'routeFilter': accessibility_route}
+        if accessibility_route is None or accessibility_route == '/account/profile':
+            if accessibility_route is None:
+                script("window.location.hash = '/account';")
+                wait_text('Your account')
+                click('Profile')
+                wait_text('Email, role and account status are managed by AISLEY.')
+            field = call(prefix + '/elements', {
+                'using': 'css selector', 'value': 'input[aria-label="First name"]'})
+            if not field:
+                failures.append({'route': '/account/profile', 'type': 'missing-keyboard-field'})
+                keyboard.update({'tabFocusAdvanced': False, 'draftSurvivedResize': False})
+            else:
+                element = next(iter(field[0].values()))
+                call(prefix + '/element/' + element + '/click', {})
+                call(prefix + '/element/' + element + '/clear', {})
+                call(prefix + '/element/' + element + '/value', {'text': 'Synthetic accessibility draft'})
+                before_focus = script("""
+                  const e = document.activeElement, r = e.getBoundingClientRect();
+                  return {label: e.getAttribute('aria-label') || e.innerText || '', role: e.getAttribute('role'),
+                    width: r.width, height: r.height, focusVisible: e.matches(':focus-visible')};
+                """)
+                call(prefix + '/actions', {'actions': [{'type': 'key', 'id': 'buyer-accessibility', 'actions': [
+                    {'type': 'keyDown', 'value': '\ue004'}, {'type': 'keyUp', 'value': '\ue004'}]}]})
+                after_focus = script("""
+                  const e = document.activeElement, r = e.getBoundingClientRect();
+                  return {label: e.getAttribute('aria-label') || e.innerText || '', role: e.getAttribute('role'),
+                    width: r.width, height: r.height, focusVisible: e.matches(':focus-visible')};
+                """)
+                tab_advanced = bool(after_focus['width'] and after_focus['height']) and (
+                    after_focus['label'] != before_focus['label'] or
+                    after_focus['role'] != before_focus['role'])
+                resize(640, 320)
+                wait_text('Email, role and account status are managed by AISLEY.')
+                draft_survived = script("return document.querySelector('input[aria-label=\"First name\"]')?.value === 'Synthetic accessibility draft';")
+                if not tab_advanced:
+                    failures.append({'route': '/account/profile', 'type': 'tab-focus-did-not-advance',
+                                     'before': before_focus, 'after': after_focus})
+                if not draft_survived:
+                    failures.append({'route': '/account/profile', 'type': 'draft-lost-on-resize'})
+                keyboard.update({
+                    'tabFocusAdvanced': tab_advanced,
+                    'before': before_focus,
+                    'after': after_focus,
+                    'draftSurvivedResize': bool(draft_survived),
+                    'focusVisible': bool(after_focus['focusVisible']),
+                })
+                capture('accessibility-profile-keyboard-landscape')
+
+                click('Cancel')
+                wait_text('Leave this screen?')
+                click('Stay')
+                wait_text('Email, role and account status are managed by AISLEY.')
+                first_name = call(prefix + '/elements', {
+                    'using': 'css selector', 'value': 'input[aria-label="First name"]'})
+                if first_name:
+                    call(prefix + '/element/' + next(iter(first_name[0].values())) + '/click', {})
+                retained = script("return document.querySelector('input[aria-label=\"First name\"]')?.value === 'Synthetic accessibility draft';")
+                if not retained:
+                    failures.append({'route': '/account/profile', 'type': 'cancel-lost-draft',
+                                     'after': script("return {url:location.hash, value:document.querySelector('input[aria-label=\"First name\"]')?.value, page:document.body.innerText.slice(0,240)};")})
+
+                call(prefix + '/back', {})
+                wait_text('Leave this screen?')
+                if not script("return document.body.innerText.includes('Discard the information entered in this form?');"):
+                    failures.append({'route': '/account/profile', 'type': 'back-missing-discard-warning'})
+                click('Stay')
+                wait_text('Email, role and account status are managed by AISLEY.')
+                first_name = call(prefix + '/elements', {
+                    'using': 'css selector', 'value': 'input[aria-label="First name"]'})
+                if first_name:
+                    call(prefix + '/element/' + next(iter(first_name[0].values())) + '/click', {})
+                retained = script("return document.querySelector('input[aria-label=\"First name\"]')?.value === 'Synthetic accessibility draft';")
+                if not retained:
+                    failures.append({'route': '/account/profile', 'type': 'cancel-lost-draft',
+                                     'after': script("return {url:location.hash, value:document.querySelector('input[aria-label=\"First name\"]')?.value, page:document.body.innerText.slice(0,240)};")})
+                call(prefix + '/back', {})
+                wait_text('Leave this screen?')
+                click('Leave')
+                wait_text('Your account')
+
+        accessibility_report = {
+            'origin': 'http://localhost:8766',
+            'viewports': [list(size) for size in viewports],
+            'journeys': journeys,
+            'routeFilter': accessibility_route,
+            'keyboardAndBack': keyboard,
+            'failures': failures,
+            'writes': [
+                item for item in script('return window.buyerSyntheticCalls;')
+                if item['method'] != 'GET'
+            ],
+            'screenshotsDirectory': os.environ.get('BUYER_SCREENSHOT_DIR'),
+        }
 
     if upload_recovery:
         from browser_upload_recovery import check_uploads
@@ -303,3 +663,4 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True, ship
     wait_text('Sign in with your approved Buyer account.')
     coverage = 'phone/tablet/desktop layouts and shopping' if matrix else 'mobile/desktop purchase journeys'
     print('PASS: synthetic browser identity, ' + coverage + ', Enter/search history, Add to Cart, accessible selected Cart, explicit quote and cancelled placement, sign-out; all API traffic intercepted.')
+    return accessibility_report

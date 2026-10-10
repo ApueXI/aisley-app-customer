@@ -171,13 +171,18 @@ class _AccountDestination extends StatelessWidget {
   final IconData icon;
   final String title, subtitle, route;
   @override
-  Widget build(BuildContext context) => ListTile(
-    contentPadding: EdgeInsets.zero,
-    minTileHeight: 64,
-    leading: Icon(icon),
-    title: Text(title),
-    subtitle: Text(subtitle),
-    trailing: const Icon(Icons.chevron_right),
-    onTap: () => context.push(route),
+  Widget build(BuildContext context) => ConstrainedBox(
+    constraints: const BoxConstraints(minHeight: 72),
+    child: ListTile(
+      contentPadding: EdgeInsets.zero,
+      minTileHeight: 72,
+      minVerticalPadding: 12,
+      visualDensity: VisualDensity.standard,
+      leading: Icon(icon),
+      title: Text(title),
+      subtitle: Text(subtitle),
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => context.push(route),
+    ),
   );
 }

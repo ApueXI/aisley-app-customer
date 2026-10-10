@@ -68,25 +68,32 @@ class _CancelOrderDialogState extends State<_CancelOrderDialog> {
                   ? 'Use at most 500 characters.'
                   : null,
             ),
+            const SizedBox(height: 16),
+            OverflowBar(
+              alignment: MainAxisAlignment.end,
+              spacing: 8,
+              overflowAlignment: OverflowBarAlignment.end,
+              overflowSpacing: 8,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Keep Order'),
+                ),
+                FilledButton(
+                  onPressed: widget.controller.session.active
+                      ? () {
+                          if (validateForm(_form.currentState!)) {
+                            Navigator.pop(context, _reason.text);
+                          }
+                        }
+                      : null,
+                  child: const Text('Cancel Order'),
+                ),
+              ],
+            ),
           ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Keep Order'),
-        ),
-        FilledButton(
-          onPressed: widget.controller.session.active
-              ? () {
-                  if (validateForm(_form.currentState!)) {
-                    Navigator.pop(context, _reason.text);
-                  }
-                }
-              : null,
-          child: const Text('Cancel Order'),
-        ),
-      ],
     ),
   );
 }

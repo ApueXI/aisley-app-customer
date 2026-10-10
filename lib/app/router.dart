@@ -22,6 +22,7 @@ import '../features/discovery/presentation/product_detail_screen.dart';
 import '../features/saved/presentation/saved_products_screen.dart';
 import '../features/saved/presentation/saved_products_controller.dart';
 import '../core/commerce/commerce_value.dart';
+import '../core/ui/form_page.dart';
 import '../features/cart/presentation/cart_screen.dart';
 import '../features/checkout/presentation/checkout_screen.dart';
 import '../features/checkout/presentation/batch_result_screen.dart';
@@ -32,6 +33,25 @@ import 'communication_routes.dart';
 import 'app_dependencies.dart';
 import 'router_guard.dart';
 import 'shell_screen.dart';
+
+bool _hasFormPage(String path) =>
+    const {
+      '/checkout',
+      '/login',
+      '/register',
+      '/forgot-password',
+      '/consent',
+      '/account/profile',
+      '/account/password',
+      '/account/preferences',
+      '/account/addresses/new',
+      '/support-tickets/new',
+    }.contains(path) ||
+    RegExp(r'^/account/addresses/[0-9a-fA-F-]{36}$').hasMatch(path) ||
+    RegExp(r'^/checkout/result/[0-9a-fA-F-]{36}$').hasMatch(path) ||
+    RegExp(r'^/products/[0-9a-fA-F-]{36}/questions$').hasMatch(path) ||
+    RegExp(r'^/order-items/[0-9a-fA-F-]{36}/review/[0-9a-fA-F-]{36}$')
+        .hasMatch(path);
 
 GoRouter buyerRouter(AppDependencies dependencies) {
   final session = dependencies.session;
@@ -54,6 +74,28 @@ GoRouter buyerRouter(AppDependencies dependencies) {
 
   return GoRouter(
     refreshListenable: session,
+    onEnter: (_, current, next, _) async {
+      if (current.uri == next.uri ||
+          current.uri.path == '/register' && next.uri.path == '/approval' ||
+          current.uri.path == '/login' &&
+              (session.active ||
+                  const [
+                    '/register',
+                    '/forgot-password',
+                  ].contains(next.uri.path) ||
+                  next.uri.path.startsWith('/policies/')) ||
+          current.uri.path == '/consent' &&
+              (session.active || next.uri.path.startsWith('/policies/'))) {
+        return const Allow();
+      }
+      if (!_hasFormPage(current.uri.path) ||
+          !FormPageExitRegistry.hasGuard(current)) {
+        return const Allow();
+      }
+      return await FormPageExitRegistry.allowExit(current)
+          ? const Allow()
+          : const Block.stop();
+    },
     redirect: (_, state) => guardRoute(session, state.uri),
     errorBuilder: (_, _) => const _Unavailable(),
     routes: [

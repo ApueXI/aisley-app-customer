@@ -77,3 +77,10 @@ The handoff's reviewed backend revision is separate from current client adoption
 unidentified deployed API revision. Earlier Phase 3/4 checks certify their dated client scope;
 this documentation sync executes no live commerce, attachment exchange or Flutter acceptance.
 [Local sync evidence](references/webapp-docs-sync-2026-10-09.md) records preservation and document checks.
+
+## Accessibility across journeys — 2026-10-10
+
+Local widget, build and synthetic-browser results are recorded in
+[accessibility journeys verification](references/accessibility-journeys-verification.md).
+The installed Android/TalkBack and controlled live-API browser gates remain
+open; the synthetic run does not complete the broad device/API acceptance item.

@@ -83,7 +83,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
           if (account != null) ...[
             Text('Email', style: Theme.of(context).textTheme.labelLarge),
-            SelectableText(account.email),
+            SelectionArea(child: Text(account.email)),
             const Text('Email, role and account status are managed by AISLEY.'),
             Form(
               key: _form,
@@ -172,15 +172,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Text(
                 'Age is calculated from your birthday: ${account.profile.age}.',
               ),
-            FilledButton.icon(
-              onPressed:
-                  _controller.saving ||
-                      _controller.coolingDown ||
-                      _controller.requiresReconciliation
-                  ? null
-                  : _save,
-              icon: const Icon(Icons.save_outlined),
-              label: Text(_controller.saving ? 'Saving…' : 'Save profile'),
+            SizedBox(
+              height: 48,
+              child: FilledButton.icon(
+                onPressed:
+                    _controller.saving ||
+                        _controller.coolingDown ||
+                        _controller.requiresReconciliation
+                    ? null
+                    : _save,
+                icon: const Icon(Icons.save_outlined),
+                label: Text(_controller.saving ? 'Saving…' : 'Save profile'),
+              ),
             ),
             Padding(
               padding: const EdgeInsets.only(top: 8),

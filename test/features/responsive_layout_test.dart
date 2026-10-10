@@ -93,6 +93,32 @@ Map<String, dynamic> longFixture(String feature, String operation) {
   return value;
 }
 
+Future<void> checkAccessibilityGuidelines(
+  WidgetTester tester, {
+  required String reason,
+}) async {
+  final semantics = tester.ensureSemantics();
+  try {
+    await expectLater(
+      tester,
+      meetsGuideline(androidTapTargetGuideline),
+      reason: '$reason targets',
+    );
+    await expectLater(
+      tester,
+      meetsGuideline(labeledTapTargetGuideline),
+      reason: '$reason labels',
+    );
+    await expectLater(
+      tester,
+      meetsGuideline(textContrastGuideline),
+      reason: '$reason contrast',
+    );
+  } finally {
+    semantics.dispose();
+  }
+}
+
 void main() {
   for (final feature in [
     'login',
@@ -335,6 +361,23 @@ void main() {
         await tester.pumpWidget(app());
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
+        await checkAccessibilityGuidelines(tester, reason: '$feature portrait');
+        if (feature == 'profile') {
+          expect(
+            find.ancestor(
+              of: find.text('buyer@example.invalid'),
+              matching: find.byType(SelectionArea),
+            ),
+            findsOneWidget,
+            reason: 'Read-only email must remain selectable for copying.',
+          );
+        } else if (feature == 'policy') {
+          expect(
+            find.byType(SelectionArea),
+            findsOneWidget,
+            reason: 'Policy text must remain selectable.',
+          );
+        }
         if (feature == 'checkout') {
           await tester.ensureVisible(find.text('Review order'));
           await tester.tap(find.text('Review order'));
@@ -511,6 +554,12 @@ void main() {
                 isNull,
                 reason: '$feature $actual text $scale',
               );
+              if (actual == const Size(640, 320) && textScale == 2.0) {
+                await checkAccessibilityGuidelines(
+                  tester,
+                  reason: '$feature landscape/split-screen',
+                );
+              }
               if (feature == 'checkout') {
                 expect(
                   find.byType(ProductBoundaryCard),

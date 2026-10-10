@@ -66,10 +66,13 @@ class ProductCardTile extends StatelessWidget {
           if (onAddToCart != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
-              child: FilledButton.tonalIcon(
-                onPressed: onAddToCart,
-                icon: const Icon(Icons.add_shopping_cart),
-                label: const Text('Add to Cart'),
+              child: SizedBox(
+                height: 48,
+                child: FilledButton.tonalIcon(
+                  onPressed: onAddToCart,
+                  icon: const Icon(Icons.add_shopping_cart),
+                  label: const Text('Add to Cart'),
+                ),
               ),
             ),
         ],
@@ -252,18 +255,22 @@ class SectionHeading extends StatelessWidget {
         style: Theme.of(context).textTheme.titleLarge,
       );
       if (action == null) return heading;
+      final targetAction = ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 48),
+        child: action!,
+      );
       if (constraints.maxWidth < 360 ||
           MediaQuery.textScalerOf(context).scale(16) > 24) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [heading, action!],
+          children: [heading, targetAction],
         );
       }
       return Row(
         children: [
           Expanded(child: heading),
           const SizedBox(width: 16),
-          action!,
+          targetAction,
         ],
       );
     },
