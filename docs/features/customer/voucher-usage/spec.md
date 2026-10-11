@@ -14,23 +14,19 @@ current_contract_inspected_checkout: 22b0a48f9575ead182d03c35ab87345711c23b90
 ## WHAT
 
 Backend: Existing quote candidate/eligibility/selection/savings/snapshot/redemption implemented;
-wallet/claim/authoring deferred.
+public discovery/detail/Shop reads and private collection/status/wallet implemented. Authoring remains role-owned.
 
-Flutter: **implemented including current shipping selection/projections**. See [G25 evidence](../../../references/shipping-selection-verification.md); live-account/device gates remain open.
+Flutter: **discovery, collection, wallet and reviewed Checkout implemented**. See [G28 evidence](../../../references/voucher-collection-verification.md); live-account/device gates remain open.
 
 Quote candidates → explicit UUID/target Shop → requote → reviewed savings → placement redeems.
 
-- Selections vouchers:[{voucher_id,target_shop_id}] ≤20; code is display, not accepted code-entry. Candidates may be ineligible with reason. No automatic best selection/claim/wallet API.
+- Selections vouchers:[{voucher_id,target_shop_id}] ≤20; code is display, not accepted code-entry. Candidates may be ineligible with reason. Collection and wallet use the documented [collection APIs](../../../api/voucher-collection.md); no automatic selection.
 - One App voucher per batch with explicit eligible Shop target; Shop voucher only its Shop. At most one discount and one shipping benefit per group; different-benefit stacking needs reciprocal permissions. Minimum spend uses full target-Shop merchandise before discounts.
 - Server time/scopes/exclusions/capacity/customer limit and integer-cent calculation/caps decide saving. Selected zero-saving voucher still redeems; quote reserves nothing. Placement locks/rechecks/redempts atomically and snapshots terms; cancellation/rejection currently does not restore counters.
 - Disclose removed/stale choices before another Place action and reject previous-account selections/results.
 
 The current [shipping contract](../../../api/shipping-selection.md) governs provider selection and DTOs;
 current client checks are recorded in [G25 evidence](../../../references/shipping-selection-verification.md). Upstream paths remain optional provenance.
-Use this feature with its prerequisite session/consent boundary and the related shopping or
-communication repositories.
-The Customer client cannot perform Seller/Admin/Logistics/Courier actions. Current Laravel ownership
-and capabilities remain authoritative.
 
 Buyer presentation requires verified active Customer identity and required consent for every shopping
 screen; public backend methods/envelopes remain unchanged. Auth/recovery/Terms/Privacy stay reachable.
@@ -40,8 +36,8 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 
 ### Feature behavior and boundaries
 
-- Voucher selection belongs to quote/checkout; no independent wallet, claim, code-entry or
-  voucher-authoring route exists.
+- Discovery/detail, Shop collection and My Vouchers use the existing APIs; Checkout alone selects/redeems.
+  Code entry, authoring and automatic selection remain unavailable to Buyer.
 - Show existing availableVouchers from each Quote group and submit UUID plus target_shop_id.
 - Issuer types are app|shop and benefits discount|shipping; never rename wire values to
   platform|seller.
@@ -68,7 +64,7 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 - Cancellation currently does not restore voucher redemption capacity; do not promise reuse or refund.
 - Shipping discount reduces the selected provider’s server shipping fee; changing provider requires reviewed
   requote and updated savings. Commission does not increase Customer COD.
-- No auto claim, code text injection, implicit promotion opt-in or other Customer’s eligibility
+- No automatic collection, code text injection, implicit promotion opt-in or other Customer’s eligibility
   inspection.
 - Candidate failures and checkout unavailable state are distinct from no available vouchers.
 - Test minimum spend, exclusions, exhausted/customer-limit/not-started/expired/payment-ineligible and
@@ -93,10 +89,6 @@ authority.
   Request: Owned batch UUID; no body.
   Replay: Read retry after bounded backoff; reject obsolete session/query generations.
 
-Full per-operation access/status notes and synthetic bodies are in
-[operations](../../../api/operations.md) and
-[this feature’s examples](../../../api/examples/checkout-order.json).
-Examples are source-derived synthetic fixtures, not live captures or usable test accounts.
 
 ### Response fields and nesting
 
@@ -114,7 +106,7 @@ actions.
 
 | DTO | Wire fields and types |
 | --- | --- |
-| `Voucher` | `id: UUID`, `code: string`, `issuerType: string`, `benefitType: string`, `valueType: string`, `value: money`, `maximumDiscount: money?`, `minimumSpend: money`, `termsSummary: string`, `validFrom: timestamp`, `validUntil: timestamp`, `paymentMethod: string?`, `stackableWith: string[]`, `scope: VoucherScope`, `eligible: bool`, `reason: string?`, `saving: money` |
+| `Voucher` | `id: UUID`, `code: string`, `issuerType: string`, `benefitType: string`, `valueType: string`, `value: money`, `maximumDiscount: money?`, `minimumSpend: money`, `termsSummary: string?`, `validFrom: timestamp`, `validUntil: timestamp`, `paymentMethod: string?`, `stackableWith: string[]`, `scope: VoucherScope`, `eligible: bool`, `reason: string?`, `saving: money` |
 | `VoucherScope` | `productIds: UUID[]`, `categoryIds: UUID[]`, `excludedProductIds: UUID[]`, `excludedCategoryIds: UUID[]` |
 | `AppliedVoucher` | `id: UUID`, `code: string`, `issuerType: string`, `benefitType: string`, `qualifyingBasis: money`, `discountAmount: money` |
 | `QuoteGroup` | `shop: QuoteShop`, `items: QuoteItem[]`, `availableVouchers: Voucher[]`, `appliedVouchers: AppliedVoucher[]`, `shippingQuote: ShippingQuote`, `totals: Totals` |
@@ -148,6 +140,13 @@ universal error envelope.
 ## HOW
 
 ### Responsibility and state ownership
+
+- [Collection contract](../../../api/voucher-collection.md) owns all seven methods, DTO fields, filters and natural replay.
+- Routes `/vouchers`, `/vouchers/:id`, `/account/vouchers` and Shop vouchers retain verified identity/consent.
+- Session-owned collection state rejects old-account replies; public definitions never hold personalized status.
+- Collect explicitly; uncertain responses offer same-endpoint Retry, with pending/cooldown duplicate protection.
+- Checkout collection invalidates review but preserves safe choices; explicitly requote/select/review afterward.
+- Unresolved placement disables collection navigation and preserves original payload/key for exact retry.
 
 - `CheckoutRepository` owns typed transport, parsing and owned cache access; inject dependencies
   through AppDependencies.

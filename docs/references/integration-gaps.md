@@ -97,3 +97,9 @@ General-notification unread-count/read-all/native push remain unavailable under 
 selection, platform-neutral Review dimension checks, individual cancellation, current
 account/photo rereads and partial Review recovery. No durable image replay or backend
 decoding/rewrite/retention behavior is inferred. G15 and live/installed-device gates remain open.
+
+## Voucher collection adoption — 2026-10-11
+
+| ID | Gap / required action | Owner / gate |
+| --- | --- | --- |
+| G28 | Buyer discovery/detail, Shop/platform collection, My Vouchers and deliberate Checkout requote are implemented. See [client evidence](voucher-collection-verification.md); deployed API/schema, controlled commerce and installed Android/TalkBack remain open. | Buyer/API; release acceptance |

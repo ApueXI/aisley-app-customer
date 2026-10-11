@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../vouchers/data/customer_voucher.dart';
 
 import '../../../core/ui/marketplace_widgets.dart';
 import '../data/quote_models.dart';
@@ -10,6 +13,7 @@ class QuoteReview extends StatelessWidget {
   const QuoteReview({super.key, required this.quote, required this.controller});
   final CheckoutQuote quote;
   final CheckoutController controller;
+
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -69,24 +73,46 @@ class QuoteReview extends StatelessWidget {
                   const SizedBox(height: 12),
                   const Text('Available vouchers'),
                   for (final voucher in group.candidates)
-                    CheckboxListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text(voucher.code),
-                      subtitle: Text(
-                        '${voucher.terms}\n${voucher.selectable ? 'Saving ${voucher.saving.display(group.totals.currency)}' : voucher.reason ?? 'Unavailable'}${voucher.saving.minorUnits == 0 ? '\nUsing this voucher can still consume its redemption limit.' : ''}',
-                      ),
-                      value: controller.vouchers.any(
-                        (v) =>
-                            v.voucherId == voucher.id &&
-                            v.shopId == group.shop.id,
-                      ),
-                      onChanged: controller.editable && voucher.selectable
-                          ? (value) => controller.chooseVoucher(
-                              group,
-                              CheckoutVoucherCandidate(voucher.id),
-                              value == true,
-                            )
-                          : null,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        CheckboxListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(voucher.name),
+                          subtitle: Text(
+                            '${voucher.terms}\n${voucher.selectable ? 'Saving ${voucher.saving.display(group.totals.currency)}' : voucherReason(voucher.reason)}${voucher.saving.minorUnits == 0 ? '\nUsing this voucher can still consume its redemption limit.' : ''}',
+                          ),
+                          value: controller.vouchers.any(
+                            (v) =>
+                                v.voucherId == voucher.id &&
+                                v.shopId == group.shop.id,
+                          ),
+                          onChanged: controller.editable && voucher.selectable
+                              ? (value) => controller.chooseVoucher(
+                                  group,
+                                  CheckoutVoucherCandidate(voucher.id),
+                                  value == true,
+                                )
+                              : null,
+                        ),
+                        if (voucher.reason == 'VOUCHER_NOT_CLAIMED')
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: TextButton.icon(
+                              icon: const Icon(Icons.local_offer_outlined),
+                              label: const Text('Collect voucher'),
+                              onPressed: controller.editable
+                                  ? () {
+                                      if (controller.openVoucherCollection(
+                                        voucher.id,
+                                      )) {
+                                        context.push('/vouchers/${voucher.id}');
+                                      }
+                                    }
+                                  : null,
+                            ),
+                          ),
+                      ],
                     ),
                 ],
               ],

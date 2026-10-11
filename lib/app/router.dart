@@ -28,6 +28,7 @@ import '../features/checkout/presentation/checkout_screen.dart';
 import '../features/checkout/presentation/batch_result_screen.dart';
 import '../features/orders/presentation/orders_screen.dart';
 import '../features/orders/presentation/order_detail_screen.dart';
+import '../features/vouchers/presentation/voucher_screens.dart';
 import 'discovery_route_query.dart';
 import 'communication_routes.dart';
 import 'app_dependencies.dart';
@@ -160,6 +161,33 @@ GoRouter buyerRouter(AppDependencies dependencies) {
               ],
             ),
         ],
+      ),
+      GoRoute(
+        path: '/vouchers',
+        builder: (_, state) =>
+            dependencies.vouchers != null && !state.uri.hasQuery
+            ? VoucherListScreen(dependencies: dependencies)
+            : const _Unavailable(),
+      ),
+      GoRoute(
+        path: '/vouchers/:id',
+        builder: (_, state) =>
+            dependencies.vouchers != null &&
+                validUuid(state.pathParameters['id']!) &&
+                !state.uri.hasQuery
+            ? VoucherDetailScreen(
+                key: ValueKey((session.generation, state.pathParameters['id'])),
+                dependencies: dependencies,
+                id: state.pathParameters['id']!,
+              )
+            : const _Unavailable(),
+      ),
+      GoRoute(
+        path: '/account/vouchers',
+        builder: (_, state) =>
+            dependencies.vouchers != null && !state.uri.hasQuery
+            ? VoucherListScreen(dependencies: dependencies, wallet: true)
+            : const _Unavailable(),
       ),
       GoRoute(
         path: '/checkout',

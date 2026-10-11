@@ -6,6 +6,8 @@ import '../features/cart/data/cart_repository.dart';
 import '../features/checkout/data/checkout_repository.dart';
 import '../features/orders/data/order_repository.dart';
 import 'commerce_state.dart';
+import '../features/vouchers/data/voucher_repository.dart';
+import '../features/vouchers/presentation/voucher_collection_controller.dart';
 import 'communication_state.dart';
 import '../core/networking/api_client.dart';
 import '../core/platform/http_adapter.dart';
@@ -43,6 +45,7 @@ class AppDependencies {
     this.client,
     this.commerce,
     this.communication,
+    this.vouchers,
   }) : clock = clock ?? DateTime.now;
   factory AppDependencies.production(AppConfig config) {
     final client = ApiClient(config);
@@ -76,6 +79,7 @@ class AppDependencies {
       launcher: TrustedLauncher(config),
       discovery: discovery,
       accounts: accounts,
+      vouchers: VoucherRepository(client),
       addresses: addresses,
       wishlist: wishlist,
       recentlyViewed: recentlyViewed,
@@ -93,6 +97,11 @@ class AppDependencies {
       ),
     );
   }
+  final VoucherRepository? vouchers;
+  VoucherCollectionController? _voucherCollection;
+  VoucherCollectionController? get voucherCollection => vouchers == null
+      ? null
+      : _voucherCollection ??= VoucherCollectionController(session, vouchers!);
   final CommerceState? commerce;
   final CommunicationState? communication;
   final AppConfig config;
@@ -115,6 +124,8 @@ class AppDependencies {
   final DateTime Function() clock;
   final ApiClient? client;
   void dispose() {
+    _voucherCollection?.dispose();
+    vouchers?.dispose();
     _profilePhoto?.dispose();
     communication?.dispose();
     commerce?.dispose();

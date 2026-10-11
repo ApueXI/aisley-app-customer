@@ -18,7 +18,7 @@ Laravel owns current prices, stock/variant eligibility, serviceable shipping/rat
 
 Acceptable first delivery includes Android and a fixed-origin local Flutter web test target, truthful failure/retry states, secure token restoration and cleanup, accessible navigation/forms, optional location fallback, and verified authenticated uploads. [Integration gaps](references/integration-gaps.md) remain visible; existing source-test coverage is not new mobile certification.
 
-Bazaar/MoneyFest placeholders, guest Cart/Wishlist merge, voucher claiming/wallet/authoring, online payments, returns/refunds/disputes, live GPS/ETA, review editing/moderation, account email changes/MFA/deletion, and unimplemented registration evidence must not be presented as operational features.
+Bazaar/MoneyFest placeholders, guest Cart/Wishlist merge, voucher authoring, online payments, returns/refunds/disputes, live GPS/ETA, review editing/moderation, account email changes/MFA/deletion, and unimplemented registration evidence must not be presented as operational features.
 
 
 ## Delivery authority and dependencies
@@ -49,7 +49,7 @@ Phases 1–4 Customer features and shared consent have implementation evidence; 
 
 ## Explicit deferred inventory
 
-Do not infer implementation from enum values, public shortcut URLs or historical planned spec wording. Missing registration evidence/status polling, native reset app links, exact global notification badges, push, guest Cart/Wishlist merge, wallet/claim/code vouchers, online payments/refunds/returns, live GPS/ETA, account session controls and support attachments/fanout remain unavailable. Pin assistance is optional and gated on suitable public credentials, permission and provider terms. Support detail cursor traversal relies on Laravel’s request-bound resolver and needs explicit integration verification.
+Do not infer implementation from enum values, public shortcut URLs or historical planned spec wording. Missing registration evidence/status polling, native reset app links, exact global notification badges, push, guest Cart/Wishlist merge, code-entry vouchers, online payments/refunds/returns, live GPS/ETA, account session controls and support attachments/fanout remain unavailable. Pin assistance is optional and gated on suitable public credentials, permission and provider terms. Support detail cursor traversal relies on Laravel’s request-bound resolver and needs explicit integration verification.
 
 ## Current platform shipping contract
 
@@ -58,3 +58,5 @@ Customers select one Seller-enabled provider per Shop Order using [options/quote
 ## Flutter presentation and pending contract adoption
 
 This Buyer project implements [marketplace layouts](references/marketplace-verification.md) on phone/tablet/desktop in one Flutter app, stable mounted pages during temporary background revalidation errors, mouse/text shopping controls and embedded Profile-photo operations. PSGC fields require explicit hierarchical selections; typed matches do not select, NCR uses a compatibility choice, unsupported Province mappings/failed assets block save with Retry. Street/contact/postal fields remain manual, and optional pin failure does not block valid locality saving. These Flutter choices preserve storefront behavior and API validation. [Private chat media](api/chat-media.md) is implemented in Laravel; Flutter media adoption remains G26; provider selection is implemented with live/device G25 gates open. Dated historical checkout failures retain unverified current resolution.
+
+Voucher journey: Home discovery or Shop vouchers → explicit collection → My Vouchers Available/Upcoming/History → explicit Checkout selection and reviewed requote. Collection does not reserve capacity or automatically apply savings. See [contract](api/voucher-collection.md).

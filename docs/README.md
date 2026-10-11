@@ -67,3 +67,7 @@ MapLibre evidence and required sign-in/account-only recency remain the implement
 Buyer now implements `22b0a48` shipping options, per-Shop selections, current projections
 and frozen placement recovery. [Verification](references/shipping-selection-verification.md)
 records synthetic client checks; deployed-provider, live commerce and installed-device gates remain open.
+
+## Buyer voucher adoption — 2026-10-11
+
+Buyer now implements [discovery, collection and wallet](api/voucher-collection.md) with explicit Checkout requote against Laravel `7e89b391`. [Verification](references/voucher-collection-verification.md) distinguishes source/synthetic checks from deployed/live/installed-device gates. Historical general and shipping baselines remain preserved.

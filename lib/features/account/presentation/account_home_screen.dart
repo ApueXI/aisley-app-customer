@@ -35,6 +35,12 @@ class AccountHomeScreen extends StatelessWidget {
                 route: '/orders',
               ),
               _AccountDestination(
+                icon: Icons.local_offer_outlined,
+                title: 'My Vouchers',
+                subtitle: 'Collected offers and available Aisley vouchers',
+                route: '/account/vouchers',
+              ),
+              _AccountDestination(
                 icon: Icons.favorite_border,
                 title: 'Wishlist',
                 subtitle: 'Products you saved',

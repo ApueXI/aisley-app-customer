@@ -27,8 +27,6 @@ Buy Now or selected Cart → saved shipping + COD → per-Shop quote → reviewe
 
 The current [shipping contract](../../../api/shipping-selection.md) governs provider selection and DTOs;
 current client checks are recorded in [G25 evidence](../../../references/shipping-selection-verification.md). Upstream paths remain optional provenance.
-Use this feature with its prerequisite session/consent boundary and the related shopping or
-communication repositories.
 The Customer client cannot perform Seller/Admin/Logistics/Courier actions. Current Laravel ownership
 and capabilities remain authoritative.
 
@@ -228,3 +226,5 @@ Follow [architecture](../../../architecture.md), [setup](../../../setup.md) and
 
 Shipping adoption 2026-10-09: [G25 evidence](../../../references/shipping-selection-verification.md) records current client checks.
 Live/device commerce and deployment configuration remain open under G25.
+
+Voucher collection adoption: [G28 contract](../../../api/voucher-collection.md) and [client evidence](../../../references/voucher-collection-verification.md).

@@ -61,6 +61,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   if (MarketplaceScope.maybeOf(context)?.active != true)
                     _searchBar(context),
+                  if (widget.dependencies.vouchers != null)
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton.icon(
+                        onPressed: () => context.push('/vouchers'),
+                        icon: const Icon(Icons.local_offer_outlined),
+                        label: const Text('Discover vouchers'),
+                      ),
+                    ),
                   if (_controller.loading && home == null)
                     const Padding(
                       padding: EdgeInsets.only(top: 56),

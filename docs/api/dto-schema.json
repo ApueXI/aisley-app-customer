@@ -382,7 +382,7 @@
       "value": "money",
       "maximumDiscount": "money?",
       "minimumSpend": "money",
-      "termsSummary": "string",
+      "termsSummary": "string?",
       "validFrom": "timestamp",
       "validUntil": "timestamp",
       "paymentMethod": "string?",
@@ -390,7 +390,10 @@
       "scope": "VoucherScope",
       "eligible": "bool",
       "reason": "string?",
-      "saving": "money"
+      "saving": "money",
+      "name": "string",
+      "distributionMode": "automatic|claim_required",
+      "collectionUrl": "string?"
     },
     "VoucherScope": {
       "productIds": "UUID[]",
@@ -927,6 +930,37 @@
       "duration_seconds": "number?",
       "content_url": "URL?",
       "preview_url": "URL?"
+    },
+    "CustomerVoucher": {
+      "id": "UUID",
+      "name": "string",
+      "code": "string",
+      "issuerType": "app|shop",
+      "benefitType": "discount|shipping",
+      "valueType": "fixed|percent",
+      "value": "money",
+      "minimumSpend": "money",
+      "maximumDiscount": "money?",
+      "currency": "string",
+      "validFrom": "timestamp",
+      "validUntil": "timestamp",
+      "paymentMethod": "string?",
+      "termsSummary": "string?",
+      "distributionMode": "automatic|claim_required",
+      "scope": "VoucherScope",
+      "shop": "VoucherShop?",
+      "collectionUrl": "string?",
+      "collected": "bool?",
+      "collectedAt": "timestamp?",
+      "remainingPersonalUses": "int?",
+      "availabilityReason": "string?",
+      "canCollect": "bool",
+      "walletStatus": "available|upcoming|history?"
+    },
+    "VoucherShop": {
+      "id": "UUID",
+      "name": "string",
+      "slug": "string"
     }
   },
   "adopted_client_checkout": "57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50",
@@ -934,5 +968,8 @@
     "date": "2026-10-06",
     "source": "Laravel chat-media feature addition; historical checkout/adoption fields preserved",
     "client_adoption": "pending"
+  },
+  "contract_updates": {
+    "voucher_collection": "2026-10-11: Buyer discovery, Shop/platform collection, wallet and explicit Checkout requote adopt Laravel 7e89b391; live/device/deployment gates remain open."
   }
 }

@@ -86,3 +86,5 @@ phone/tablet retain Home/Shops/Cart/Account. Shopping bounds are 1200 pixels; fo
 560. See [marketplace design](design-buyer.md) and [verification](verification.md).
 
 Background revalidation errors preserve the mounted route, scroll, drafts and dialogs with retry feedback; identity loss clears private state and renewed consent gates shopping. Profile includes private photo viewing/selection/upload/removal; `/account/photo` links redirect there. Home categories retain expansion, Cart Select all changes eligible lines once through its controller, and listing/detail purchase controls fetch current Product data before a deliberate write. These are implemented Flutter presentation changes; current provider selection remains an adoption gate (G25).
+
+Voucher journey: Home discovery or Shop vouchers → explicit collection → My Vouchers Available/Upcoming/History → explicit Checkout selection and reviewed requote. Collection does not reserve capacity or automatically apply savings. See [contract](api/voucher-collection.md).

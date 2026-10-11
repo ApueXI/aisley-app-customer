@@ -244,7 +244,7 @@ Customer feature routes generally include `throttle:120,1`; focused throttles ar
 - Public media routes still check current owning Product/review/campaign visibility; route-public does not make hidden assets public. Private avatar requires authenticated Customer bytes and current consent.
 - Generic address-options routes are auxiliary upstream APIs; current Customer dropdowns use bundled PSGC data. See the Dart asset plan.
 - Platform policies expose only public Terms/Privacy and published/superseded history; Internal Rules are scoped unavailable.
-- There is no Buyer push-device registration, notification unread-count/read-all, voucher wallet/claim/code-entry, native-reset-link, applicant-status, live-location, delivery-POD, online-payment, returns/refunds or arbitrary-user messaging API promised by this inventory.
+- There is no Buyer push-device registration, notification unread-count/read-all, voucher code-entry, native-reset-link, applicant-status, live-location, delivery-POD, online-payment, returns/refunds or arbitrary-user messaging API promised by this inventory.
 - Customer methods differ from other roles: account password is PATCH, avatar part is photo, review part image, Q&A part question, support description part body, Shop read sequence versus operational read last_read_sequence.
 
 The current [103 typed operation records](operation-index.json) cover the 95 historical operations, logistics-options and seven chat-media operations with synthetic JSON or binary metadata examples. Auxiliary address-options remain optional; media consumes returned URLs. [Standalone requests/envelopes](operations.md) are authoritative local definitions, with no monorepo reading dependency.
@@ -254,3 +254,17 @@ The current [103 typed operation records](operation-index.json) cover the 95 his
 [Private media](chat-media.md) defines Customer GET/POST `/api/v1/customer/chat-attachments`, GET/DELETE `/{id}`, POST `/{id}/retry`, GET `/{id}/content` and GET `/{id}/preview`. All three existing chat start/reply routes accept ordered `attachment_ids`; messages add `attachments`. Runtime gated; Buyer Flutter adoption pending.
 
 The 2026-10-09 [supplied route snapshot](../references/routes-2026-10-09.json) includes the media addition. Its review revision is separate from client adoption and the unidentified deployed API revision.
+
+## Customer / vouchers — additive 2026-10-11
+
+The [collection contract](voucher-collection.md) adds seven methods after the historical 96-route inventory; historical route manifests/adopted Flutter revision remain preserved.
+
+| Method | Path | Access | Throttle | Controller/action |
+| --- | --- | --- | --- | --- |
+| GET | `/api/v1/customer/vouchers` | Public | 120,1 | CustomerVoucherController@index |
+| GET | `/api/v1/customer/vouchers/{voucher}` | Public | 120,1 | CustomerVoucherController@show |
+| GET | `/api/v1/customer/shops/{slug}/vouchers` | Public | 120,1 | CustomerVoucherController@shop |
+| GET | `/api/v1/customer/my-vouchers` | Active Customer + consent | 120,1 | CustomerVoucherController@mine |
+| GET | `/api/v1/customer/voucher-statuses` | Active Customer + consent | 120,1 | CustomerVoucherController@statuses |
+| POST | `/api/v1/customer/vouchers/{voucher}/claim` | Active Customer + consent | 120,1 | CustomerVoucherController@claim |
+| POST | `/api/v1/customer/shops/{slug}/vouchers/{voucher}/claim` | Active Customer + consent | 120,1 | CustomerVoucherController@shopClaim |

@@ -10,6 +10,7 @@ import '../data/catalog_models.dart';
 import 'catalog_widgets.dart';
 import 'product_purchase_flow.dart';
 import 'shop_controllers.dart';
+import '../../vouchers/presentation/shop_vouchers_section.dart';
 
 class ShopScreen extends StatefulWidget {
   const ShopScreen({
@@ -77,6 +78,13 @@ class _ShopScreenState extends State<ShopScreen> {
           children: [
             if (_controller.shop != null)
               _shopHeader(context, _controller.shop!),
+            if (_controller.shop != null &&
+                widget.dependencies.vouchers != null)
+              ShopVouchersSection(
+                key: ValueKey(widget.slug),
+                dependencies: widget.dependencies,
+                slug: widget.slug,
+              ),
             TextField(
               controller: _query,
               maxLength: 100,

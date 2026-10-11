@@ -1138,3 +1138,11 @@ Current shipping inspection: `22b0a48f9575ead182d03c35ab87345711c23b90`; impleme
 - Retry: Bounded authenticated private read retry; JPEG thumbnail/poster only. Missing/foreign/unbound media is scoped 404.
 - Notes: Source-derived addition; Buyer Flutter adoption pending. 401/403/404/409/422/429/503; MP4 ranges 206/416.
 - [Media contract](chat-media.md) and [synthetic examples](examples/chat-media.json).
+
+## Voucher collection delta — 2026-10-11
+
+[Discovery, collection and wallet](voucher-collection.md) supplies the seven additive operations, DTO, availability, natural replay and Checkout collection gate.
+
+### Voucher operation records
+
+Stable `voucher-collection-001` through `voucher-collection-007` in [operation index](operation-index.json) follow the endpoint order in [collection contract](voucher-collection.md). [Synthetic examples](examples/voucher-collection.json) include public nulls, private status and platform/Shop collection confirmations.

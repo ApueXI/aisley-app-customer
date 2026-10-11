@@ -34,10 +34,12 @@ String safeReturn(String? value) {
         '/account/preferences',
         '/account/addresses',
         '/account/wishlist',
+        '/account/vouchers',
+        '/vouchers',
         '/account/recently-viewed',
       ].contains(uri.path) ||
       RegExp(
-        r'^/products/[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$',
+        r'^/(?:products|vouchers)/[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$',
       ).hasMatch(uri.path) ||
       RegExp(
         r'^/(?:orders|checkout/result)/[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}$',

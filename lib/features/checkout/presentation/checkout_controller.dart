@@ -155,6 +155,23 @@ class CheckoutController extends CommerceController {
     unawaited(loadShippingOptions());
   }
 
+  /// Only an editable review may leave for collection; frozen placement is untouched.
+  bool openVoucherCollection(String id) {
+    if (!editable ||
+        quote == null ||
+        !quote!.groups.any(
+          (g) => g.candidates.any(
+            (v) => v.id == id && v.reason == 'VOUCHER_NOT_CLAIMED',
+          ),
+        )) {
+      return false;
+    }
+    invalidateQuote();
+    error = 'After collecting, review your order again and select the voucher.';
+    notifyListeners();
+    return true;
+  }
+
   void removeVoucher(String id) {
     if (!editable) return;
     vouchers = List.unmodifiable(vouchers.where((v) => v.voucherId != id));
