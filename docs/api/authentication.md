@@ -1,6 +1,6 @@
 # Customer bearer authentication
 
-Backend implemented; Buyer Flutter pending. Sources: Customer Auth controller/Requests/Resources, `EnsureActiveCustomer`, Customer Account service, Sanctum configuration and `CustomerAuthenticationTest.php` at the [baseline](../references/source-provenance.md).
+Backend and Buyer Flutter Phase 1 implemented; live-account/device acceptance remains partial. See [Phase 1 evidence](../references/phase-1-verification.md). Sources: Customer Auth controller/Requests/Resources, `EnsureActiveCustomer`, Customer Account service, Sanctum configuration and `CustomerAuthenticationTest.php` at the [baseline](../references/source-provenance.md).
 
 ## Exact login path
 

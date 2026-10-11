@@ -24,6 +24,9 @@ class CheckoutVoucher {
     final w = Wire(json);
     id = w.uuid('id');
     code = w.string('code');
+    name = w.optionalString('name') ?? code;
+    distributionMode = w.optionalString('distributionMode');
+    collectionUrl = w.optionalString('collectionUrl');
     issuer = w.string('issuerType');
     benefit = w.string('benefitType');
     valueType = w.string('valueType');
@@ -31,7 +34,7 @@ class CheckoutVoucher {
     final maximum = w.field('maximumDiscount');
     maximumDiscount = maximum == null ? null : Money.parse(maximum);
     minimumSpend = Money.parse(w.field('minimumSpend'));
-    terms = w.string('termsSummary');
+    terms = w.nullableString('termsSummary') ?? '';
     validFrom = requiredTime(w, 'validFrom');
     validUntil = requiredTime(w, 'validUntil');
     paymentMethod = w.nullableString('paymentMethod');
@@ -41,7 +44,8 @@ class CheckoutVoucher {
     reason = w.nullableString('reason');
     saving = Money.parse(w.field('saving'));
   }
-  late final String id, code, issuer, benefit, valueType, terms;
+  late final String id, code, name, issuer, benefit, valueType, terms;
+  late final String? distributionMode, collectionUrl;
   late final String? paymentMethod, reason;
   late final Money value, minimumSpend, saving;
   late final Money? maximumDiscount;
@@ -51,6 +55,8 @@ class CheckoutVoucher {
   late final bool eligible;
   bool get selectable =>
       eligible &&
+      (distributionMode == null ||
+          const ['automatic', 'claim_required'].contains(distributionMode)) &&
       const ['app', 'shop'].contains(issuer) &&
       const ['discount', 'shipping'].contains(benefit) &&
       const ['fixed', 'percent'].contains(valueType) &&

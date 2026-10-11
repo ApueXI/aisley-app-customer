@@ -1,4 +1,6 @@
 import '../core/networking/api_client.dart';
+import '../core/chat_media/api_repository.dart';
+import '../core/chat_media/draft_controller.dart';
 import '../core/security/session_controller.dart';
 import '../features/shop_messages/data/shop_repository.dart';
 import '../features/shop_messages/presentation/shop_inbox_controller.dart';
@@ -21,7 +23,7 @@ import '../features/support/presentation/ticket_inbox_controller.dart';
 /// Session-owned controllers retain unresolved writes while screens come and go.
 /// The three channel maps/repositories/read markers never share conversation state.
 class CommunicationState {
-  CommunicationState(this.session, ApiClient api, {this.uuid}) {
+  CommunicationState(this.session, this.api, {this.uuid}) {
     shops = ShopChatRepository(api);
     logistics = LogisticsChatRepository(api);
     courier = CourierChatRepository(api);
@@ -36,6 +38,13 @@ class CommunicationState {
     session.registerPrivateCleanup(_clearMaps);
   }
   final SessionController session;
+  final ApiClient api;
+  ChatMediaDraftController _media() => ChatMediaDraftController(
+    ApiChatMediaRepository(
+      api,
+      () => session.active ? session.verifiedLease : null,
+    ),
+  );
   final String Function()? uuid;
   late final ShopChatRepository shops;
   late final LogisticsChatRepository logistics;
@@ -76,6 +85,7 @@ class CommunicationState {
         shops,
         id: id,
         uuid: uuid,
+        media: _media(),
         entry: {
           'shop_id': ?shop,
           if (contextId != null) ...{
@@ -98,6 +108,7 @@ class CommunicationState {
         logistics,
         id: id,
         uuid: uuid,
+        media: _media(),
         entry: {
           if (order != null) ...{'context_type': 'order', 'context_id': order},
         },
@@ -116,6 +127,7 @@ class CommunicationState {
         courier,
         id: id,
         uuid: uuid,
+        media: _media(),
         entry: {
           if (order != null) ...{'context_type': 'order', 'context_id': order},
         },

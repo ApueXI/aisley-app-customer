@@ -3,9 +3,10 @@ feature: order-modification-cancellation
 role: Customer
 platform: Flutter / Dart
 phase: 3
-flutter_status: Implemented; acceptance partial
+flutter_status: Implemented including 22b0a48 shipping; live/device acceptance partial
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
+current_contract_inspected_checkout: 22b0a48f9575ead182d03c35ab87345711c23b90
 ---
 
 # Order cancellation and address correction
@@ -15,7 +16,7 @@ contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 Backend: Eligible placed COD mutations, locked reservations, new address snapshots and replay
 implemented; shipping-rate revalidation gap remains.
 
-Flutter: **implemented; acceptance partial**. See [Phase 3 evidence](../../../references/phase-3-verification.md); live-account/device gates remain open.
+Flutter: **implemented including current shipping selection/projections**. See [G25 evidence](../../../references/shipping-selection-verification.md); live-account/device gates remain open.
 
 Owned eligible Order → confirm cancellation or select saved shipping row → locked action → refreshed state/history.
 
@@ -24,7 +25,8 @@ Owned eligible Order → confirm cancellation or select saved shipping row → l
 - The inspected service does not recalculate the saved shipping rate/coverage on address correction. Record G21 and coordinate material-location handling with backend owner; never derive a replacement fee or serviceability locally.
 - On 409 refetch capabilities; freeze uncertain key/payload for exact replay. No quantity/variant/voucher/price/status changes. Address Book edits do not modify Order snapshots.
 
-The local bundle supplies the implementation contract. Upstream paths are optional provenance only.
+The current [shipping contract](../../../api/shipping-selection.md) governs provider selection and DTOs;
+current client checks are recorded in [G25 evidence](../../../references/shipping-selection-verification.md). Upstream paths remain optional provenance.
 Use this feature with its prerequisite session/consent boundary and the related shopping or
 communication repositories.
 The Customer client cannot perform Seller/Admin/Logistics/Courier actions. Current Laravel
@@ -108,7 +110,7 @@ unsupported actions.
 
 | DTO | Wire fields and types |
 | --- | --- |
-| `Order` | `id: UUID`, `reference: string`, `checkoutBatchId: UUID?`, `placedAt: timestamp`, `latestTrackingAt: timestamp`, `status: string`, `statusLabel: string`, `group: string`, `groupLabel: string`, `shop: OrderShop`, `items: ReviewableItem[]`, `deliveryAddress: DeliveryAddress`, `payment: Payment`, `vouchers: OrderVoucher[]`, `totals: Totals`, `timeline: Tracking[]`, `timelineCount: int`, `timelineHasMore: bool`, `trackingUrl: URL`, `delivery: Delivery?`, `map: UnavailableMap`, `actions: OrderActions` |
+| `Order` | `id: UUID`, `reference: string`, `checkoutBatchId: UUID?`, `placedAt: timestamp`, `latestTrackingAt: timestamp`, `status: string`, `statusLabel: string`, `group: string`, `groupLabel: string`, `shop: OrderShop`, `shippingProvider: ShippingProvider?`, `items: ReviewableItem[]`, `deliveryAddress: DeliveryAddress`, `payment: Payment`, `vouchers: OrderVoucher[]`, `totals: Totals`, `timeline: Tracking[]`, `timelineCount: int`, `timelineHasMore: bool`, `trackingUrl: URL`, `delivery: Delivery?`, `map: UnavailableMap`, `actions: OrderActions` |
 | `OrderActions` | `canCancel: bool`, `canModify: bool`, `canReview: bool`, `modifiableFields: string[]` |
 | `DeliveryAddress` | `version: int`, `recipientName: string`, `contactNumber: string`, `addressLine1: string`, `addressLine2: string?`, `barangay: string`, `cityMunicipality: string`, `province: string`, `region: string`, `postalCode: string`, `country: string` |
 
@@ -182,15 +184,16 @@ require a universal error envelope.
 
 ### Verification scenarios
 
+- [x] Current nullable provider/shipping projections and related selection effects pass G25 client verification.
 - [ ] Seller-processing race/stale revision/key replay yield one permissible outcome and release
   stock once.
 - [ ] Correction preserves previous address versions and shows current
   capability/error/shipping-gap boundaries.
 - [ ] Android and fixed-origin local browser verify loading/empty/errors, keyboard/back/focus,
   supported permission/retry states and cleanup after identity loss.
-- [x] DTO fixtures reject wrong required types, distinguish null/absent/false/empty and preserve
+- [ ] DTO fixtures reject wrong required types, distinguish null/absent/false/empty and preserve
   wire casing.
-- [x] Each consumed operation uses its documented method/body/envelope and correct public/private
+- [ ] Each consumed operation uses its documented method/body/envelope and correct public/private
   credential behavior.
 - [ ] Exercise normal, empty, malformed, denied, consent-required, validation, conflict, throttle,
   offline and timeout outcomes.
@@ -218,5 +221,5 @@ history.
 Follow [architecture](../../../architecture.md), [setup](../../../setup.md) and
 [verification](../../../verification.md).
 
-Spec revision 2026-10-04: Phase 3 client implemented against the unchanged inspected checkout;
-synthetic verification is separate from live commerce and installed-device acceptance.
+Shipping adoption 2026-10-09: [G25 evidence](../../../references/shipping-selection-verification.md) records current client checks.
+Live/device commerce and deployment configuration remain open under G25.

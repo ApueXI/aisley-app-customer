@@ -47,7 +47,7 @@ exact local origin in the provider settings. See [live-key results](references/g
 
 ## Current Phases 1–4 local development
 
-The ten approved package pins support implemented auth, discovery/account, commerce and communication.
+Seven core package pins support auth, discovery/account, commerce and communication. Optional pinning uses MapLibre and geolocator; the old ten-package table records the October 4 resolution before the October 8 map replacement.
 Maps/uploads/PSGC/preferences are implemented; no dependency was added for Phases 3–4. Preserve
 historical SDK/package checks; current results are in [Phase 4 evidence](references/phase-4-verification.md).
 
@@ -166,3 +166,9 @@ Disable Android auto backup or exclude secure-storage preferences using Android 
 - Map attribution/tile terms and trusted storefront reset-link deployment. Native reset app links and production browser security remain separate decisions.
 
 Do not modify server configuration to satisfy these inputs from the mobile task. The historical metadata inspection and current dependency-resolution/scaffold-analysis checks do not establish any build, live exchange, permission, device or browser acceptance result.
+
+## Current backend contract adoption
+
+The [webapp handoff sync](references/webapp-docs-sync-2026-10-09.md) imports newer shipping and
+private chat-media contracts. Flutter still adopts backend `57e9eb2`; G25/G26 remain pending.
+Changing documentation does not change package pins, application behavior or deployed configuration.

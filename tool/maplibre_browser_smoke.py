@@ -104,7 +104,11 @@ def main():
         identity = {'id': ID, 'displayName': 'Synthetic map Buyer', 'avatarUrl': None,
                     'role': 'customer', 'status': 'active'}
         address = fixture('address-book', 'op-015')
-        address['data'][0].update(latitude=14.6, longitude=121, country='Philippines')
+        address['data'][0].update(
+            addressLine1='Synthetic address', barangay='Barangay 1',
+            cityMunicipality='City of Caloocan', province='National Capital Region (NCR)',
+            region='National Capital Region (NCR)', postalCode='1400', country='Philippines',
+            latitude=14.6, longitude=121)
         if live_provider:
             # Public landmark, never a person's address or real customer record.
             address['data'][0].update(addressLine1='Rizal Park', addressLine2='',

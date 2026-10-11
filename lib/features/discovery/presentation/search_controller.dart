@@ -1,24 +1,24 @@
-import 'package:flutter/foundation.dart';
-
 import '../../../core/networking/api_failure.dart';
-import '../../../core/networking/request_cooldown.dart';
+import '../../../core/security/private_feature_controller.dart';
 import '../data/discovery_page_models.dart';
 import '../data/discovery_repository.dart';
 
 enum SearchMode { products, shops }
 
-class DiscoverySearchController extends ChangeNotifier with RequestCooldown {
-  DiscoverySearchController(this.repository);
+class DiscoverySearchController extends PrivateFeatureController {
+  DiscoverySearchController(this.repository) : super(repository.session);
   final DiscoveryRepository repository;
   SearchMode mode = SearchMode.products;
   String query = '';
   int pageNumber = 1, limit = 20;
   ProductSearchPage? products;
   ShopSearchPage? shops;
-  String? error;
   bool loading = false;
-  int _generation = 0;
-  bool _disposed = false;
+  bool stale = true;
+  Object? _baseSignature;
+  Object? _requestSignature;
+  int? get displayedPage =>
+      products?.pagination.currentPage ?? shops?.pagination.currentPage;
 
   bool get hasQuery => query.isNotEmpty;
   bool get pageOutOfRange => switch (mode) {
@@ -30,17 +30,24 @@ class DiscoverySearchController extends ChangeNotifier with RequestCooldown {
 
   void setMode(SearchMode value) {
     if (value == mode) return;
+    loading = false;
+    stale = true;
     mode = value;
     pageNumber = 1;
     products = null;
     shops = null;
     error = null;
-    _generation++;
+    featureGeneration++;
     notifyListeners();
   }
 
-  Future<void> search(String rawQuery, {int page = 1}) async {
-    if (coolingDown) return;
+  Future<void> search(
+    String rawQuery, {
+    int page = 1,
+    bool refresh = false,
+  }) async {
+    final lease = currentLease;
+    if (lease == null || isDisposed) return;
     final normalized = rawQuery.trim();
     if (normalized.isEmpty) {
       query = '';
@@ -49,12 +56,12 @@ class DiscoverySearchController extends ChangeNotifier with RequestCooldown {
       shops = null;
       error = null;
       loading = false;
-      _generation++;
+      featureGeneration++;
       notifyListeners();
       return;
     }
     if (normalized.length > 100 || page < 1 || page > 10000) {
-      _generation++;
+      featureGeneration++;
       products = null;
       shops = null;
       loading = false;
@@ -62,13 +69,28 @@ class DiscoverySearchController extends ChangeNotifier with RequestCooldown {
       notifyListeners();
       return;
     }
+    final base = (normalized, mode, limit);
+    final request = (base, page);
+    if (loading && request == _requestSignature) return;
+    if (base != _baseSignature) {
+      products = null;
+      shops = null;
+    }
+    _baseSignature = base;
+    _requestSignature = request;
     query = normalized;
     pageNumber = page;
-    products = null;
-    shops = null;
+    if (coolingDown) {
+      featureGeneration++;
+      loading = false;
+      stale = true;
+      notifyListeners();
+      return;
+    }
+    stale = true;
     error = null;
     loading = true;
-    final generation = ++_generation;
+    final generation = ++featureGeneration;
     notifyListeners();
     try {
       if (mode == SearchMode.products) {
@@ -76,36 +98,54 @@ class DiscoverySearchController extends ChangeNotifier with RequestCooldown {
           query: normalized,
           page: page,
           limit: limit,
+          refresh: refresh,
         );
-        if (_disposed || generation != _generation) return;
+        if (!isCurrentEpoch(generation, lease)) return;
+        if (result.pagination.currentPage != page) {
+          throw const ApiFailure(FailureKind.decode);
+        }
         products = result;
+        stale = false;
       } else {
         final result = await repository.searchShops(
           query: normalized,
           page: page,
           limit: limit,
+          refresh: refresh,
         );
-        if (_disposed || generation != _generation) return;
+        if (!isCurrentEpoch(generation, lease)) return;
+        if (result.pagination.currentPage != page) {
+          throw const ApiFailure(FailureKind.decode);
+        }
         shops = result;
+        stale = false;
       }
     } on ApiFailure catch (failure) {
-      if (!_disposed && generation == _generation) {
+      if (isCurrentEpoch(generation, lease)) {
         error = describeFailure(failure);
+        if (failure.status == 403 || failure.status == 404) {
+          products = null;
+          shops = null;
+        }
       }
     } finally {
-      if (!_disposed && generation == _generation) {
+      if (isCurrentEpoch(generation, lease)) {
         loading = false;
         notifyListeners();
       }
     }
   }
 
-  Future<void> retry() => search(query, page: pageNumber);
+  Future<void> retry() => search(query, page: pageNumber, refresh: true);
 
   @override
-  void dispose() {
-    _disposed = true;
-    _generation++;
-    super.dispose();
+  void onClear() {
+    _baseSignature = _requestSignature = null;
+    products = null;
+    shops = null;
+    loading = false;
+    stale = true;
+    query = '';
+    pageNumber = 1;
   }
 }

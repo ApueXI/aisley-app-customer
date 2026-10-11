@@ -3,9 +3,10 @@ feature: checkout-order
 role: Customer
 platform: Flutter / Dart
 phase: 3
-flutter_status: Implemented; acceptance partial
+flutter_status: Implemented including 22b0a48 shipping; live/device acceptance partial
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
+current_contract_inspected_checkout: 22b0a48f9575ead182d03c35ab87345711c23b90
 ---
 
 # COD checkout and placement
@@ -13,20 +14,19 @@ contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 ## WHAT
 
 Backend: Quote/place/batch, per-Shop Orders, shipping/vouchers/reservations/snapshots and UUID replay
-implemented.
+implemented; nullable item imageUrl parsing is adopted from 5d55ecf; Checkout image rendering deferred.
 
-Flutter: **implemented; acceptance partial**. See [Phase 3 evidence](../../../references/phase-3-verification.md); live-account/device gates remain open.
+Flutter: **implemented including current shipping selection/projections**. See [G25 evidence](../../../references/shipping-selection-verification.md); live-account/device gates remain open.
 
 Buy Now or selected Cart → saved shipping + COD → per-Shop quote → reviewed Place → atomic batch result.
 
-- Choose exactly buy_now product_id/nullable-present variant_id/quantity or distinct owned cart_item_ids; add address_id,payment_method:cod and optional voucher UUID/target Shop selections. No computed price/total/shipping/provider/owner/status.
-- Requote changed intent and display exact server serviceability/rate/shipping/savings/COD. Buyer never selects Logistics; Seller chooses downstream. One Shop creates one independent Order; all group Orders/snapshots/redemptions/reservations/selected Cart cleanup commit atomically.
+- Choose exactly buy_now product_id/nullable-present variant_id/quantity or distinct owned cart_item_ids; add address_id,payment_method:cod and optional voucher UUID/target Shop selections. Add logistics_selections per Shop; no computed price/total/shipping/owner/status.
+- Requote changed intent and display exact server serviceability/provider/routeStatus/shippingFee/savings/COD. Customer selects one Seller-enabled provider per Shop; Seller pickup enforces it. One Shop creates one independent Order; all group Orders/snapshots/redemptions/reservations/selected Cart cleanup commit atomically.
 - Place same intent plus quote_id and UUID key; COD starts placed/pending payment and reserves stock until authoritative first-mile fulfillment. Buy Now leaves Cart unchanged; commission does not increase COD.
 - Freeze uncertain key/payload for exact replay. Fresh quote needs review and deliberate Place; process-death recovery and missing GET-by-key remain gaps. Do not show partial success.
 
-The local bundle supplies the implementation contract. Upstream paths are optional provenance only.
-Use this feature with its prerequisite session/consent boundary and the related shopping or
-communication repositories.
+The current [shipping contract](../../../api/shipping-selection.md) governs provider selection and DTOs;
+current client checks are recorded in [G25 evidence](../../../references/shipping-selection-verification.md). Upstream paths remain optional provenance.
 The Customer client cannot perform Seller/Admin/Logistics/Courier actions. Current Laravel ownership
 and capabilities remain authoritative.
 
@@ -44,11 +44,11 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 - Quote computes fresh Product/variant stock, shipping serviceability/rate and voucher effects; no
   local payable authority.
 - Quote groups are one per Shop; show each subtotal/shipping/discount/payable and the overall
-  orderCount summary. Keep each Product's name, quantity, options and line total inside its own
-  outlined card; Shop totals and voucher controls remain outside the Product cards.
-- Quote shippingQuote is always serviceable true for successful groups; unserviceable intent fails
-  rather than returning invented serviceable false group.
-- No Customer Logistics/provider/Courier selector exists; eligibleLogisticsCount is informative only.
+  orderCount summary. Product name/quantity/options/total share an outlined card; Shop totals/vouchers stay outside.
+- Successful Quote shippingQuote exposes serviceable true, provider UUID/name, routeStatus and final fee;
+  unplanned is a commercial fallback, not operational readiness. No private tariff components remain.
+- Select one provider per Shop; implicit single-option fallback is allowed, multiple options require choice.
+- Empty options block quoting; provider failures never authorize substitution or a Courier selector.
 - Display returned expiresAt (default lifetime15min) and clear review validity when any intent input
   changes.
 - Place sends quote_id, exact intent and one UUID Idempotency-Key generated for that deliberate action.
@@ -80,11 +80,13 @@ Private calls use Bearer only for the configured API origin. Public reads need n
 A path UUID or slug is encoded before use; do not submit owner, status, financial or recipient
 authority.
 
+- `POST /api/v1/customer/checkout/logistics-options` → HTTP 200; `{data:LogisticsOptions}`.
+  Request: same CheckoutQuoteRequest intent; no key or quote creation. Read retry with session guards.
 - `POST /api/v1/customer/checkout/quote` → HTTP 200; `{data:Quote}`.
-  Request: mode cart|buy_now; exactly cart_item_ids distinct UUID[] min1 OR buy_now product_id UUID, present nullable variant_id UUID, quantity1–2147483647; address_id owned UUID; payment_method cod; optional vouchers max20 {voucher_id distinct UUID,target_shop_id UUID}; no owner/prices/status.
+  Request: mode cart|buy_now; exactly cart_item_ids distinct UUID[] min1 OR buy_now product_id UUID, present nullable variant_id UUID, quantity1–2147483647; address_id owned UUID; payment_method cod; optional vouchers max20 {voucher_id distinct UUID,target_shop_id UUID}; optional logistics_selections max50 {shop_id distinct UUID,logistics_organization_id UUID}; no owner/prices/status.
   Replay: No durable replay key. After timeout/cancellation, reread authoritative state before a deliberate new action.
 - `POST /api/v1/customer/checkout/place` → HTTP 200; `{data:Batch}`.
-  Request: mode cart|buy_now; exactly cart_item_ids distinct UUID[] min1 OR buy_now product_id UUID, present nullable variant_id UUID, quantity1–2147483647; address_id owned UUID; payment_method cod; optional vouchers max20 {voucher_id distinct UUID,target_shop_id UUID}; no owner/prices/status. quote_id UUID + UUID header.
+  Request: mode cart|buy_now; exactly cart_item_ids distinct UUID[] min1 OR buy_now product_id UUID, present nullable variant_id UUID, quantity1–2147483647; address_id owned UUID; payment_method cod; optional vouchers max20 {voucher_id distinct UUID,target_shop_id UUID}; optional logistics_selections max50 {shop_id distinct UUID,logistics_organization_id UUID}; no owner/prices/status. quote_id UUID + UUID header.
   Replay: UUID Idempotency-Key required. Freeze payload/key; exact retry only after uncertain outcome. Changed intent uses a new key after reconciliation.
 - `GET /api/v1/customer/checkout/{batch}` → HTTP 200; `{data:Batch}`.
   Request: Owned batch UUID; no body.
@@ -164,8 +166,7 @@ universal error envelope.
   use injected fakes.
 
 ### Screen and interaction states
-
-- Initial address loading starts after the first frame with a mounted guard; existing listeners must not be notified during build.
+- Defer initial address loading until after the first frame with a mounted guard; never notify during build.
 - Initial loading exposes progress and accessible labels without a private-data flash.
 - Empty success explains the next supported step; unavailable includes Retry and does not pretend there
   are zero records.
@@ -188,14 +189,15 @@ universal error envelope.
 
 ### Verification scenarios
 
+- [x] Current provider choice/fallback, shipping DTOs and frozen selection intent pass G25 client verification.
 - [ ] Atomic one/multi-Shop placement and immutable current quote/totals/serviceability follow Laravel.
 - [ ] Lost-response same-key replay creates one batch/reservation/redemption; stale inputs require
   reviewed recovery.
 - [ ] Android and fixed-origin local browser verify loading/empty/errors, keyboard/back/focus,
   supported permission/retry states and cleanup after identity loss.
-- [x] DTO fixtures reject wrong required types, distinguish null/absent/false/empty and preserve wire
+- [ ] DTO fixtures reject wrong required types, distinguish null/absent/false/empty and preserve wire
   casing.
-- [x] Each consumed operation uses its documented method/body/envelope and correct public/private
+- [ ] Each consumed operation uses its documented method/body/envelope and correct public/private
   credential behavior.
 - [ ] Exercise normal, empty, malformed, denied, consent-required, validation, conflict, throttle,
   offline and timeout outcomes.
@@ -222,5 +224,7 @@ history.
 Follow [architecture](../../../architecture.md), [setup](../../../setup.md) and
 [verification](../../../verification.md).
 
-Spec revision 2026-10-04: Phase 3 client implemented against the unchanged inspected checkout;
-synthetic verification is separate from live commerce and installed-device acceptance.
+Shipping adoption 2026-10-09: [G25 evidence](../../../references/shipping-selection-verification.md) records current client checks.
+Live/device commerce and deployment configuration remain open under G25.
+
+Voucher collection adoption: [G28 contract](../../../api/voucher-collection.md) and [client evidence](../../../references/voucher-collection-verification.md).

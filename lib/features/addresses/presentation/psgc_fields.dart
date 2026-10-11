@@ -41,9 +41,6 @@ class _PsgcFieldsState extends State<PsgcFields> {
     for (final key in _localityKeys)
       key: TextEditingController(text: widget.initialValues[key] ?? ''),
   };
-  late final Map<String, FocusNode> _focusNodes = {
-    for (final key in _localityKeys) key: FocusNode(),
-  };
   late final Map<String, GlobalKey<FormFieldState<String>>> _fieldKeys = {
     for (final key in _localityKeys) key: GlobalKey<FormFieldState<String>>(),
   };
@@ -75,9 +72,6 @@ class _PsgcFieldsState extends State<PsgcFields> {
   void dispose() {
     for (final controller in _controllers.values) {
       controller.dispose();
-    }
-    for (final node in _focusNodes.values) {
-      node.dispose();
     }
     super.dispose();
   }
@@ -245,7 +239,7 @@ class _PsgcFieldsState extends State<PsgcFields> {
   }
 
   bool _enabled(String key) {
-    if (key == 'region') return _indexLoaded && !_loading;
+    if (key == 'region') return _indexLoaded;
     if (!_datasetLoaded || _loading) return false;
     if (key == 'province') return _choices(key).isNotEmpty;
     if (key == 'city_municipality') return _choices(key).isNotEmpty;
@@ -268,7 +262,9 @@ class _PsgcFieldsState extends State<PsgcFields> {
         (_dataset?.provinces.isEmpty ?? true)) {
       return 'This Region has no supported Province mapping.';
     }
-    if (value == null || !_selected.containsKey(key)) {
+    if (value == null ||
+        _selected[key] != value ||
+        !_choices(key).any((choice) => choice.value == value)) {
       final requiredLabel = switch (key) {
         'region' => 'Region',
         'province' => 'Province',
@@ -313,6 +309,7 @@ class _PsgcFieldsState extends State<PsgcFields> {
     _fieldKeys[key]!.currentState?.didChange(null);
     if (key == 'region') {
       _epoch++;
+      _loading = false;
       _region = null;
       _dataset = null;
       _datasetLoaded = false;
@@ -423,6 +420,7 @@ class _PsgcFieldsState extends State<PsgcFields> {
     field.didChange(null);
     if (key == 'region') {
       _epoch++;
+      _loading = false;
       _region = null;
       _dataset = null;
       _datasetLoaded = false;
@@ -535,7 +533,6 @@ class _PsgcFieldsState extends State<PsgcFields> {
     validator: (value) => _validate(key, value),
     builder: (field) => DropdownMenu<String>(
       controller: _controllers[key],
-      focusNode: _focusNodes[key],
       initialSelection: field.value,
       enabled: _enabled(key),
       requestFocusOnTap: true,

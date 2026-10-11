@@ -5,10 +5,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
 import '../../../core/ui/responsive_layout.dart';
+import '../../../core/ui/list_recovery.dart';
 import '../data/catalog_models.dart';
 import 'catalog_widgets.dart';
 import 'product_purchase_flow.dart';
 import 'shop_controllers.dart';
+import '../../vouchers/presentation/shop_vouchers_section.dart';
 
 class ShopScreen extends StatefulWidget {
   const ShopScreen({
@@ -49,6 +51,15 @@ class _ShopScreenState extends State<ShopScreen> {
   }
 
   @override
+  void didUpdateWidget(covariant ShopScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.page != oldWidget.page) {
+      _controller.page = widget.page;
+      _controller.load();
+    }
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     _query.dispose();
@@ -67,6 +78,13 @@ class _ShopScreenState extends State<ShopScreen> {
           children: [
             if (_controller.shop != null)
               _shopHeader(context, _controller.shop!),
+            if (_controller.shop != null &&
+                widget.dependencies.vouchers != null)
+              ShopVouchersSection(
+                key: ValueKey(widget.slug),
+                dependencies: widget.dependencies,
+                slug: widget.slug,
+              ),
             TextField(
               controller: _query,
               maxLength: 100,
@@ -123,20 +141,28 @@ class _ShopScreenState extends State<ShopScreen> {
               label: const Text('Apply filters'),
             ),
             const SizedBox(height: 16),
-            if (_controller.loading)
-              const LinearProgressIndicator(
-                semanticsLabel: 'Loading Shop Products',
-              ),
-            if (_controller.error != null) _error(context, _controller.error!),
+            ListRecovery(
+              stale: _controller.stale,
+              retry: _controller.retry,
+              error: _controller.error,
+              busy: _controller.loading,
+              coolingDown: _controller.coolingDown,
+              retained: result != null,
+              requestedPage: _controller.page,
+              displayedPage: result?.pagination.currentPage,
+            ),
             if (result != null) ...[
-              if (_controller.page > result.pagination.lastPage) ...[
+              if (!_controller.stale &&
+                  _controller.page > result.pagination.lastPage) ...[
                 const Text('This page is no longer available.'),
                 TextButton(
                   onPressed: () => _replaceShopRoute(context, page: 1),
                   child: const Text('Go to first page'),
                 ),
               ] else if (result.items.isEmpty)
-                const Text('No Products match these filters.')
+                Text(
+                  _controller.stale ? '' : 'No Products match these filters.',
+                )
               else
                 CatalogGrid(
                   children: [
@@ -195,17 +221,6 @@ class _ShopScreenState extends State<ShopScreen> {
     ),
   );
 
-  Widget _error(BuildContext context, String message) => Center(
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Text('This Shop is unavailable.'),
-        Text(message),
-        FilledButton(onPressed: _controller.retry, child: const Text('Retry')),
-      ],
-    ),
-  );
-
   Widget _pagination(BuildContext context, Pagination pagination) => Padding(
     padding: const EdgeInsets.only(bottom: 12),
     child: Wrap(
@@ -214,7 +229,10 @@ class _ShopScreenState extends State<ShopScreen> {
       children: [
         IconButton(
           tooltip: 'Previous page',
-          onPressed: pagination.currentPage > 1
+          onPressed:
+              !_controller.loading &&
+                  !_controller.coolingDown &&
+                  pagination.currentPage > 1
               ? () =>
                     _replaceShopRoute(context, page: pagination.currentPage - 1)
               : null,
@@ -223,7 +241,10 @@ class _ShopScreenState extends State<ShopScreen> {
         Text('Page ${pagination.currentPage} of ${pagination.lastPage}'),
         IconButton(
           tooltip: 'Next page',
-          onPressed: pagination.currentPage < pagination.lastPage
+          onPressed:
+              !_controller.loading &&
+                  !_controller.coolingDown &&
+                  pagination.currentPage < pagination.lastPage
               ? () =>
                     _replaceShopRoute(context, page: pagination.currentPage + 1)
               : null,
@@ -262,6 +283,10 @@ class _ShopScreenState extends State<ShopScreen> {
         if (widget.limit != 20) 'limit': '${widget.limit}',
       },
     );
-    context.replace(uri.toString());
+    if (uri.toString() == GoRouterState.of(context).uri.toString()) {
+      _controller.retry();
+    } else {
+      context.replace(uri.toString());
+    }
   }
 }

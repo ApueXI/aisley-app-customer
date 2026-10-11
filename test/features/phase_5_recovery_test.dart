@@ -69,7 +69,10 @@ void main() {
       await chat.send();
       final placement = checkout.pending!, message = chat.pending!;
       final writes = h.adapter.requests.where((r) => r.method == 'POST').length;
-      expect(writes, 3); // One quote, one placement, one first message.
+      expect(
+        writes,
+        4,
+      ); // One options read, quote, placement and first message.
 
       h.policies.consent = ConsentStatus.parse(consentJson(required: true));
       await h.session.refreshConsent();

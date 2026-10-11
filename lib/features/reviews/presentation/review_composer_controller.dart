@@ -1,8 +1,9 @@
-import 'dart:ui' as ui;
+import 'package:dio/dio.dart';
 
 import '../../../core/commerce/commerce_controller.dart';
 import '../../../core/communication/text_rules.dart';
 import '../../../core/networking/api_failure.dart';
+import '../../../core/security/private_feature_controller.dart';
 import '../../account/data/photo_picker_adapter.dart';
 import '../../account/data/photo_validation.dart';
 import '../data/review_models.dart';
@@ -33,6 +34,8 @@ class ReviewComposerController extends CommerceController {
       uncertainPhoto = false,
       conflict = false;
   double? progress;
+  CancelToken? _uploadCancellation;
+  int _selectionOperation = 0;
   String? photoError;
   bool get locked => busy || uploading || selecting || reconciling;
   Future<void> submit({bool retry = false}) async {
@@ -94,57 +97,47 @@ class ReviewComposerController extends CommerceController {
         reviewId == null) {
       return;
     }
-    final stamp = epoch;
+    final stamp = epoch, operation = ++_selectionOperation;
+    final id = reviewId;
+    bool valid() =>
+        current(stamp, credential) &&
+        operation == _selectionOperation &&
+        reviewId == id;
     selecting = true;
-    selected = null;
     photoError = null;
     notifyListeners();
     try {
-      final image = await picker.pick();
-      if (!current(stamp, credential) || image == null) return;
-      if (!validProfilePhoto(
-            length: image.bytes.lengthInBytes,
-            filename: image.filename,
-            mimeType: image.mimeType,
-          ) ||
-          image.filename.split('.').length != 2) {
-        photoError = 'Choose JPEG, PNG or WebP under 10 MiB with one filename extension.';
-        return;
+      final image = await picker.pick(review: true);
+      if (!valid() || image == null) return;
+      selected = null;
+      await validateBuyerImage(
+        image.bytes,
+        filename: image.filename,
+        mimeType: image.mimeType,
+        review: true,
+      );
+      if (valid()) selected = image;
+    } on BuyerImageValidationException catch (e) {
+      if (valid()) {
+        selected = null;
+        photoError = e.message;
       }
-      final buffer = await ui.ImmutableBuffer.fromUint8List(image.bytes);
-      ui.ImageDescriptor? descriptor;
-      try {
-        descriptor = await ui.ImageDescriptor.encoded(buffer);
-        if (descriptor.width > 8000 ||
-            descriptor.height > 8000 ||
-            descriptor.width * descriptor.height > 40000000) {
-          if (current(stamp, credential)) photoError = 'Use images with edges up to 8,000 pixels and at most 40 million pixels.';
-          return;
-        }
-      } finally {
-        descriptor?.dispose();
-        buffer.dispose();
-      }
-      if (current(stamp, credential)) selected = image;
     } catch (_) {
-      if (current(stamp, credential)) {
-        photoError =
-            'The image could not be read. Choose another JPEG, PNG or WebP.';
-      }
+      if (valid()) photoError = 'The image could not be read. Check photo access and choose another JPEG, PNG or WebP.';
     } finally {
-      if (current(stamp, credential)) {
+      if (valid()) {
         selecting = false;
         notifyListeners();
       }
     }
   }
 
-  void clearSelection() {
-    if (!uploading) {
-      selected = null;
-      photoError = null;
-      notifyListeners();
-    }
+  void clearSelection({bool notify = true}) {
+    _selectionOperation++;
+    selecting = false;
+    selected = null;
+    if (!uploading && !uncertainPhoto) photoError = null;
+    if (notify && !disposed) notifyListeners();
   }
 
   Future<void> upload() async {
@@ -159,23 +152,32 @@ class ReviewComposerController extends CommerceController {
       return;
     }
     final stamp = epoch;
+    final cancellation = CancelToken();
+    _uploadCancellation = cancellation;
     uploading = true;
     progress = null;
     photoError = null;
+    fieldErrors = const {};
     notifyListeners();
     try {
       final value = await repository.upload(
         credential,
         reviewId!,
         image,
+        cancelToken: cancellation,
         onProgress: (sent, total) {
-          if (current(stamp, credential)) {
-            progress = total > 0 ? sent / total : null;
+          if (current(stamp, credential) &&
+              identical(_uploadCancellation, cancellation) &&
+              !cancellation.isCancelled) {
+            progress = total > 0 ? (sent / total).clamp(0, 1) : null;
             notifyListeners();
           }
         },
       );
       if (!current(stamp, credential)) return;
+      if (cancellation.isCancelled) {
+        throw const ApiFailure(FailureKind.cancelled);
+      }
       photos = List.unmodifiable(
         {
           ...{for (final e in photos) e.id: e},
@@ -186,6 +188,7 @@ class ReviewComposerController extends CommerceController {
     } on ApiFailure catch (e) {
       if (!current(stamp, credential)) return;
       photoError = describeFailure(e);
+      fieldErrors = validationFields(e);
       if (e.uncertain) {
         uncertainPhoto = true;
         selected = null;
@@ -195,9 +198,21 @@ class ReviewComposerController extends CommerceController {
         uncertainPhoto = true;
         selected = null;
       }
-      if (e.status == 403 || e.status == 404) reset(preserveUnresolved: false);
+      if (e.status == 403 || e.status == 404) {
+        review = null;
+        photos = const [];
+        selected = null;
+        uncertainPhoto = true;
+      }
+    } catch (_) {
+      if (current(stamp, credential)) {
+        uncertainPhoto = true;
+        selected = null;
+        photoError = 'This upload may have saved. Check published photos before another upload.';
+      }
     } finally {
       if (current(stamp, credential)) {
+        _uploadCancellation = null;
         uploading = false;
         progress = null;
         notifyListeners();
@@ -210,10 +225,15 @@ class ReviewComposerController extends CommerceController {
     if (credential == null || reviewId == null || locked || coolingDown) return;
     final stamp = epoch;
     reconciling = true;
+    uncertainPhoto = true;
     photoError = null;
     notifyListeners();
     try {
-      final value = await repository.canonical(product, reviewId!);
+      final value = await repository.canonical(
+        product,
+        reviewId!,
+        isCurrent: () => current(stamp, credential),
+      );
       if (!current(stamp, credential)) return;
       review = value;
       photos = value.photos;
@@ -228,6 +248,8 @@ class ReviewComposerController extends CommerceController {
         selected = null;
         uncertainPhoto = true;
       }
+    } catch (_) {
+      if (current(stamp, credential)) photoError = 'Published photos could not be checked. Try checking again before another upload.';
     } finally {
       if (current(stamp, credential)) {
         reconciling = false;
@@ -236,12 +258,25 @@ class ReviewComposerController extends CommerceController {
     }
   }
 
+  void cancelUpload() {
+    if (!uploading || _uploadCancellation == null) return;
+    uncertainPhoto = true;
+    selected = null;
+    progress = null;
+    photoError = 'Upload cancelled. It may have saved; check published photos before another upload.';
+    _uploadCancellation!.cancel();
+    notifyListeners();
+  }
+
   @override
   void reset({required bool preserveUnresolved}) {
     if (preserveUnresolved && busy && pending != null) textUncertain = true;
     if (preserveUnresolved && uploading) {
       uncertainPhoto = true;
     }
+    _uploadCancellation?.cancel();
+    _uploadCancellation = null;
+    _selectionOperation++;
     selected = null;
     photos = const [];
     review = null;

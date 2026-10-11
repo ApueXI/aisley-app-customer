@@ -28,3 +28,9 @@ Read [operation contracts](../operations.md) and [wire definitions](../field-ind
 - [wishlist](./wishlist.json)
 
 - [Auxiliary address options](address-options.json)
+
+- [Current shipping-selection scenarios](shipping-selection-scenarios.json) cover empty/single/multiple options, invalid/unavailable providers, tariff/route failures, frozen/replayed/changed intent and nullable legacy providers. These are synthetic expected contracts; current client adoption remains G25.
+
+- [Chat media](chat-media.json) provides synthetic upload/status/retry/removal/authorized-read and attachment-message examples for the additive 2026-10-06 contract; external Flutter media adoption remains pending.
+
+[Voucher collection fixtures](voucher-collection.json) record all seven additive operations, with public/private separation and natural claim replay; these are synthetic, not live API evidence.

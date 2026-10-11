@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 import '../../../core/networking/api_client.dart';
 import '../../../core/networking/api_failure.dart';
 import '../../../core/networking/wire.dart';
@@ -44,6 +46,7 @@ class ReviewRepository {
     String review,
     PickedBuyerImage image, {
     void Function(int, int)? onProgress,
+    CancelToken? cancelToken,
   }) async {
     if (!validProfilePhoto(
           length: image.bytes.lengthInBytes,
@@ -71,16 +74,27 @@ class ReviewRepository {
           mimeType: image.mimeType,
           lease: lease,
           onSendProgress: onProgress,
+          cancelToken: cancelToken,
         ),
       ).object('data'),
     );
   }
 
   // No private Review GET exists. Traverse public pages to find the canonical ID.
-  Future<ProductReview> canonical(String product, String review) async {
+  Future<ProductReview> canonical(
+    String product,
+    String review, {
+    bool Function()? isCurrent,
+  }) async {
     final seen = <String>{};
     for (var page = 1; page <= 10000; page++) {
+      if (isCurrent?.call() == false) {
+        throw const ApiFailure(FailureKind.cancelled);
+      }
       final value = await list(product, page);
+      if (isCurrent?.call() == false) {
+        throw const ApiFailure(FailureKind.cancelled);
+      }
       if (value.page != page) throw const ApiFailure(FailureKind.decode);
       for (final item in value.items) {
         if (item.id == review) return item;

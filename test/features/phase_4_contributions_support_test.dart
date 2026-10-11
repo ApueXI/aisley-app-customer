@@ -18,7 +18,7 @@ class SyntheticPicker extends PhotoPickerAdapter {
   SyntheticPicker(this.result);
   final Future<PickedBuyerImage?> result;
   @override
-  Future<PickedBuyerImage?> pick() => result;
+  Future<PickedBuyerImage?> pick({bool review = false}) => result;
 }
 
 void main() {
@@ -181,7 +181,7 @@ void main() {
         ),
       );
       expect(c.selected, isNull);
-      expect(c.photoError, contains('could not be read'));
+      expect(c.photoError, contains('contents do not match'));
       final picked = Completer<PickedBuyerImage?>();
       final selection = c.select(SyntheticPicker(picked.future));
       await h.session.signOut();
@@ -205,7 +205,10 @@ void main() {
     final deferred = Completer<ResponseBody>();
     h.reply = (o) => deferred.future;
     final upload = c.upload();
-    await Future<void>.delayed(Duration.zero);
+    for (var i = 0; i < 100 && h.adapter.requests.isEmpty; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 1));
+    }
+    expect(h.adapter.requests.length, 1);
     h.policies.consent = ConsentStatus.parse(consentJson(required: true));
     await h.session.refreshConsent();
     expect(c.uncertainPhoto, isTrue);

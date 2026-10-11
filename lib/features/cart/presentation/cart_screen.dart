@@ -56,111 +56,119 @@ class _CartScreenState extends State<CartScreen> {
         for (final line in cart.cart?.items ?? <CartLine>[]) {
           (groups[_metadata.shops[line.productId]?.id] ??= []).add(line);
         }
+        final cartContents = <Widget>[
+          Text('Your Cart', style: Theme.of(context).textTheme.headlineSmall),
+          TextButton.icon(
+            onPressed: cart.loading || cart.writing || cart.coolingDown
+                ? null
+                : cart.load,
+            icon: const Icon(Icons.refresh),
+            label: const Text('Refresh Cart'),
+          ),
+          if (cart.loading || cart.writing)
+            const LinearProgressIndicator(semanticsLabel: 'Updating Cart'),
+          if (cart.stale && cart.cart != null)
+            const Text('This Cart view needs a refresh before you continue.'),
+          if (cart.error != null)
+            Semantics(liveRegion: true, child: Text(cart.error!)),
+          if (commerce.checkout.pending != null) ...[
+            const Text(
+              'An order is unconfirmed. Check its outcome in checkout.',
+            ),
+            TextButton(
+              onPressed: () => context.push('/checkout'),
+              child: const Text('Return to checkout'),
+            ),
+          ],
+          if (cart.cart != null) Text('${cart.cart!.itemCount} items'),
+          if (cart.cart?.items.any((line) => line.selectable) == true)
+            Material(
+              color: Colors.transparent,
+              child: CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                tristate: true,
+                value: cart.selectAllValue,
+                onChanged: cart.canEdit
+                    ? (_) => cart.toggleSelectAllEligible()
+                    : null,
+                title: const Text('Select all available items'),
+              ),
+            ),
+          if (cart.cart?.items.isEmpty == true && !cart.loading) ...[
+            const SizedBox(height: 24),
+            const Text('Your Cart is empty.'),
+            TextButton(
+              onPressed: () => context.go('/'),
+              child: const Text('Browse Products'),
+            ),
+          ],
+          for (final group in groups.entries)
+            Padding(
+              padding: const EdgeInsets.only(top: 16),
+              child: MarketSection(
+                title: group.key == null
+                    ? 'Cart items'
+                    : _metadata.shops[group.value.first.productId]!.name,
+                child: Column(
+                  children: [
+                    for (final line in group.value)
+                      CartItemRow(
+                        key: ValueKey(line.id),
+                        line: line,
+                        dependencies: widget.dependencies,
+                      ),
+                  ],
+                ),
+              ),
+            ),
+        ];
+        final purchaseSummary = Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Shipping and discounts are confirmed when you review your order.',
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 48,
+              child: FilledButton(
+                onPressed: cart.canEdit && cart.selection.isNotEmpty
+                    ? () {
+                        if (commerce.checkout.begin(
+                          CheckoutIntent.cart(cart.selection),
+                        )) {
+                          context.push('/checkout');
+                        }
+                      }
+                    : null,
+                child: Text('Checkout selected (${cart.selection.length})'),
+              ),
+            ),
+          ],
+        );
+        final compactHeight =
+            MediaQuery.sizeOf(context).height -
+                MediaQuery.viewInsetsOf(context).bottom <
+            500;
+        if (compactHeight) {
+          return ListView(
+            padding: pagePadding(context),
+            children: [
+              ...cartContents,
+              const SizedBox(height: 16),
+              purchaseSummary,
+            ],
+          );
+        }
         return Column(
           children: [
             Expanded(
               child: ListView(
                 padding: pagePadding(context),
-                children: [
-                  Text(
-                    'Your Cart',
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  TextButton.icon(
-                    onPressed: cart.loading || cart.writing || cart.coolingDown
-                        ? null
-                        : cart.load,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Refresh Cart'),
-                  ),
-                  if (cart.loading || cart.writing)
-                    const LinearProgressIndicator(
-                      semanticsLabel: 'Updating Cart',
-                    ),
-                  if (cart.stale && cart.cart != null)
-                    const Text(
-                      'This Cart view needs a refresh before you continue.',
-                    ),
-                  if (cart.error != null)
-                    Semantics(liveRegion: true, child: Text(cart.error!)),
-                  if (commerce.checkout.pending != null) ...[
-                    const Text(
-                      'An order is unconfirmed. Check its outcome in checkout.',
-                    ),
-                    TextButton(
-                      onPressed: () => context.push('/checkout'),
-                      child: const Text('Return to checkout'),
-                    ),
-                  ],
-                  if (cart.cart != null) Text('${cart.cart!.itemCount} items'),
-                  if (cart.cart?.items.any((line) => line.selectable) == true)
-                    Material(
-                      color: Colors.transparent,
-                      child: CheckboxListTile(
-                        contentPadding: EdgeInsets.zero,
-                        tristate: true,
-                        value: cart.selectAllValue,
-                        onChanged: cart.canEdit
-                            ? (_) => cart.toggleSelectAllEligible()
-                            : null,
-                        title: const Text('Select all available items'),
-                      ),
-                    ),
-                  if (cart.cart?.items.isEmpty == true && !cart.loading) ...[
-                    const SizedBox(height: 24),
-                    const Text('Your Cart is empty.'),
-                    TextButton(
-                      onPressed: () => context.go('/'),
-                      child: const Text('Browse Products'),
-                    ),
-                  ],
-                  for (final group in groups.entries)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: MarketSection(
-                        title: group.key == null
-                            ? 'Cart items'
-                            : _metadata
-                                  .shops[group.value.first.productId]!
-                                  .name,
-                        child: Column(
-                          children: [
-                            for (final line in group.value)
-                              CartItemRow(
-                                key: ValueKey(line.id),
-                                line: line,
-                                dependencies: widget.dependencies,
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                ],
+                children: cartContents,
               ),
             ),
-            PurchaseBar(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text(
-                    'Shipping and discounts are confirmed when you review your order.',
-                  ),
-                  const SizedBox(height: 8),
-                  FilledButton(
-                    onPressed: cart.canEdit && cart.selection.isNotEmpty
-                        ? () {
-                            if (commerce.checkout.begin(
-                              CheckoutIntent.cart(cart.selection),
-                            )) {
-                              context.push('/checkout');
-                            }
-                          }
-                        : null,
-                    child: Text('Checkout selected (${cart.selection.length})'),
-                  ),
-                ],
-              ),
-            ),
+            PurchaseBar(child: purchaseSummary),
           ],
         );
       },

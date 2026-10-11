@@ -4,10 +4,25 @@ import '../../../core/networking/wire.dart';
 import '../domain/checkout_intent.dart';
 import 'batch_models.dart';
 import 'quote_models.dart';
+import 'shipping_models.dart';
 
 class CheckoutRepository {
   CheckoutRepository(this.api);
   final ApiClient api;
+  Future<LogisticsOptions> logisticsOptions(
+    SessionLease lease,
+    CheckoutInput input,
+  ) async => LogisticsOptions.parse(
+    Wire(
+      await api.request(
+        'POST',
+        'customer/checkout/logistics-options',
+        body: input.toJson(discovery: true),
+        lease: lease,
+        readOnlyOperation: true,
+      ),
+    ).object('data'),
+  );
   Future<CheckoutQuote> quote(SessionLease lease, CheckoutInput input) async =>
       CheckoutQuote.parse(
         Wire(

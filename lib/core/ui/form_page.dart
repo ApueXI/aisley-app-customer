@@ -30,24 +30,58 @@ class FormPage extends StatefulWidget {
 }
 
 class _FormPageState extends State<FormPage> {
-  bool _allowPop = false, _confirming = false;
-  Future<void> _leave() async {
-    if (_confirming || !widget.canLeave) return;
-    _confirming = true;
-    if ((widget.dirty || widget.busy) && !_allowPop) {
-      final leave = await confirmDiscard(
-        context,
-        widget.busy
-            ? 'A request is in progress. Leaving does not cancel a committed result.'
-            : 'Discard the information entered in this form?',
-      );
-      if (!mounted) return;
-      if (!leave) {
-        _confirming = false;
-        return;
-      }
-    }
+  bool _allowPop = false;
+  Object? _registeredPageKey;
+  String? _registeredPath;
+  Future<bool>? _pendingExit;
+  final Object _registryOwner = Object();
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final router = GoRouter.maybeOf(context);
+    final routeState = router == null ? null : GoRouterState.of(context);
+    final nextKey = routeState?.pageKey;
+    final nextPath = routeState?.uri.path;
+    if (nextKey == null || _registeredPageKey != null) return;
+    _registeredPageKey = nextKey;
+    _registeredPath = nextPath;
+    FormPageExitRegistry.register(
+      nextKey,
+      nextPath,
+      _registryOwner,
+      _confirmRouteExit,
+    );
+  }
+
+  Future<bool> _confirmRouteExit() {
+    if (_allowPop) return Future.value(true);
+    final pending = _pendingExit;
+    if (pending != null) return pending;
+    final request = _confirmRouteExitOnce();
+    _pendingExit = request;
+    request.whenComplete(() {
+      if (identical(_pendingExit, request)) _pendingExit = null;
+    });
+    return request;
+  }
+
+  Future<bool> _confirmRouteExitOnce() async {
+    if (!widget.canLeave) return false;
+    if (!widget.dirty && !widget.busy) return true;
+    final leave = await confirmDiscard(
+      context,
+      widget.busy
+          ? 'A request is in progress. Leaving does not cancel a committed result.'
+          : 'Discard the information entered in this form?',
+    );
+    if (!mounted || !leave) return false;
     setState(() => _allowPop = true);
+    return true;
+  }
+
+  Future<void> _leave() async {
+    if (!await _confirmRouteExit() || !mounted) return;
     await WidgetsBinding.instance.endOfFrame;
     if (!mounted) return;
     if (widget.onCancel != null) {
@@ -57,7 +91,17 @@ class _FormPageState extends State<FormPage> {
     } else {
       context.go('/');
     }
-    _confirming = false;
+  }
+
+  @override
+  void dispose() {
+    if (_registeredPageKey case final key?) {
+      FormPageExitRegistry.unregister(key, _registryOwner);
+    }
+    if (_registeredPath case final path?) {
+      FormPageExitRegistry.unregisterPath(path, _registryOwner);
+    }
+    super.dispose();
   }
 
   @override
@@ -134,6 +178,52 @@ class _FormPageState extends State<FormPage> {
             ),
     ),
   );
+}
+
+typedef FormPageExitCallback = Future<bool> Function();
+
+class _RegisteredFormExit {
+  const _RegisteredFormExit(this.owner, this.callback);
+  final Object owner;
+  final FormPageExitCallback callback;
+}
+
+/// Associates an active FormPage's unsaved-input guard with its GoRouter page.
+/// The app's route-entry guard consults this registry before moving away.
+class FormPageExitRegistry {
+  FormPageExitRegistry._();
+
+  static final Map<Object, _RegisteredFormExit> _guards = {};
+  static final Map<String, _RegisteredFormExit> _guardsByPath = {};
+
+  static void register(
+    Object pageKey,
+    String? path,
+    Object owner,
+    FormPageExitCallback callback,
+  ) {
+    final registration = _RegisteredFormExit(owner, callback);
+    _guards[pageKey] = registration;
+    if (path != null) _guardsByPath[path] = registration;
+  }
+
+  static void unregister(Object pageKey, Object owner) {
+    if (_guards[pageKey]?.owner == owner) _guards.remove(pageKey);
+  }
+
+  static void unregisterPath(String path, Object owner) {
+    if (_guardsByPath[path]?.owner == owner) _guardsByPath.remove(path);
+  }
+
+  static _RegisteredFormExit? _registrationFor(GoRouterState state) =>
+      _guards[state.pageKey] ?? _guardsByPath[state.uri.path];
+
+  static bool hasGuard(GoRouterState state) => _registrationFor(state) != null;
+
+  static Future<bool> allowExit(GoRouterState state) {
+    final registration = _registrationFor(state);
+    return registration?.callback() ?? Future.value(true);
+  }
 }
 
 bool validateForm(FormState form) {

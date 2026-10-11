@@ -5,6 +5,7 @@ import '../../../app/app_dependencies.dart';
 import '../../../core/ui/form_page.dart';
 import '../data/address_models.dart';
 import '../data/map_location_service.dart';
+import '../data/psgc_loader.dart';
 import 'address_controller.dart';
 import 'coordinate_dialog.dart';
 import 'map_pin_dialog.dart';
@@ -15,9 +16,11 @@ class AddressFormScreen extends StatefulWidget {
     super.key,
     required this.dependencies,
     this.addressId,
+    this.psgcLoader,
   });
   final AppDependencies dependencies;
   final String? addressId;
+  final PsgcLoader? psgcLoader;
   @override
   State<AddressFormScreen> createState() => _AddressFormScreenState();
 }
@@ -214,6 +217,7 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
                   optional: true,
                 ),
                 PsgcFields(
+                  loader: widget.psgcLoader,
                   initialValues: {
                     for (final key in const [
                       'region',
@@ -360,18 +364,8 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
   }
 
   Future<void> _choosePin() async {
-    if (_locationKeys
-        .where((key) => key != 'address_line_2')
-        .any((key) => _fields[key]!.text.trim().isEmpty)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Complete and review the address location fields first.',
-          ),
-        ),
-      );
-      return;
-    }
+    // Search text is not a selected locality, even if every field is nonempty.
+    if (!validateForm(_form.currentState!)) return;
     final pin = await showAddressPinDialog(
       context: context,
       dependencies: widget.dependencies,

@@ -3,9 +3,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
 import '../../../core/ui/responsive_layout.dart';
+import '../../../core/ui/list_recovery.dart';
 import '../../../core/ui/marketplace_widgets.dart';
 import '../data/order_models.dart';
+import '../../checkout/presentation/shipping_details.dart';
 import 'orders_controller.dart';
+import 'order_item_row.dart';
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key, required this.dependencies});
@@ -53,7 +56,9 @@ class _OrdersScreenState extends State<OrdersScreen>
         actions: [
           IconButton(
             tooltip: 'Refresh Orders',
-            onPressed: () => _controller.load(),
+            onPressed: _controller.loading || _controller.coolingDown
+                ? null
+                : () => _controller.load(),
             icon: const Icon(Icons.refresh),
           ),
         ],
@@ -79,7 +84,9 @@ class _OrdersScreenState extends State<OrdersScreen>
             ),
           if (_controller.error != null)
             Semantics(liveRegion: true, child: Text(_controller.error!)),
-          if (!_controller.loading &&
+          if (!_controller.stale &&
+              !_controller.loading &&
+              _controller.pageError == null &&
               _controller.error == null &&
               _controller.items.isEmpty)
             const Text('No Orders in this group.'),
@@ -103,12 +110,23 @@ class _OrdersScreenState extends State<OrdersScreen>
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     const SizedBox(height: 12),
-                    Text(
-                      order.item?.name ?? '${order.lineCount} items',
-                      style: Theme.of(context).textTheme.titleMedium,
+                    ShippingDetails(
+                      businessName: order.shippingProvider?.businessName,
+                      fee: order.totals.shipping.display(order.totals.currency),
                     ),
-                    if (order.item?.variantName != null)
-                      Text(order.item!.variantName!),
+                    OrderItemRow(
+                      imageUrl: order.item?.imageUrl,
+                      name: order.item?.name ?? '${order.lineCount} items',
+                      discovery: widget.dependencies.discovery!,
+                      details: [
+                        Text(
+                          order.item?.name ?? '${order.lineCount} items',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        if (order.item?.variantName != null)
+                          Text(order.item!.variantName!),
+                      ],
+                    ),
                     const SizedBox(height: 8),
                     Text(
                       '${order.itemCount} items · ${order.totals.payable.display(order.totals.currency)}',
@@ -132,17 +150,17 @@ class _OrdersScreenState extends State<OrdersScreen>
                 ),
               ),
             ),
-          if (_controller.pageError != null) Text(_controller.pageError!),
-          if (_controller.hasMore)
-            TextButton(
-              onPressed:
-                  _controller.paging ||
-                      _controller.stale ||
-                      _controller.coolingDown
-                  ? null
-                  : () => _controller.load(more: true),
-              child: Text(_controller.paging ? 'Loading…' : 'Load more Orders'),
-            ),
+          ListPageAction(
+            load: () => _controller.load(more: true),
+            hasMore: _controller.hasMore,
+            error: _controller.pageError,
+            busy: _controller.paging,
+            disabled:
+                _controller.loading ||
+                _controller.stale ||
+                _controller.coolingDown,
+            label: 'Load more Orders',
+          ),
           TextButton(
             onPressed: _controller.loading || _controller.coolingDown
                 ? null

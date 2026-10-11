@@ -7,6 +7,7 @@ import '../../../core/networking/api_failure.dart';
 import '../../../core/ui/form_page.dart';
 import '../data/batch_models.dart';
 import 'commerce_widgets.dart';
+import 'shipping_details.dart';
 
 class BatchResultController extends CommerceController {
   BatchResultController(super.session, this.dependencies, this.id);
@@ -118,6 +119,12 @@ class _BatchResultScreenState extends State<BatchResultScreen> {
                       Text('${item.name} × ${item.quantity}'),
                     AddressSnapshotView(order.address),
                     TotalsView(order.totals),
+                    ShippingDetails(
+                      businessName: order.shipping?.businessName,
+                      fee: (order.shipping?.fee ?? order.totals.shipping)
+                          .display(order.totals.currency),
+                      routeStatus: order.shipping?.routeStatus,
+                    ),
                     TextButton(
                       onPressed: () => context.push('/orders/${order.id}'),
                       child: const Text('View Order'),

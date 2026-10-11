@@ -1,44 +1,54 @@
-import '../../../core/networking/api_failure.dart';
-import '../../../core/security/private_feature_controller.dart';
-import '../data/account_repository.dart';
-
 import 'dart:typed_data';
 
+import 'package:dio/dio.dart';
+
+import '../../../core/networking/api_client.dart';
+import '../../../core/networking/api_failure.dart';
+import '../../../core/security/private_feature_controller.dart';
+import '../data/account_models.dart';
+import '../data/account_repository.dart';
+import '../data/photo_validation.dart';
+
+/// Session-owned photo writes survive navigation; selected files stay in the form.
 class PhotoController extends PrivateFeatureController {
   PhotoController(super.session, this.repository);
   final AccountRepository repository;
   Uint8List? bytes;
   String? photoUrl;
   bool loading = false, uploading = false, removing = false;
+  bool selectionConsumed = false;
   double? progress;
+  CancelToken? _uploadCancellation;
+  bool get busy => loading || uploading || removing;
 
-  Future<void> load([String? url]) async {
+  Future<void> load() async {
     final lease = currentLease;
-    if (lease == null) return;
+    if (lease == null || busy || coolingDown) return;
     final generation = featureGeneration;
     loading = true;
+    requiresReconciliation = true;
     error = null;
     notifyListeners();
     try {
-      final value = await repository.profilePhoto(lease, url ?? photoUrl);
-      if (isCurrentEpoch(generation, lease)) {
-        bytes = value;
-        photoUrl = url ?? photoUrl;
-        requiresReconciliation = false;
+      final account = await repository.account(lease);
+      if (!isCurrentEpoch(generation, lease)) return;
+      if (account.id != session.customer?.id ||
+          account.role != 'customer' ||
+          account.status != 'active') {
+        throw const ApiFailure(FailureKind.decode);
       }
+      await _readPhoto(account, generation, lease);
     } on ApiFailure catch (failure) {
       if (isCurrentEpoch(generation, lease)) {
-        if (failure.status == 404 || failure.status == 403) {
+        if (failure.status == 403 || failure.status == 404) {
           bytes = null;
           photoUrl = null;
-          requiresReconciliation = false;
-        } else {
-          error = describeFailure(failure);
         }
+        error = describeFailure(failure);
       }
     } catch (_) {
       if (isCurrentEpoch(generation, lease)) {
-        error = 'The profile photo is unavailable.';
+        error = 'The current profile photo could not be checked. Refresh before another upload.';
       }
     } finally {
       if (isCurrentEpoch(generation, lease)) {
@@ -48,33 +58,63 @@ class PhotoController extends PrivateFeatureController {
     }
   }
 
+  Future<void> _readPhoto(
+    CustomerAccount account,
+    int generation,
+    SessionLease lease,
+  ) async {
+    final url = account.profile.profilePhotoUrl;
+    try {
+      final value = await repository.profilePhoto(lease, url);
+      if (!isCurrentEpoch(generation, lease)) return;
+      bytes = value;
+      photoUrl = url;
+      requiresReconciliation = false;
+    } on ApiFailure catch (failure) {
+      if (!isCurrentEpoch(generation, lease)) return;
+      // Only the authorized photo endpoint's missing-photo result confirms absence.
+      if (failure.status == 404) {
+        bytes = null;
+        photoUrl = null;
+        requiresReconciliation = false;
+      } else {
+        if (failure.status == 403) {
+          bytes = null;
+          photoUrl = null;
+        }
+        error = describeFailure(failure);
+      }
+    } catch (_) {
+      if (isCurrentEpoch(generation, lease)) {
+        error = 'The photo preview could not be refreshed. Refresh current photo to try again.';
+      }
+    }
+  }
+
   Future<bool> upload({
     required Uint8List data,
     required String filename,
     required String mimeType,
   }) async {
-    final type = mimeType.toLowerCase();
-    final extension = filename.split('.').last.toLowerCase();
-    const formats = {
-      'jpg': 'image/jpeg',
-      'jpeg': 'image/jpeg',
-      'png': 'image/png',
-      'webp': 'image/webp',
-    };
-    if (data.isEmpty ||
-        data.lengthInBytes >= 10485760 ||
-        formats[extension] == null ||
-        formats[extension] != type) {
-      error = 'Choose a JPEG, PNG or WebP photo smaller than 10 MiB.';
+    final lease = currentLease;
+    if (lease == null || busy || coolingDown || requiresReconciliation) {
+      return false;
+    }
+    if (!validProfilePhoto(
+      length: data.lengthInBytes,
+      filename: filename,
+      mimeType: mimeType,
+    )) {
+      error =
+          'Choose JPEG, PNG or WebP under 10 MiB with one filename extension.';
       notifyListeners();
       return false;
     }
-    final lease = currentLease;
-    if (lease == null || uploading || coolingDown || requiresReconciliation) {
-      return false;
-    }
     final generation = featureGeneration;
+    final cancellation = CancelToken();
+    _uploadCancellation = cancellation;
     uploading = true;
+    selectionConsumed = false;
     progress = null;
     error = null;
     fieldErrors = const {};
@@ -84,45 +124,75 @@ class PhotoController extends PrivateFeatureController {
         lease,
         bytes: data,
         filename: filename,
-        mimeType: type,
+        mimeType: mimeType.toLowerCase(),
+        cancelToken: cancellation,
         onProgress: (sent, total) {
-          if (isCurrentEpoch(generation, lease)) {
-            progress = total > 0 ? sent / total : null;
+          if (isCurrentEpoch(generation, lease) &&
+              identical(_uploadCancellation, cancellation) &&
+              !cancellation.isCancelled) {
+            progress = total > 0 ? (sent / total).clamp(0, 1) : null;
             notifyListeners();
           }
         },
       );
       if (!isCurrentEpoch(generation, lease)) return false;
+      if (cancellation.isCancelled) {
+        throw const ApiFailure(FailureKind.cancelled);
+      }
+      selectionConsumed = true;
+      requiresReconciliation = true;
+      bytes = null;
       photoUrl = account.profile.profilePhotoUrl;
-      await load(photoUrl);
+      await _readPhoto(account, generation, lease);
       await session.refreshNavigation();
       return isCurrentEpoch(generation, lease);
     } on ApiFailure catch (failure) {
       if (isCurrentEpoch(generation, lease)) {
         fieldErrors = validationFields(failure);
+        error = describeFailure(failure);
         if (failure.uncertain) {
+          selectionConsumed = true;
           requiresReconciliation = true;
-          error =
-              'The upload outcome is uncertain. Checking the current photo…';
-          await load();
+          error = 'This upload may have saved. Refresh current photo before choosing another image.';
         }
-        if (isCurrentEpoch(generation, lease)) {
-          error ??= describeFailure(failure);
+        if (failure.status == 403 || failure.status == 404) {
+          bytes = null;
+          photoUrl = null;
+          requiresReconciliation = true;
+          selectionConsumed = true;
         }
+      }
+      return false;
+    } catch (_) {
+      if (isCurrentEpoch(generation, lease)) {
+        selectionConsumed = true;
+        requiresReconciliation = true;
+        error = 'This upload may have saved. Refresh current photo before choosing another image.';
       }
       return false;
     } finally {
       if (isCurrentEpoch(generation, lease)) {
         uploading = false;
         progress = null;
+        _uploadCancellation = null;
         notifyListeners();
       }
     }
   }
 
+  void cancelUpload() {
+    if (!uploading || _uploadCancellation == null) return;
+    selectionConsumed = true;
+    requiresReconciliation = true;
+    progress = null;
+    error = 'Upload cancelled. It may have saved; refresh current photo before another upload.';
+    _uploadCancellation!.cancel();
+    notifyListeners();
+  }
+
   Future<bool> remove() async {
     final lease = currentLease;
-    if (lease == null || removing || coolingDown || requiresReconciliation) {
+    if (lease == null || busy || coolingDown || requiresReconciliation) {
       return false;
     }
     final generation = featureGeneration;
@@ -140,13 +210,19 @@ class PhotoController extends PrivateFeatureController {
     } on ApiFailure catch (failure) {
       if (isCurrentEpoch(generation, lease)) {
         fieldErrors = validationFields(failure);
-        if (failure.uncertain) {
-          requiresReconciliation = true;
-          await load();
+        requiresReconciliation =
+            failure.uncertain || failure.status == 403 || failure.status == 404;
+        error = describeFailure(failure);
+        if (failure.status == 403 || failure.status == 404) {
+          bytes = null;
+          photoUrl = null;
         }
-        if (isCurrentEpoch(generation, lease)) {
-          error ??= describeFailure(failure);
-        }
+      }
+      return false;
+    } catch (_) {
+      if (isCurrentEpoch(generation, lease)) {
+        requiresReconciliation = true;
+        error = 'Removal could not be confirmed. Refresh current photo.';
       }
       return false;
     } finally {
@@ -158,12 +234,28 @@ class PhotoController extends PrivateFeatureController {
   }
 
   @override
+  void clearPrivate() {
+    final unresolved =
+        (uploading || removing || requiresReconciliation) &&
+        session.customer != null &&
+        session.verifiedLease?.isCurrent() == true;
+    featureGeneration++;
+    clearCooldown();
+    onClear();
+    error = null;
+    fieldErrors = const {};
+    requiresReconciliation = unresolved;
+    if (!isDisposed) notifyListeners();
+  }
+
+  @override
   void onClear() {
+    _uploadCancellation?.cancel();
+    _uploadCancellation = null;
     bytes = null;
     photoUrl = null;
-    loading = false;
-    uploading = false;
-    removing = false;
+    loading = uploading = removing = false;
+    selectionConsumed = true;
     progress = null;
   }
 }

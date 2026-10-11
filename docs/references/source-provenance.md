@@ -231,3 +231,22 @@ Local [typed models](../api/field-index.md), [operations](../api/operations.md),
 New source details include Account account envelope; nullable stored specifications; FlashDeals nullable object rather than Product list; Quote Address label/no coordinates; support recorded201 replay and Customer reply reopening; Laravel request-bound cursor resolution; NCR/direct-city required-text compatibility and registration path-field discard. These observations do not claim backend fixes or Flutter adoption.
 
 No Flutter tests/builds, authenticated API exchanges, physical devices, provider requests, migrations, seeds or application database changes ran. See [documentation validation](documentation-validation.md) for completed handoff checks and [verification](../verification.md) for unexecuted release gates.
+
+## Supplied webapp handoff review — 2026-10-09
+
+This Buyer project selectively imports contracts from `cabigan/docs-mobile-buyer-from-webapp/`.
+The supplied [October 9 review](synchronization-2026-10-09.md) and
+[source hashes](source-inspection-2026-10-09.json) identify Laravel
+`0a6aaa8096196e2c26822ac0281d5d30675511a8`; the [October 7 review](synchronization-2026-10-07.md)
+records the preceding `a946692` inspection. These are upstream documentation/source reports,
+not Laravel source inspection or runtime checks performed during this local merge.
+
+[Shipping inspection](current-source-inspection.json) at `22b0a48f9575ead182d03c35ab87345711c23b90`
+and [historical shipping routes](routes-current.json) supply the provider-selection/DTO change.
+[Latest supplied routes](routes-2026-10-09.json) preserve the newer review; the October 6
+chat-media revision remains separate in schemas/operations. Client adoption stays `57e9eb2`.
+G25/G26 record pending implementation/verification without completing or erasing older evidence.
+
+Original local progress/archive bytes, package/SDK records, verification reports and PSGC assets
+are preserved. See [local synchronization evidence](webapp-docs-sync-2026-10-09.md) for this merge.
+Upstream paths/manifests are optional provenance; local API/spec/example documents remain portable.

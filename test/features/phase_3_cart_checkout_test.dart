@@ -186,6 +186,7 @@ void main() {
       'address_id': customerId,
       'payment_method': 'cod',
       'vouchers': [],
+      'logistics_selections': [],
       'quote_id': '00000008-1111-4111-8111-111111111111',
     });
     expect(await c.place(), isNull);
@@ -280,6 +281,7 @@ void main() {
       await quote(cart: true);
       c.chooseAddress(customerId);
       expect(c.quote, isNull);
+      await h.settleShipping();
       final gate = Completer<ResponseBody>();
       h.reply = (r) =>
           r.uri.path.endsWith('/quote') ? gate.future : h.defaultReply(r);
@@ -305,6 +307,13 @@ void main() {
     () async {
       final c = h.commerce.checkout;
       h.reply = (r) {
+        if (r.uri.path.endsWith('/logistics-options')) {
+          final value = h.optionsFor(r.data as Map<String, dynamic>);
+          final group = clone(value['data']['groups'][0]);
+          group['shop']['id'] = otherId;
+          value['data']['groups'].add(group);
+          return jsonReply(value);
+        }
         if (r.uri.path.endsWith('/quote')) {
           final q = h.quoteFor(r.data as Map<String, dynamic>);
           final group = clone(q['data']['groups'][0]);
@@ -386,6 +395,7 @@ void main() {
     c.chooseVoucher(group, const CheckoutVoucherCandidate(otherId), true);
     expect(c.quote, isNull);
     expect(c.vouchers.single.shopId, customerId);
+    await h.settleShipping();
     await c.getQuote();
     expect(c.canPlace, true);
     expect(c.quote!.groups.single.applied.single.discount.minorUnits, 0);

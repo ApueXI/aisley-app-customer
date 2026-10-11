@@ -63,6 +63,7 @@ class SnapshotItem {
     name = w.string('productName');
     variantName = w.nullableString('variantName');
     sku = w.nullableString('sku');
+    imageUrl = w.optionalString('imageUrl');
     options = w.list('selectedOptions', SelectedOption.parse);
     unitPrice = Money.parse(w.field('unitPrice'));
     quantity = w.positiveInt('quantity');
@@ -72,7 +73,7 @@ class SnapshotItem {
     reviewId = reviewable ? nullableUuid(w, 'reviewId') : null;
   }
   late final String id, name, currency;
-  late final String? productId, variantId, variantName, sku, reviewId;
+  late final String? productId, variantId, variantName, sku, reviewId, imageUrl;
   late final bool canReview;
   late final List<SelectedOption> options;
   late final Money unitPrice, subtotal;
@@ -82,11 +83,12 @@ class SnapshotItem {
 class BatchShipping {
   BatchShipping.parse(Object? json) {
     final w = Wire(json);
-    rateId = w.uuid('rateVersionId');
-    version = w.positiveInt('rateVersion');
-    weight = nonnegative(w, 'billableWeightGrams');
-    logisticsCount = nonnegative(w, 'eligibleLogisticsCount');
+    organizationId = nullableUuid(w, 'logisticsOrganizationId');
+    businessName = w.nullableString('logisticsBusinessName');
+    routeStatus = w.string('routeStatus');
+    fee = Money.parse(w.field('shippingFee'));
   }
-  late final String rateId;
-  late final int version, weight, logisticsCount;
+  late final String? organizationId, businessName;
+  late final String routeStatus;
+  late final Money fee;
 }

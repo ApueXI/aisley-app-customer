@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import 'package:dio/dio.dart';
+
 import '../../../core/networking/api_client.dart';
 import '../../../core/networking/wire.dart';
 import 'account_models.dart';
@@ -22,6 +24,7 @@ abstract interface class AccountRepository {
     required String filename,
     required String mimeType,
     void Function(int sent, int total)? onProgress,
+    CancelToken? cancelToken,
   });
   Future<CustomerAccount> removePhoto(SessionLease lease);
   Future<PromotionPreference> promotionPreference(SessionLease lease);
@@ -108,6 +111,7 @@ class ApiAccountRepository implements AccountRepository {
     required String filename,
     required String mimeType,
     void Function(int sent, int total)? onProgress,
+    CancelToken? cancelToken,
   }) async {
     if (!validProfilePhoto(
       length: bytes.lengthInBytes,
@@ -124,6 +128,7 @@ class ApiAccountRepository implements AccountRepository {
       mimeType: mimeType,
       lease: lease,
       onSendProgress: onProgress,
+      cancelToken: cancelToken,
     );
     return ProfileMutation.parse(response).account;
   }

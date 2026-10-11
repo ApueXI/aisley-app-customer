@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
 
 import '../../checkout/presentation/commerce_widgets.dart';
+import '../../checkout/presentation/shipping_details.dart';
+import '../../discovery/data/discovery_repository.dart';
 import '../data/order_models.dart';
+import 'order_item_row.dart';
 
 class OrderFacts extends StatelessWidget {
-  const OrderFacts(this.order, {super.key});
+  const OrderFacts(this.order, {super.key, required this.discovery});
   final BuyerOrder order;
+  final DiscoveryRepository discovery;
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -20,9 +24,11 @@ class OrderFacts extends StatelessWidget {
       for (final item in order.items)
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+          child: OrderItemRow(
+            imageUrl: item.imageUrl,
+            name: item.name,
+            discovery: discovery,
+            details: [
               Text('${item.name} × ${item.quantity}'),
               if (item.variantName != null) Text(item.variantName!),
               Text(
@@ -36,6 +42,10 @@ class OrderFacts extends StatelessWidget {
         ),
       const Divider(),
       TotalsView(order.totals),
+      ShippingDetails(
+        businessName: order.shippingProvider?.businessName,
+        fee: order.totals.shipping.display(order.totals.currency),
+      ),
       for (final voucher in order.vouchers)
         Padding(
           padding: const EdgeInsets.only(top: 8),

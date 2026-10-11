@@ -3,7 +3,7 @@ feature: courier-messaging
 role: Customer
 platform: Flutter / Dart
 phase: 4
-flutter_status: Implemented; acceptance partial
+flutter_status: Text and images implemented locally; video/document and live/device acceptance open G26
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 ---
@@ -59,7 +59,7 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 - Uncertain first send survives polling and cannot rebind to replacement Courier silently.
 - History limit1–50 default 20; newest-first page selection with ascending output; merge by UUID/sequence.
 - Poll visible online 15s and focus/reconnect; no push/background guarantees or offline queue.
-- Text≤2,000, no attachments/edit/delete/presence/calls/proof sharing or Customer delivery completion.
+- Caption≤2,000; images adopted locally; video/documents pending G26 in Flutter. No edit/delete/presence/calls/proof sharing or Customer delivery completion.
 - Clear transcript/draft/key/timers on identity/scoped denial; keep safe readonly UI for ended relation.
 - Test accepted eligibility vs offer/unaccepted/invalid affiliation, foreign Order, reassignment privacy
   and delivery close.
@@ -76,7 +76,7 @@ A path UUID or slug is encoded before use; do not submit owner, status, financia
   Request: cursor opaque≤2048; limit1–50 default 20.
   Replay: Read retry after bounded backoff; reject obsolete session/query generations.
 - `POST /api/v1/customer/courier-conversations` → HTTP 201; `{conversation:CourierConversation,message:OperationalMessage}`.
-  Request: context_type order; context_id owned Order UUID; body trimmed1–2000; UUID header; server resolves counterparty.
+  Request: context_type order; context_id owned Order UUID; body trimmed≤2000, optional with ready attachment_ids; UUID header; server resolves counterparty.
   Replay: UUID Idempotency-Key required. Freeze payload/key; exact retry only after uncertain outcome. Changed intent uses a new key after reconciliation.
 - `GET /api/v1/customer/courier-conversations/{conversation}` → HTTP 200; `{data:CourierConversation}`.
   Request: No parameters.
@@ -85,7 +85,7 @@ A path UUID or slug is encoded before use; do not submit owner, status, financia
   Request: cursor opaque≤2048; limit1–50 default 20.
   Replay: Read retry after bounded backoff; reject obsolete session/query generations.
 - `POST /api/v1/customer/courier-conversations/{conversation}/messages` → HTTP 201; `{conversation:CourierConversation,message:OperationalMessage}`.
-  Request: body trimmed1–2000; UUID header; Shop allows optional validated product|order context_type/context_id; operational sends body only.
+  Request: body trimmed≤2000, optional with attachments; text-only body1–2000; UUID header; ordered distinct attachment_ids UUID[]≤5, ready/same scope/≤50 MiB.
   Replay: UUID Idempotency-Key required. Freeze payload/key; exact retry only after uncertain outcome. Changed intent uses a new key after reconciliation.
 - `POST /api/v1/customer/courier-conversations/{conversation}/read` → HTTP 200; `{data:CourierConversation}`.
   Request: last_read_sequence required int≥1, cannot exceed committed history; monotonic.
@@ -98,6 +98,8 @@ Full per-operation access/status notes and synthetic bodies are in
 [operations](../../../api/operations.md) and
 [this feature’s examples](../../../api/examples/courier-messaging.json).
 Examples are source-derived synthetic fixtures, not live captures or usable test accounts.
+
+Current media requests accept ordered distinct `attachment_ids:UUID[]`≤5, ready/same scope/≤50 MiB; at least text or attachments is required (G26).
 
 ### Response fields and nesting
 
@@ -116,7 +118,7 @@ actions.
 | --- | --- |
 | `CourierOrderContext` | `order_id: UUID`, `order_reference: string`, `send_allowed: bool`, `conversation_id: UUID?` |
 | `CourierConversation` | `id: UUID`, `kind: string`, `leg: string?`, `task_id: UUID?`, `task_reference: string?`, `order_id: UUID?`, `order_reference: string?`, `counterparty_role: string`, `counterparty_label: string`, `last_message_preview: string?`, `last_message_at: timestamp?`, `last_sequence: int`, `last_read_sequence: int`, `unread_count: int`, `send_allowed: bool`, `read_only_reason: string?` |
-| `OperationalMessage` | `id: UUID`, `conversation_id: UUID`, `sequence: int`, `sender_role: string`, `mine: bool`, `body: string`, `created_at: timestamp?` |
+| `OperationalMessage` | `id: UUID`, `conversation_id: UUID`, `sequence: int`, `sender_role: string`, `mine: bool`, `body: string`, `created_at: timestamp?`, `attachments: ChatAttachment[]~` |
 
 ### Errors, ownership and recovery
 
@@ -219,3 +221,9 @@ No Flutter implementation checkbox is completed by documentation authoring or ro
 Append actual implementation/test outcomes to [Progress](../../../PROGRESS.md) and retain prior history.
 Follow [architecture](../../../architecture.md), [setup](../../../setup.md) and
 [verification](../../../verification.md).
+
+## Additive media contract — 2026-10-06; synced 2026-10-09
+
+The implemented Laravel [private media API](../../../api/chat-media.md) adds ordered `attachment_ids` to start/reply and `attachments` to messages. Optional captions and existing scoped history rules apply. This scoped addition supersedes earlier text-only media exclusions with image-only Flutter adoption and partial acceptance; Buyer image adoption is implemented locally; video/document and live/device gates remain open (G26).
+
+Local evidence: [image checks](../../../references/dashboard-chat-images-verification.md).

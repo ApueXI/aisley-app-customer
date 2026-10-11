@@ -1,9 +1,10 @@
 # Requests, responses and replay contracts
 
-Inspected checkout `57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50`; examples synthetic, not live captures.
+Current inspected checkout `22b0a48f9575ead182d03c35ab87345711c23b90`; implemented client adoption `57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50` (G25); examples synthetic, not live captures.
 
 Use [wire types](field-index.md), [schema](dto-schema.json), [examples](examples/README.md), [errors](errors.md) and [feature error codes](error-codes.json) together.
 JSON uses Accept/Content-Type application/json; multipart sets its own boundary. GET has no body. Private bearer is restricted to the trusted API origin.
+Address-options retry notes preserve historical generic fallback advice. Current Buyer locality forms require explicit hierarchical selections and failed assets block Save with Retry; those notes do not authorize custom locality text.
 Named types define all nested fields locally. Status201 replay semantics vary: Shop/Q&A/Support retain201; operational chat and Review creation replay200.
 
 ## op-001
@@ -319,22 +320,22 @@ Named types define all nested fields locally. Status201 replay semantics vary: S
 `POST /api/v1/customer/checkout/quote`
 
 - Access: Active Customer + consent.
-- Request: mode cart|buy_now; exactly cart_item_ids distinct UUID[] min1 OR buy_now product_id UUID, present nullable variant_id UUID, quantity1–2147483647; address_id owned UUID; payment_method cod; optional vouchers max20 {voucher_id distinct UUID,target_shop_id UUID}; no owner/prices/status.
+- Request: mode cart|buy_now; exactly cart_item_ids distinct UUID[] min1 OR buy_now product_id UUID, present nullable variant_id UUID, quantity1–2147483647; address_id owned UUID; payment_method cod; optional vouchers max20 {voucher_id distinct UUID,target_shop_id UUID}; optional logistics_selections max50 {shop_id distinct UUID,logistics_organization_id UUID}; no owner/prices/status.
 - Response: HTTP 200; `{data:Quote}`.
-- Retry: No durable replay key. After timeout/cancellation, reread authoritative state before a deliberate new action.
-- Notes: Laravel rechecks current ownership and visibility.
-- [Synthetic examples](examples/checkout-order.json).
+- Retry: No idempotency key; each deliberate quote request creates a new expiring quote, never places or reserves.
+- Notes: Current provider selection/DTO contract is not established as adopted by the current client (G25). Selections participate in normalized quote and placement hashes.
+- [Synthetic examples](examples/checkout-order.json); [shipping selection](shipping-selection.md).
 
 ## op-030
 
 `POST /api/v1/customer/checkout/place`
 
 - Access: Active Customer + consent.
-- Request: mode cart|buy_now; exactly cart_item_ids distinct UUID[] min1 OR buy_now product_id UUID, present nullable variant_id UUID, quantity1–2147483647; address_id owned UUID; payment_method cod; optional vouchers max20 {voucher_id distinct UUID,target_shop_id UUID}; no owner/prices/status. quote_id UUID + UUID header.
+- Request: mode cart|buy_now; exactly cart_item_ids distinct UUID[] min1 OR buy_now product_id UUID, present nullable variant_id UUID, quantity1–2147483647; address_id owned UUID; payment_method cod; optional vouchers max20 {voucher_id distinct UUID,target_shop_id UUID}; optional logistics_selections max50 {shop_id distinct UUID,logistics_organization_id UUID}; no owner/prices/status. quote_id UUID + UUID header.
 - Response: HTTP 200; `{data:Batch}`.
 - Retry: UUID Idempotency-Key required. Freeze payload/key; exact retry only after uncertain outcome. Changed intent uses a new key after reconciliation.
-- Notes: Laravel rechecks current ownership and visibility.
-- [Synthetic examples](examples/checkout-order.json).
+- Notes: Current provider selection/DTO contract is not established as adopted by the current client (G25). Selections participate in normalized quote and placement hashes.
+- [Synthetic examples](examples/checkout-order.json); [shipping selection](shipping-selection.md).
 
 ## op-031
 
@@ -638,7 +639,7 @@ Named types define all nested fields locally. Status201 replay semantics vary: S
 `POST /api/v1/customer/conversations`
 
 - Access: Active Customer + consent.
-- Request: shop_id UUID; body trimmed string 1–2000; optional context_type product|order with context_id UUID; UUID header.
+- Request: shop_id UUID; body optional trimmed string≤2000 with attachments; text-only body1–2000; optional context_type product|order with context_id UUID; UUID header. Optional ordered distinct attachment_ids UUID[]≤5, all ready and same scope, total≤50 MiB.
 - Response: HTTP 201; `{conversation:ShopConversation,message:ShopMessage}`.
 - Retry: UUID Idempotency-Key required. Freeze payload/key; exact retry only after uncertain outcome. Changed intent uses a new key after reconciliation.
 - Notes: Shop start/send201 including replay; operational201 created/200 replay. History page selected newest-first but returned ascending; merge by ID/sequence, retain older cursor gaps.
@@ -671,7 +672,7 @@ Named types define all nested fields locally. Status201 replay semantics vary: S
 `POST /api/v1/customer/conversations/{conversation}/messages`
 
 - Access: Active Customer + consent.
-- Request: body trimmed1–2000; UUID header; Shop allows optional validated product|order context_type/context_id; operational sends body only.
+- Request: body trimmed≤2000, optional with attachments; text-only body1–2000; UUID header; ordered distinct attachment_ids UUID[]≤5, ready/same scope/≤50 MiB. Optional validated product|order context_type/context_id.
 - Response: HTTP 201; `{conversation:ShopConversation,message:ShopMessage}`.
 - Retry: UUID Idempotency-Key required. Freeze payload/key; exact retry only after uncertain outcome. Changed intent uses a new key after reconciliation.
 - Notes: Shop start/send201 including replay; operational201 created/200 replay. History page selected newest-first but returned ascending; merge by ID/sequence, retain older cursor gaps.
@@ -715,7 +716,7 @@ Named types define all nested fields locally. Status201 replay semantics vary: S
 `POST /api/v1/customer/logistics-conversations`
 
 - Access: Active Customer + consent.
-- Request: context_type order; context_id owned Order UUID; body trimmed1–2000; UUID header; server resolves counterparty.
+- Request: context_type order; context_id owned Order UUID; body optional trimmed≤2000 with attachments; text-only body1–2000; UUID header; server resolves counterparty. Optional ordered distinct attachment_ids UUID[]≤5, all ready and same scope, total≤50 MiB.
 - Response: HTTP 201; `{conversation:LogisticsConversation,message:OperationalMessage}`.
 - Retry: UUID Idempotency-Key required. Freeze payload/key; exact retry only after uncertain outcome. Changed intent uses a new key after reconciliation.
 - Notes: Shop start/send201 including replay; operational201 created/200 replay. History page selected newest-first but returned ascending; merge by ID/sequence, retain older cursor gaps.
@@ -748,7 +749,7 @@ Named types define all nested fields locally. Status201 replay semantics vary: S
 `POST /api/v1/customer/logistics-conversations/{conversation}/messages`
 
 - Access: Active Customer + consent.
-- Request: body trimmed1–2000; UUID header; Shop allows optional validated product|order context_type/context_id; operational sends body only.
+- Request: body trimmed≤2000, optional with attachments; text-only body1–2000; UUID header; ordered distinct attachment_ids UUID[]≤5, ready/same scope/≤50 MiB.
 - Response: HTTP 201; `{conversation:LogisticsConversation,message:OperationalMessage}`.
 - Retry: UUID Idempotency-Key required. Freeze payload/key; exact retry only after uncertain outcome. Changed intent uses a new key after reconciliation.
 - Notes: Shop start/send201 including replay; operational201 created/200 replay. History page selected newest-first but returned ascending; merge by ID/sequence, retain older cursor gaps.
@@ -781,7 +782,7 @@ Named types define all nested fields locally. Status201 replay semantics vary: S
 `POST /api/v1/customer/courier-conversations`
 
 - Access: Active Customer + consent.
-- Request: context_type order; context_id owned Order UUID; body trimmed1–2000; UUID header; server resolves counterparty.
+- Request: context_type order; context_id owned Order UUID; body optional trimmed≤2000 with attachments; text-only body1–2000; UUID header; server resolves counterparty. Optional ordered distinct attachment_ids UUID[]≤5, all ready and same scope, total≤50 MiB.
 - Response: HTTP 201; `{conversation:CourierConversation,message:OperationalMessage}`.
 - Retry: UUID Idempotency-Key required. Freeze payload/key; exact retry only after uncertain outcome. Changed intent uses a new key after reconciliation.
 - Notes: Shop start/send201 including replay; operational201 created/200 replay. History page selected newest-first but returned ascending; merge by ID/sequence, retain older cursor gaps.
@@ -814,7 +815,7 @@ Named types define all nested fields locally. Status201 replay semantics vary: S
 `POST /api/v1/customer/courier-conversations/{conversation}/messages`
 
 - Access: Active Customer + consent.
-- Request: body trimmed1–2000; UUID header; Shop allows optional validated product|order context_type/context_id; operational sends body only.
+- Request: body trimmed≤2000, optional with attachments; text-only body1–2000; UUID header; ordered distinct attachment_ids UUID[]≤5, ready/same scope/≤50 MiB.
 - Response: HTTP 201; `{conversation:CourierConversation,message:OperationalMessage}`.
 - Retry: UUID Idempotency-Key required. Freeze payload/key; exact retry only after uncertain outcome. Changed intent uses a new key after reconciliation.
 - Notes: Shop start/send201 including replay; operational201 created/200 replay. History page selected newest-first but returned ascending; merge by ID/sequence, retain older cursor gaps.
@@ -1047,3 +1048,101 @@ Named types define all nested fields locally. Status201 replay semantics vary: S
 - Response: HTTP 200; `{options:AddressOption[]}`.
 - Retry: Read retry; bundled/manual fallback on503.
 - [Synthetic examples](examples/address-options.json).
+
+## op-096
+
+`POST /api/v1/customer/checkout/logistics-options`
+
+- Access: Active Customer + consent.
+- Request: mode cart|buy_now; exactly cart_item_ids distinct UUID[] min1 OR buy_now product_id UUID, present nullable variant_id UUID, quantity1–2147483647; address_id owned UUID; payment_method cod; optional vouchers max20 {voucher_id distinct UUID,target_shop_id UUID}; optional logistics_selections max50 {shop_id distinct UUID,logistics_organization_id UUID}; no owner/prices/status.
+- Response: HTTP 200; `{data:LogisticsOptions}`.
+- Retry: Read-only calculation via POST; no quote, reservation or durable key. Retry the same intent with bounded backoff and session/query guards.
+- Notes: Runs owned address/item/stock validation. Provider and voucher selections are validated structurally but not applied in options-only calculation. Empty options are a successful read, not quote eligibility; G25 adoption pending.
+- [Synthetic examples](examples/checkout-order.json); [shipping selection](shipping-selection.md).
+
+Current shipping inspection: `22b0a48f9575ead182d03c35ab87345711c23b90`; implemented client adoption remains `57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50` (G25). Existing operation IDs are stable.
+
+## chat-media-001
+
+`GET /api/v1/customer/chat-attachments`
+
+- Access: Active Customer + consent; scoped bearer or web session/CSRF.
+- Request: No body.
+- Response: HTTP 200; `{data:{enabled:bool,max_files:int,max_total_bytes:int}}`.
+- Retry: Read retry with bounded backoff and session/query guards; no mutation or replay key.
+- Notes: Source-derived addition; Buyer Flutter adoption pending. 401/403/404/409/422/429/503; MP4 ranges 206/416.
+- [Media contract](chat-media.md) and [synthetic examples](examples/chat-media.json).
+
+## chat-media-002
+
+`POST /api/v1/customer/chat-attachments`
+
+- Access: Active Customer + consent; scoped bearer or web session/CSRF.
+- Request: Multipart file and JSON context string; UUID Idempotency-Key. Limits and selectors in chat-media.md.
+- Response: HTTP 201; `{data:ChatAttachment}`.
+- Retry: Freeze the upload UUID key, selected bytes, filename and context; exact upload replay returns 200 (new upload 201).
+- Notes: Source-derived addition; Buyer Flutter adoption pending. 401/403/404/409/422/429/503; MP4 ranges 206/416.
+- [Media contract](chat-media.md) and [synthetic examples](examples/chat-media.json).
+
+## chat-media-003
+
+`GET /api/v1/customer/chat-attachments/{id}`
+
+- Access: Active Customer + consent; scoped bearer or web session/CSRF.
+- Request: Uploader-only status, no body.
+- Response: HTTP 200; `{data:ChatAttachment}`.
+- Retry: Bounded status polling with session guards; pause while background/offline and stop on terminal state.
+- Notes: Source-derived addition; Buyer Flutter adoption pending. 401/403/404/409/422/429/503; MP4 ranges 206/416.
+- [Media contract](chat-media.md) and [synthetic examples](examples/chat-media.json).
+
+## chat-media-004
+
+`POST /api/v1/customer/chat-attachments/{id}/retry`
+
+- Access: Active Customer + consent; scoped bearer or web session/CSRF.
+- Request: No body; failed/unbound/unexpired processing only.
+- Response: HTTP 200; `{data:ChatAttachment}`.
+- Retry: No durable retry key is documented. After uncertainty, reread uploader status before deliberate retry of failed, unbound, unexpired work; ineligible 409/unavailable 503.
+- Notes: Source-derived addition; Buyer Flutter adoption pending. 401/403/404/409/422/429/503; MP4 ranges 206/416.
+- [Media contract](chat-media.md) and [synthetic examples](examples/chat-media.json).
+
+## chat-media-005
+
+`DELETE /api/v1/customer/chat-attachments/{id}`
+
+- Access: Active Customer + consent; scoped bearer or web session/CSRF.
+- Request: No body; unbound only.
+- Response: HTTP 200; `{deleted:bool}`.
+- Retry: No durable removal key is documented. After uncertainty, reread uploader status before another deliberate removal; bound media cannot be removed (409).
+- Notes: Source-derived addition; Buyer Flutter adoption pending. 401/403/404/409/422/429/503; MP4 ranges 206/416.
+- [Media contract](chat-media.md) and [synthetic examples](examples/chat-media.json).
+
+## chat-media-006
+
+`GET /api/v1/customer/chat-attachments/{id}/content`
+
+- Access: Active Customer + consent; scoped bearer or web session/CSRF.
+- Request: Authorized bound ready media; optional MP4 single Range.
+- Response: HTTP 200; `Binary authorized media`.
+- Retry: Bounded authenticated private read retry; MP4 single byte ranges return 206, invalid ranges 416. Never put bearer credentials in URLs.
+- Notes: Source-derived addition; Buyer Flutter adoption pending. 401/403/404/409/422/429/503; MP4 ranges 206/416.
+- [Media contract](chat-media.md) and [synthetic examples](examples/chat-media.json).
+
+## chat-media-007
+
+`GET /api/v1/customer/chat-attachments/{id}/preview`
+
+- Access: Active Customer + consent; scoped bearer or web session/CSRF.
+- Request: Authorized bound ready thumbnail/poster.
+- Response: HTTP 200; `Binary authorized media`.
+- Retry: Bounded authenticated private read retry; JPEG thumbnail/poster only. Missing/foreign/unbound media is scoped 404.
+- Notes: Source-derived addition; Buyer Flutter adoption pending. 401/403/404/409/422/429/503; MP4 ranges 206/416.
+- [Media contract](chat-media.md) and [synthetic examples](examples/chat-media.json).
+
+## Voucher collection delta — 2026-10-11
+
+[Discovery, collection and wallet](voucher-collection.md) supplies the seven additive operations, DTO, availability, natural replay and Checkout collection gate.
+
+### Voucher operation records
+
+Stable `voucher-collection-001` through `voucher-collection-007` in [operation index](operation-index.json) follow the endpoint order in [collection contract](voucher-collection.md). [Synthetic examples](examples/voucher-collection.json) include public nulls, private status and platform/Shop collection confirmations.

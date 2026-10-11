@@ -9,6 +9,8 @@ ThemeData buyerTheme() {
   return ThemeData(
     brightness: Brightness.light,
     useMaterial3: true,
+    visualDensity: VisualDensity.standard,
+    materialTapTargetSize: MaterialTapTargetSize.padded,
     colorScheme:
         ColorScheme.fromSeed(
           seedColor: const Color(0xFFE6007A),
@@ -51,18 +53,21 @@ ThemeData buyerTheme() {
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
         minimumSize: const Size(48, 48),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         shape: shape,
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         minimumSize: const Size(48, 48),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         shape: shape,
       ),
     ),
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
         minimumSize: const Size(48, 48),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         shape: shape,
       ),
     ),

@@ -3,9 +3,10 @@ feature: voucher-usage
 role: Customer
 platform: Flutter / Dart
 phase: 3
-flutter_status: Implemented; acceptance partial
+flutter_status: Implemented including 22b0a48 shipping; live/device acceptance partial
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
+current_contract_inspected_checkout: 22b0a48f9575ead182d03c35ab87345711c23b90
 ---
 
 # Checkout voucher usage
@@ -13,22 +14,19 @@ contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 ## WHAT
 
 Backend: Existing quote candidate/eligibility/selection/savings/snapshot/redemption implemented;
-wallet/claim/authoring deferred.
+public discovery/detail/Shop reads and private collection/status/wallet implemented. Authoring remains role-owned.
 
-Flutter: **implemented; acceptance partial**. See [Phase 3 evidence](../../../references/phase-3-verification.md); live-account/device gates remain open.
+Flutter: **discovery, collection, wallet and reviewed Checkout implemented**. See [G28 evidence](../../../references/voucher-collection-verification.md); live-account/device gates remain open.
 
 Quote candidates → explicit UUID/target Shop → requote → reviewed savings → placement redeems.
 
-- Selections vouchers:[{voucher_id,target_shop_id}] ≤20; code is display, not accepted code-entry. Candidates may be ineligible with reason. No automatic best selection/claim/wallet API.
+- Selections vouchers:[{voucher_id,target_shop_id}] ≤20; code is display, not accepted code-entry. Candidates may be ineligible with reason. Collection and wallet use the documented [collection APIs](../../../api/voucher-collection.md); no automatic selection.
 - One App voucher per batch with explicit eligible Shop target; Shop voucher only its Shop. At most one discount and one shipping benefit per group; different-benefit stacking needs reciprocal permissions. Minimum spend uses full target-Shop merchandise before discounts.
 - Server time/scopes/exclusions/capacity/customer limit and integer-cent calculation/caps decide saving. Selected zero-saving voucher still redeems; quote reserves nothing. Placement locks/rechecks/redempts atomically and snapshots terms; cancellation/rejection currently does not restore counters.
 - Disclose removed/stale choices before another Place action and reject previous-account selections/results.
 
-The local bundle supplies the implementation contract. Upstream paths are optional provenance only.
-Use this feature with its prerequisite session/consent boundary and the related shopping or
-communication repositories.
-The Customer client cannot perform Seller/Admin/Logistics/Courier actions. Current Laravel ownership
-and capabilities remain authoritative.
+The current [shipping contract](../../../api/shipping-selection.md) governs provider selection and DTOs;
+current client checks are recorded in [G25 evidence](../../../references/shipping-selection-verification.md). Upstream paths remain optional provenance.
 
 Buyer presentation requires verified active Customer identity and required consent for every shopping
 screen; public backend methods/envelopes remain unchanged. Auth/recovery/Terms/Privacy stay reachable.
@@ -38,8 +36,8 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 
 ### Feature behavior and boundaries
 
-- Voucher selection belongs to quote/checkout; no independent wallet, claim, code-entry or
-  voucher-authoring route exists.
+- Discovery/detail, Shop collection and My Vouchers use the existing APIs; Checkout alone selects/redeems.
+  Code entry, authoring and automatic selection remain unavailable to Buyer.
 - Show existing availableVouchers from each Quote group and submit UUID plus target_shop_id.
 - Issuer types are app|shop and benefits discount|shipping; never rename wire values to
   platform|seller.
@@ -64,8 +62,9 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 - AppliedVouchers expose qualifyingBasis/discountAmount; Order snapshots retain committed
   terms/code/amount.
 - Cancellation currently does not restore voucher redemption capacity; do not promise reuse or refund.
-- Shipping discount reduces server shipping component; commission does not increase Customer COD.
-- No auto claim, code text injection, implicit promotion opt-in or other Customer’s eligibility
+- Shipping discount reduces the selected provider’s server shipping fee; changing provider requires reviewed
+  requote and updated savings. Commission does not increase Customer COD.
+- No automatic collection, code text injection, implicit promotion opt-in or other Customer’s eligibility
   inspection.
 - Candidate failures and checkout unavailable state are distinct from no available vouchers.
 - Test minimum spend, exclusions, exhausted/customer-limit/not-started/expired/payment-ineligible and
@@ -81,19 +80,15 @@ A path UUID or slug is encoded before use; do not submit owner, status, financia
 authority.
 
 - `POST /api/v1/customer/checkout/quote` → HTTP 200; `{data:Quote}`.
-  Request: mode cart|buy_now; exactly cart_item_ids distinct UUID[] min1 OR buy_now product_id UUID, present nullable variant_id UUID, quantity1–2147483647; address_id owned UUID; payment_method cod; optional vouchers max20 {voucher_id distinct UUID,target_shop_id UUID}; no owner/prices/status.
+  Request: mode cart|buy_now; exactly cart_item_ids distinct UUID[] min1 OR buy_now product_id UUID, present nullable variant_id UUID, quantity1–2147483647; address_id owned UUID; payment_method cod; optional vouchers max20 {voucher_id distinct UUID,target_shop_id UUID}; optional logistics_selections max50 {shop_id distinct UUID,logistics_organization_id UUID}; no owner/prices/status.
   Replay: No durable replay key. After timeout/cancellation, reread authoritative state before a deliberate new action.
 - `POST /api/v1/customer/checkout/place` → HTTP 200; `{data:Batch}`.
-  Request: mode cart|buy_now; exactly cart_item_ids distinct UUID[] min1 OR buy_now product_id UUID, present nullable variant_id UUID, quantity1–2147483647; address_id owned UUID; payment_method cod; optional vouchers max20 {voucher_id distinct UUID,target_shop_id UUID}; no owner/prices/status. quote_id UUID + UUID header.
+  Request: mode cart|buy_now; exactly cart_item_ids distinct UUID[] min1 OR buy_now product_id UUID, present nullable variant_id UUID, quantity1–2147483647; address_id owned UUID; payment_method cod; optional vouchers max20 {voucher_id distinct UUID,target_shop_id UUID}; optional logistics_selections max50 {shop_id distinct UUID,logistics_organization_id UUID}; no owner/prices/status. quote_id UUID + UUID header.
   Replay: UUID Idempotency-Key required. Freeze payload/key; exact retry only after uncertain outcome. Changed intent uses a new key after reconciliation.
 - `GET /api/v1/customer/checkout/{batch}` → HTTP 200; `{data:Batch}`.
   Request: Owned batch UUID; no body.
   Replay: Read retry after bounded backoff; reject obsolete session/query generations.
 
-Full per-operation access/status notes and synthetic bodies are in
-[operations](../../../api/operations.md) and
-[this feature’s examples](../../../api/examples/checkout-order.json).
-Examples are source-derived synthetic fixtures, not live captures or usable test accounts.
 
 ### Response fields and nesting
 
@@ -111,7 +106,7 @@ actions.
 
 | DTO | Wire fields and types |
 | --- | --- |
-| `Voucher` | `id: UUID`, `code: string`, `issuerType: string`, `benefitType: string`, `valueType: string`, `value: money`, `maximumDiscount: money?`, `minimumSpend: money`, `termsSummary: string`, `validFrom: timestamp`, `validUntil: timestamp`, `paymentMethod: string?`, `stackableWith: string[]`, `scope: VoucherScope`, `eligible: bool`, `reason: string?`, `saving: money` |
+| `Voucher` | `id: UUID`, `code: string`, `issuerType: string`, `benefitType: string`, `valueType: string`, `value: money`, `maximumDiscount: money?`, `minimumSpend: money`, `termsSummary: string?`, `validFrom: timestamp`, `validUntil: timestamp`, `paymentMethod: string?`, `stackableWith: string[]`, `scope: VoucherScope`, `eligible: bool`, `reason: string?`, `saving: money` |
 | `VoucherScope` | `productIds: UUID[]`, `categoryIds: UUID[]`, `excludedProductIds: UUID[]`, `excludedCategoryIds: UUID[]` |
 | `AppliedVoucher` | `id: UUID`, `code: string`, `issuerType: string`, `benefitType: string`, `qualifyingBasis: money`, `discountAmount: money` |
 | `QuoteGroup` | `shop: QuoteShop`, `items: QuoteItem[]`, `availableVouchers: Voucher[]`, `appliedVouchers: AppliedVoucher[]`, `shippingQuote: ShippingQuote`, `totals: Totals` |
@@ -145,6 +140,13 @@ universal error envelope.
 ## HOW
 
 ### Responsibility and state ownership
+
+- [Collection contract](../../../api/voucher-collection.md) owns all seven methods, DTO fields, filters and natural replay.
+- Routes `/vouchers`, `/vouchers/:id`, `/account/vouchers` and Shop vouchers retain verified identity/consent.
+- Session-owned collection state rejects old-account replies; public definitions never hold personalized status.
+- Collect explicitly; uncertain responses offer same-endpoint Retry, with pending/cooldown duplicate protection.
+- Checkout collection invalidates review but preserves safe choices; explicitly requote/select/review afterward.
+- Unresolved placement disables collection navigation and preserves original payload/key for exact retry.
 
 - `CheckoutRepository` owns typed transport, parsing and owned cache access; inject dependencies
   through AppDependencies.
@@ -185,14 +187,15 @@ universal error envelope.
 
 ### Verification scenarios
 
+- [x] Current nullable provider/shipping projections and related selection effects pass G25 client verification.
 - [ ] Targeting, stacking/reasons/zero-saving/current amount display are server-driven.
 - [ ] Voucher-bearing replay/rollback/capacity conflicts and account switch do not double-consume or
   silently retarget.
 - [ ] Android and fixed-origin local browser verify loading/empty/errors, keyboard/back/focus,
   supported permission/retry states and cleanup after identity loss.
-- [x] DTO fixtures reject wrong required types, distinguish null/absent/false/empty and preserve wire
+- [ ] DTO fixtures reject wrong required types, distinguish null/absent/false/empty and preserve wire
   casing.
-- [x] Each consumed operation uses its documented method/body/envelope and correct public/private
+- [ ] Each consumed operation uses its documented method/body/envelope and correct public/private
   credential behavior.
 - [ ] Exercise normal, empty, malformed, denied, consent-required, validation, conflict, throttle,
   offline and timeout outcomes.
@@ -219,5 +222,5 @@ history.
 Follow [architecture](../../../architecture.md), [setup](../../../setup.md) and
 [verification](../../../verification.md).
 
-Spec revision 2026-10-04: Phase 3 client implemented against the unchanged inspected checkout;
-synthetic verification is separate from live commerce and installed-device acceptance.
+Shipping adoption 2026-10-09: [G25 evidence](../../../references/shipping-selection-verification.md) records current client checks.
+Live/device commerce and deployment configuration remain open under G25.

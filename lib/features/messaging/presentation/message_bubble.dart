@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 
 import 'message_row.dart';
+import '../../../core/chat_media/draft_controller.dart';
+import '../../../core/chat_media/image_widgets.dart';
 
 class MessageBubble extends StatelessWidget {
-  const MessageBubble({super.key, required this.row});
+  const MessageBubble({super.key, required this.row, this.media});
   final MessageRow row;
+  final ChatMediaDraftController? media;
   @override
   Widget build(BuildContext context) => Align(
     alignment: row.mine ? Alignment.centerRight : Alignment.centerLeft,
@@ -24,6 +27,9 @@ class MessageBubble extends StatelessWidget {
             style: Theme.of(context).textTheme.titleSmall,
           ),
           SelectableText(row.body),
+          if (media != null)
+            for (final attachment in row.attachments)
+              PrivateChatImage(attachment: attachment, controller: media!),
           if (row.context != null) Text(row.context!),
           if (row.at != null)
             Text(

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../../../core/networking/api_failure.dart';
+import '../../../core/networking/cursor_page.dart';
 import '../../../core/networking/request_cooldown.dart';
 import '../../../core/networking/api_client.dart';
 import '../../../core/security/session_controller.dart';
@@ -26,7 +27,10 @@ class HomeController extends ChangeNotifier with RequestCooldown {
   final RecentlyViewedRepository recentlyViewed;
   BuyerHome? home;
   List<ProductCard> recommendations = const [];
-  String? cursor, error, pageError;
+  final _trail = CursorTrail();
+  String? get cursor => _trail.next;
+  String? error, pageError;
+  bool stale = true;
   bool loading = false, loadingMore = false;
   int _queryGeneration = 0;
   bool _disposed = false;
@@ -43,7 +47,8 @@ class HomeController extends ChangeNotifier with RequestCooldown {
     _queryGeneration++;
     home = null;
     recommendations = const [];
-    cursor = null;
+    _trail.clear();
+    stale = true;
     error = null;
     pageError = null;
     loading = false;
@@ -59,13 +64,16 @@ class HomeController extends ChangeNotifier with RequestCooldown {
     final generation = ++_queryGeneration;
     final epoch = session.generation;
     final customerId = lease == null ? null : session.customer?.id;
-    if (refresh || home != null && _homeOwner != customerId) {
+    if (home != null && _homeOwner != customerId) {
       home = null;
       recommendations = const [];
-      cursor = null;
+      _trail.clear();
+      stale = true;
     }
     _homeOwner = customerId;
     loading = true;
+    loadingMore = false;
+    stale = true;
     error = null;
     pageError = null;
     notifyListeners();
@@ -76,11 +84,22 @@ class HomeController extends ChangeNotifier with RequestCooldown {
       recommendations = _unique(result.recommendations.items)
           .take(200)
           .toList();
-      cursor = recommendations.length >= 200
-          ? null
-          : result.recommendations.nextCursor;
+      _trail.clear();
+      _trail.seed(
+        recommendations.length >= 200
+            ? null
+            : result.recommendations.nextCursor,
+      );
+      stale = false;
     } on ApiFailure catch (failure) {
-      if (_current(generation, epoch, lease)) error = describeFailure(failure);
+      if (_current(generation, epoch, lease)) {
+        error = describeFailure(failure);
+        if (failure.status == 403 || failure.status == 404) {
+          home = null;
+          recommendations = const [];
+          _trail.clear();
+        }
+      }
     } finally {
       if (_current(generation, epoch, lease)) {
         loading = false;
@@ -93,7 +112,9 @@ class HomeController extends ChangeNotifier with RequestCooldown {
 
   Future<void> loadMore() async {
     final next = cursor;
-    if (!session.active ||
+    if (_disposed ||
+        stale ||
+        !session.active ||
         coolingDown ||
         loading ||
         loadingMore ||
@@ -112,13 +133,24 @@ class HomeController extends ChangeNotifier with RequestCooldown {
       final merged = _unique([...recommendations, ...page.items])
           .take(200)
           .toList();
+      final prior = recommendations.map((e) => e.id).toSet();
       recommendations = merged;
-      cursor = merged.length >= 200 || page.nextCursor == next
-          ? null
-          : page.nextCursor;
+      _trail.advance(
+        next,
+        merged.length >= 200 ? null : page.nextCursor,
+        progressed: page.items.any((e) => !prior.contains(e.id)),
+      );
     } on ApiFailure catch (failure) {
       if (_current(generation, epoch, lease)) {
         pageError = describeFailure(failure);
+        if (failure.status == 403 || failure.status == 404) {
+          home = null;
+          recommendations = const [];
+          _trail.clear();
+          stale = true;
+          error = pageError;
+          pageError = null;
+        }
       }
     } finally {
       if (_current(generation, epoch, lease)) {
@@ -146,11 +178,7 @@ class HomeController extends ChangeNotifier with RequestCooldown {
       (session.active && lease != null && lease.isCurrent());
 
   List<ProductCard> _unique(Iterable<ProductCard> values) {
-    final found = <String>{};
-    return [
-      for (final item in values)
-        if (found.add(item.id)) item,
-    ];
+    return List.unmodifiable({for (final item in values) item.id: item}.values);
   }
 
   void clearPrivate() {
@@ -159,7 +187,8 @@ class HomeController extends ChangeNotifier with RequestCooldown {
     if (_homeOwner != null) {
       home = null;
       recommendations = const [];
-      cursor = null;
+      _trail.clear();
+      stale = true;
       _homeOwner = null;
       error = null;
       pageError = null;

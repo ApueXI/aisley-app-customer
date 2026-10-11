@@ -17,7 +17,13 @@ class OrdersController extends CommerceController {
     group = value;
     _query++;
     items = const [];
-    loading = paging = false;
+    loading = paging = hasMore = false;
+    tabs = const [];
+    stale = true;
+    error = coolingDown ? 'Please wait before retrying this list.' : null;
+    pageError = null;
+    _page = 0;
+    notifyListeners();
     await load();
   }
 
@@ -25,7 +31,7 @@ class OrdersController extends CommerceController {
     final credential = lease;
     if (credential == null ||
         loading ||
-        paging ||
+        more && paging ||
         coolingDown ||
         more && (!hasMore || stale)) {
       return;
@@ -37,6 +43,7 @@ class OrdersController extends CommerceController {
       pageError = null;
     } else {
       loading = true;
+      paging = false;
       stale = true;
       error = null;
       pageError = null;
@@ -66,6 +73,7 @@ class OrdersController extends CommerceController {
     } on ApiFailure catch (value) {
       if (current(generation, credential) && query == _query) {
         if (value.status == 403 || value.status == 404) {
+          stale = true;
           items = const [];
           tabs = const [];
           hasMore = false;

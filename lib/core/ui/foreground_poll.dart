@@ -10,11 +10,15 @@ class ForegroundPoll extends StatefulWidget {
     required this.refresh,
     required this.paused,
     this.visible,
+    this.busy,
     required this.child,
   });
   final Future<void> Function() refresh;
   final bool Function() paused;
   final bool Function()? visible;
+
+  /// Automatic refresh must not supersede a deliberate list/page action.
+  final bool Function()? busy;
   final Widget child;
   @override
   State<ForegroundPoll> createState() => _ForegroundPollState();
@@ -24,6 +28,7 @@ class _ForegroundPollState extends State<ForegroundPoll>
     with WidgetsBindingObserver {
   Timer? _timer;
   bool _foreground = true;
+  bool get _busy => widget.busy?.call() == true;
   bool get _visible =>
       mounted &&
       _foreground &&
@@ -39,7 +44,7 @@ class _ForegroundPollState extends State<ForegroundPoll>
   void _start() {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 15), (_) {
-      if (_visible && !widget.paused()) unawaited(widget.refresh());
+      if (_visible && !_busy && !widget.paused()) unawaited(widget.refresh());
     });
   }
 
@@ -48,7 +53,7 @@ class _ForegroundPollState extends State<ForegroundPoll>
     _foreground = state == AppLifecycleState.resumed;
     if (_foreground) {
       _start();
-      if (_visible) unawaited(widget.refresh());
+      if (_visible && !_busy) unawaited(widget.refresh());
     } else {
       _timer?.cancel();
     }
@@ -64,7 +69,15 @@ class _ForegroundPollState extends State<ForegroundPoll>
   @override
   Widget build(BuildContext context) => Focus(
     onFocusChange: (focus) {
-      if (focus && _visible) unawaited(widget.refresh());
+      if (!focus || !_visible) return;
+      if (widget.busy == null) {
+        unawaited(widget.refresh());
+      } else {
+        // Let the focused button's action establish its busy state first.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (_visible && !_busy) unawaited(widget.refresh());
+        });
+      }
     },
     child: widget.child,
   );

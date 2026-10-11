@@ -2,8 +2,10 @@
 """Read-only Chrome smoke checks. Run the Buyer web server on localhost:8766 first."""
 import argparse
 import base64
+import datetime
 import json
 import os
+from pathlib import Path
 import shutil
 import socket
 import subprocess
@@ -13,12 +15,30 @@ import urllib.error
 import urllib.request
 
 
-def main():
+def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--synthetic-shopping', action='store_true', help='Also inject synthetic identity/API responses for shopping layout checks.')
     parser.add_argument('--synthetic-only', action='store_true', help='Intercept every API request before startup; requires only the Buyer server, never Laravel.')
     parser.add_argument('--synthetic-journey-only', action='store_true', help='Focus on intercepted purchase journeys after a verified resize matrix.')
-    args = parser.parse_args()
+    parser.add_argument('--synthetic-shipping', action='store_true', help='Exercise provider choices and renewed quote review using intercepted synthetic responses.')
+    parser.add_argument('--synthetic-list-recovery', action='store_true', help='Exercise intercepted list refresh and page recovery.')
+    parser.add_argument('--synthetic-upload-recovery', action='store_true', help='Exercise browser file selection and upload recovery with intercepted writes.')
+    parser.add_argument('--synthetic-accessibility', action='store_true', help='Audit semantic names and 48px targets across synthetic Buyer routes and responsive browser sizes.')
+    parser.add_argument('--accessibility-route', help='Limit the accessibility route audit to one exact Buyer route, such as /account/password.')
+    parser.add_argument('--accessibility-report', default='build/verification/accessibility-journeys-browser.json', help='JSON report destination for --synthetic-accessibility.')
+    args = parser.parse_args(argv)
+    if args.synthetic_upload_recovery:
+        args.synthetic_only = True
+        args.synthetic_journey_only = True
+    if args.synthetic_list_recovery:
+        args.synthetic_only = True
+        args.synthetic_journey_only = True
+    if args.synthetic_shipping:
+        args.synthetic_only = True
+        args.synthetic_journey_only = True
+    if args.synthetic_accessibility:
+        args.synthetic_only = True
+        args.synthetic_journey_only = True
     if args.synthetic_journey_only:
         args.synthetic_only = True
     driver = shutil.which('chromedriver')
@@ -79,7 +99,25 @@ def main():
                 if script("return document.body.innerText + '\\n' + Array.from(document.querySelectorAll('[aria-label]')).map(e => e.getAttribute('aria-label')).join('\\n');").replace('\n', ' ').find(expected) >= 0:
                     return
                 time.sleep(0.2)
-            raise AssertionError('Expected public screen did not render: ' + expected)
+            diagnostic = ''
+            if args.synthetic_only:
+                state = script("return {url:location.href,title:document.title,text:document.body.innerText.slice(0,600)};")
+                diagnostic = '; synthetic page state: ' + json.dumps(state)
+                try:
+                    logs = call(prefix + '/log', {'type': 'browser'}, method='POST')
+                    guard_logs = [item.get('message', '') for item in logs
+                                  if 'BUYER_FORM_GUARD' in item.get('message', '')]
+                    if guard_logs:
+                        diagnostic += '; form guard trace: ' + json.dumps(guard_logs[-12:])
+                except Exception:
+                    pass
+                directory = os.environ.get('BUYER_SCREENSHOT_DIR')
+                if directory:
+                    destination = Path(directory)
+                    destination.mkdir(parents=True, exist_ok=True)
+                    (destination / 'accessibility-startup-failure.png').write_bytes(
+                        base64.b64decode(call(prefix + '/screenshot')))
+            raise AssertionError('Expected public screen did not render: ' + expected + diagnostic)
 
         if args.synthetic_only:
             from browser_synthetic import bootstrap_script
@@ -102,8 +140,7 @@ def main():
           window.buyerFetchCalls = [];
           const originalFetch = window.fetch;
           window.fetch = function(url, options) {
-            if (['http://localhost:8000/api/v1/', 'http://127.0.0.1:8000/api/v1/']
-                .some(base => String(url).startsWith(base))) {
+            if (new URL(String(url), window.location.href).pathname.startsWith('/api/v1/')) {
               window.buyerFetchCalls.push({path: new URL(String(url)).pathname, credentials: options?.credentials, redirect: options?.redirect});
             }
             return originalFetch.apply(this, arguments);
@@ -180,9 +217,45 @@ def main():
             assert commerce_denial == [401, 401], 'Commerce idempotency-header preflights must allow denial responses.'
         script("window.location.hash = '/';")
         wait_text('Sign in with your approved Buyer account.')
+        accessibility_report = None
         if args.synthetic_shopping or args.synthetic_only:
             from browser_synthetic import check_shopping
-            check_shopping(call, prefix, script, wait_text, resize, matrix=not args.synthetic_journey_only)
+            accessibility_report = check_shopping(
+                call,
+                prefix,
+                script,
+                wait_text,
+                resize,
+                matrix=not args.synthetic_journey_only,
+                shipping_selection=args.synthetic_shipping,
+                list_recovery=args.synthetic_list_recovery,
+                upload_recovery=args.synthetic_upload_recovery,
+                accessibility=args.synthetic_accessibility,
+                accessibility_route=args.accessibility_route,
+            )
+        if args.synthetic_accessibility:
+            browser = call(prefix + '/goog/cdp/execute', {
+                'cmd': 'Browser.getVersion', 'params': {}})
+            accessibility_report.update({
+                'origin': 'http://localhost:8766',
+                'browser': browser.get('product'),
+                'observedAtUtc': datetime.datetime.now(
+                    datetime.timezone.utc).isoformat(),
+            })
+            destination = Path(args.accessibility_report)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_text(json.dumps(accessibility_report, indent=2) + '\n')
+            if accessibility_report['failures']:
+                first = accessibility_report['failures'][0]
+                raise AssertionError(
+                    'Accessibility browser audit found '
+                    f"{len(accessibility_report['failures'])} failures; "
+                    f"first: {first}. Report: {destination}")
+            print(
+                'PASS: synthetic browser accessibility routes, names, 48px '
+                f"targets, keyboard focus, history and no-write resizing. Report: {destination}",
+                flush=True,
+            )
         screenshot = os.environ.get('BUYER_SCREENSHOT')
         if screenshot:
             with open(screenshot, 'wb') as output:

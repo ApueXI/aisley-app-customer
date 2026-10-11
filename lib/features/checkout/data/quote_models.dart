@@ -3,6 +3,7 @@ import '../../../core/networking/api_failure.dart';
 import '../../../core/networking/wire.dart';
 import 'commerce_address.dart';
 import 'voucher_models.dart';
+import 'shipping_models.dart';
 
 class CheckoutQuote {
   CheckoutQuote.parse(Object? json) {
@@ -74,16 +75,13 @@ class ShippingQuote {
   ShippingQuote.parse(Object? json) {
     final w = Wire(json);
     serviceable = w.boolean('serviceable');
-    rateId = w.uuid('rateVersionId');
-    version = w.positiveInt('rateVersion');
-    weight = nonnegative(w, 'billableWeightGrams');
-    baseFee = Money.parse(w.field('baseFee'));
-    additionalFee = Money.parse(w.field('additionalWeightFee'));
-    surcharge = Money.parse(w.field('destinationSurcharge'));
-    logisticsCount = nonnegative(w, 'eligibleLogisticsCount');
+    organizationId = w.uuid('logisticsOrganizationId').toLowerCase();
+    businessName = w.string('logisticsBusinessName');
+    routeStatus = w.string('routeStatus');
+    fee = Money.parse(w.field('shippingFee'));
   }
   late final bool serviceable;
-  late final String rateId;
-  late final int version, weight, logisticsCount;
-  late final Money baseFee, additionalFee, surcharge;
+  late final String organizationId, businessName, routeStatus;
+  late final Money fee;
+  bool get supported => supportedShippingRoute(routeStatus);
 }

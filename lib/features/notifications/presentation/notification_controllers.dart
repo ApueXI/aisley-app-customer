@@ -11,6 +11,7 @@ class NotificationInboxController extends CommerceController {
   bool loading = false, paging = false, loaded = false, hasMore = false;
   int page = 0;
   String? pageError;
+  bool stale = true;
   Future<void> filter(String value) async {
     if (!const ['all', 'read', 'unread'].contains(value) || value == status) {
       return;
@@ -18,8 +19,12 @@ class NotificationInboxController extends CommerceController {
     epoch++;
     status = value;
     items = const [];
+    error = coolingDown ? 'Please wait before retrying this list.' : null;
+    pageError = null;
+    stale = true;
     page = 0;
     hasMore = loaded = loading = paging = false;
+    notifyListeners();
     await load();
   }
 
@@ -27,17 +32,20 @@ class NotificationInboxController extends CommerceController {
     final credential = lease;
     if (credential == null ||
         loading ||
-        paging ||
+        more && paging ||
         coolingDown ||
-        more && !hasMore) {
+        more && (!hasMore || stale)) {
       return;
     }
-    final stamp = epoch;
+    final stamp = more ? epoch : ++epoch;
     if (more) {
       paging = true;
       pageError = null;
     } else {
       loading = true;
+      paging = false;
+      stale = true;
+      pageError = null;
       error = null;
     }
     notifyListeners();
@@ -51,7 +59,6 @@ class NotificationInboxController extends CommerceController {
       if (value.page != (more ? page + 1 : 1)) {
         throw const ApiFailure(FailureKind.decode);
       }
-      final old = items.map((e) => e.id).toSet();
       items = List.unmodifiable(
         {
           if (more)
@@ -60,10 +67,9 @@ class NotificationInboxController extends CommerceController {
         }.values,
       );
       page = value.page;
-      hasMore =
-          value.hasMore &&
-          (!more || value.items.any((e) => !old.contains(e.id)));
+      hasMore = value.hasMore;
       loaded = true;
+      stale = false;
     } on ApiFailure catch (e) {
       if (!current(stamp, credential)) return;
       if (more) {
@@ -72,6 +78,7 @@ class NotificationInboxController extends CommerceController {
         failure(e);
       }
       if (e.status == 403 || e.status == 404) {
+        stale = true;
         items = const [];
         hasMore = loaded = false;
       }
@@ -90,6 +97,7 @@ class NotificationInboxController extends CommerceController {
     page = 0;
     loading = paging = loaded = hasMore = false;
     pageError = null;
+    stale = true;
   }
 }
 

@@ -27,6 +27,8 @@ class SnapshotCache<T> {
     }
   }
 
+  void remove(String key) => _values.remove(key);
+
   void clear() => _values.clear();
 }
 

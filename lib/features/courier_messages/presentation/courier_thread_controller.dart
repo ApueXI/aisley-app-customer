@@ -1,6 +1,7 @@
 import '../../../core/commerce/commerce_controller.dart';
 import '../../../core/commerce/commerce_value.dart';
 import '../../../core/communication/text_rules.dart';
+import '../../../core/chat_media/draft_controller.dart';
 import '../../../core/networking/api_failure.dart';
 import '../../../core/networking/cursor_page.dart';
 import '../data/courier_models.dart';
@@ -20,11 +21,15 @@ class CourierThreadController extends CommerceController {
     super.session,
     this.repository, {
     this.id,
+    this.media,
     this.entry = const {},
     String Function()? uuid,
   }) : uuid = uuid ?? secureUuid;
   final CourierChatRepository repository;
   final String Function() uuid;
+  final ChatMediaDraftController? media;
+  Map<String, Object?> get mediaContext =>
+      id != null ? {'conversation_id': id} : {'channel': 'courier', ...entry};
   String? id;
   final Map<String, dynamic> entry;
   CourierConversation? conversation;
@@ -53,6 +58,7 @@ class CourierThreadController extends CommerceController {
       context?.conversationId != id;
   void contactCurrentCourier() {
     if (!replacementAvailable || sending || loading) return;
+    media?.clear();
     id = context!.conversationId;
     conversation = null;
     messages = const [];
@@ -176,7 +182,10 @@ class CourierThreadController extends CommerceController {
       return;
     }
     final value = normalizedText(draft);
-    final invalid = plainTextError(value, 2000);
+    if (media != null && !media!.ready) return;
+    final invalid = value.isEmpty && media?.hasImages == true
+        ? null
+        : plainTextError(value, 2000);
     if (invalid != null) {
       error = invalid;
       notifyListeners();
@@ -185,7 +194,9 @@ class CourierThreadController extends CommerceController {
     pending = CourierPendingMessage(id, {
       if (id == null) ...entry,
       'body': value,
+      if (media?.hasImages == true) 'attachment_ids': media!.ids,
     }, uuid());
+    if (media != null) media!.locked = true;
     await retry();
   }
 
@@ -222,6 +233,7 @@ class CourierThreadController extends CommerceController {
       conversation = value.$1;
       _merge([value.$2]);
       pending = null;
+      media?.clear(preserveHistory: true);
       draft = '';
       conflict = false;
     } on ApiFailure catch (e) {
@@ -233,6 +245,7 @@ class CourierThreadController extends CommerceController {
           !record.uncertain &&
           !e.fields.containsKey('idempotency_key')) {
         pending = null;
+        if (media != null) media!.locked = false;
       }
       if (e.status == 403 || e.status == 404) {
         reset(preserveUnresolved: false);
@@ -258,6 +271,7 @@ class CourierThreadController extends CommerceController {
     }
     draft = pending?.body['body'] as String? ?? draft;
     pending = null;
+    if (media != null) media!.locked = false;
     conflict = false;
     error = null;
     notifyListeners();
@@ -313,6 +327,8 @@ class CourierThreadController extends CommerceController {
 
   @override
   void reset({required bool preserveUnresolved}) {
+    // Frozen message IDs survive a consent review; private image bytes do not.
+    media?.clear();
     if (preserveUnresolved && sending && pending != null) {
       pending!.uncertain = true;
     }
@@ -329,5 +345,11 @@ class CourierThreadController extends CommerceController {
       conflict = false;
     }
     context = null;
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    media?.dispose();
   }
 }

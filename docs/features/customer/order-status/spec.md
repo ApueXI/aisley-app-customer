@@ -3,9 +3,11 @@ feature: order-status
 role: Customer
 platform: Flutter / Dart
 phase: 3
-flutter_status: Implemented; acceptance partial
+flutter_status: Implemented including 22b0a48 shipping and G30 images; live/device acceptance partial
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
+current_contract_inspected_checkout: 22b0a48f9575ead182d03c35ab87345711c23b90
+current_contract_inspected_order_images: 5d55ecf379c7646dedcae5a3170cfcb61093db26
 ---
 
 # Owned Orders and tracking
@@ -15,7 +17,7 @@ contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 Backend: Owned list/detail/timeline, status mapper, immutable facts and safe assigned-Courier projection
 implemented; live maps deferred.
 
-Flutter: **implemented; acceptance partial**. See [Phase 3 evidence](../../../references/phase-3-verification.md); live-account/device gates remain open.
+Flutter: **implemented including current shipping selection/projections**. See [G25 evidence](../../../references/shipping-selection-verification.md); live-account/device gates remain open.
 
 Account Orders → All/status group → own detail/timeline → server-capable correction/contact/review.
 
@@ -24,7 +26,8 @@ Account Orders → All/status group → own detail/timeline → server-capable c
 - Buyer cannot advance status, scan/submit proof/accept tasks/collect COD. map.available=false means no fabricated GPS/route/ETA. Tracking Courier name/contact does not enable chat: fetch Courier Order-context.
 - Responses are private; focus/reconnect/filter paging must discard obsolete account responses. Routine movement/first-mile scheduling does not imply Buyer notifications.
 
-The local bundle supplies the implementation contract. Upstream paths are optional provenance only.
+The current [shipping contract](../../../api/shipping-selection.md) governs provider selection and DTOs;
+current client checks are recorded in [G25 evidence](../../../references/shipping-selection-verification.md). Upstream paths remain optional provenance.
 Use this feature with its prerequisite session/consent boundary and the related shopping or
 communication repositories.
 The Customer client cannot perform Seller/Admin/Logistics/Courier actions. Current Laravel ownership and
@@ -49,6 +52,10 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 - Order Detail uses immutable items/address/payment/vouchers/totals, with explicit
   deliveryAddress.version.
 - Historical productId/variantId/sku may be null; snapshots remain readable after Product removal.
+- Parse optional nullable `imageUrl` on ItemPreview and purchased items; older omission means unavailable.
+- Orders list/detail use 64px public Product thumbnails, wrapping facts and loading/unavailable fallbacks.
+- Trusted API media paths load without credentials; image failures never block Order facts/actions.
+- Images reflect current media, not frozen purchase evidence; see [G30 checks](../../../references/order-images-verification.md).
 - TimelineCount/HasMore determine whether to load tracking pages; preserve returned chronology and
   deduplicate event IDs.
 - Tracking location omits unavailable hub/city; empty PHP array can arrive as [] and must normalize to
@@ -110,8 +117,8 @@ actions.
 
 | DTO | Wire fields and types |
 | --- | --- |
-| `Order` | `id: UUID`, `reference: string`, `checkoutBatchId: UUID?`, `placedAt: timestamp`, `latestTrackingAt: timestamp`, `status: string`, `statusLabel: string`, `group: string`, `groupLabel: string`, `shop: OrderShop`, `items: ReviewableItem[]`, `deliveryAddress: DeliveryAddress`, `payment: Payment`, `vouchers: OrderVoucher[]`, `totals: Totals`, `timeline: Tracking[]`, `timelineCount: int`, `timelineHasMore: bool`, `trackingUrl: URL`, `delivery: Delivery?`, `map: UnavailableMap`, `actions: OrderActions` |
-| `OrderSummary` | `id: UUID`, `reference: string`, `shop: OrderShop`, `itemPreview: ItemPreview?`, `lineCount: int`, `itemCount: int`, `status: string`, `statusLabel: string`, `group: string`, `groupLabel: string`, `latestTrackingAt: timestamp`, `totals: Totals`, `actions: OrderActions`, `detailUrl: URL` |
+| `Order` | `id: UUID`, `reference: string`, `checkoutBatchId: UUID?`, `placedAt: timestamp`, `latestTrackingAt: timestamp`, `status: string`, `statusLabel: string`, `group: string`, `groupLabel: string`, `shop: OrderShop`, `shippingProvider: ShippingProvider?`, `items: ReviewableItem[]`, `deliveryAddress: DeliveryAddress`, `payment: Payment`, `vouchers: OrderVoucher[]`, `totals: Totals`, `timeline: Tracking[]`, `timelineCount: int`, `timelineHasMore: bool`, `trackingUrl: URL`, `delivery: Delivery?`, `map: UnavailableMap`, `actions: OrderActions` |
+| `OrderSummary` | `id: UUID`, `reference: string`, `shop: OrderShop`, `shippingProvider: ShippingProvider?`, `itemPreview: ItemPreview?`, `lineCount: int`, `itemCount: int`, `status: string`, `statusLabel: string`, `group: string`, `groupLabel: string`, `latestTrackingAt: timestamp`, `totals: Totals`, `actions: OrderActions`, `detailUrl: URL` |
 | `Tracking` | `id: UUID`, `status: string`, `label: string`, `eventType: string?`, `location: TrackingLocation`, `occurredAt: timestamp` |
 | `OrderActions` | `canCancel: bool`, `canModify: bool`, `canReview: bool`, `modifiableFields: string[]` |
 
@@ -185,14 +192,15 @@ universal error envelope.
 
 ### Verification scenarios
 
+- [x] Current nullable provider/shipping projections and related selection effects pass G25 client verification.
 - [ ] Foreign/role/account-state privacy and bounded group/list/timeline work.
 - [ ] Server actions/maps/labels and independent Shop Orders remain truthful through refresh/error/late
   replies.
 - [ ] Android and fixed-origin local browser verify loading/empty/errors, keyboard/back/focus, supported
   permission/retry states and cleanup after identity loss.
-- [x] DTO fixtures reject wrong required types, distinguish null/absent/false/empty and preserve wire
+- [ ] DTO fixtures reject wrong required types, distinguish null/absent/false/empty and preserve wire
   casing.
-- [x] Each consumed operation uses its documented method/body/envelope and correct public/private
+- [ ] Each consumed operation uses its documented method/body/envelope and correct public/private
   credential behavior.
 - [ ] Exercise normal, empty, malformed, denied, consent-required, validation, conflict, throttle,
   offline and timeout outcomes.
@@ -218,5 +226,5 @@ Append actual implementation/test outcomes to [Progress](../../../PROGRESS.md) a
 Follow [architecture](../../../architecture.md), [setup](../../../setup.md) and
 [verification](../../../verification.md).
 
-Spec revision 2026-10-04: Phase 3 client implemented against the unchanged inspected checkout;
-synthetic verification is separate from live commerce and installed-device acceptance.
+Shipping adoption 2026-10-09: [G25 evidence](../../../references/shipping-selection-verification.md) records current client checks.
+Live/device commerce and deployment configuration remain open under G25.

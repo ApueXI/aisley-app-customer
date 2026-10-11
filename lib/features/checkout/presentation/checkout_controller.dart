@@ -10,6 +10,7 @@ import '../data/batch_models.dart';
 import '../data/checkout_repository.dart';
 import '../data/quote_models.dart';
 import '../domain/checkout_intent.dart';
+import 'checkout_shipping_controller.dart';
 
 class CheckoutController extends CommerceController {
   CheckoutController(
@@ -19,7 +20,11 @@ class CheckoutController extends CommerceController {
     this.cart, {
     required this.clock,
     required this.uuid,
-  });
+  }) {
+    shipping = CheckoutShippingController(session, repository);
+    shipping.addListener(notifyListeners);
+  }
+  late final CheckoutShippingController shipping;
   final CheckoutRepository repository;
   final AddressRepository addressRepository;
   final CartController cart;
@@ -33,6 +38,8 @@ class CheckoutController extends CommerceController {
   CheckoutInput? _reviewedInput;
   CheckoutBatch? result;
   PendingPlacement? pending;
+  // A later rejected attempt does not prove an earlier request rolled back.
+  bool _placementUncertain = false;
   List<String> _pendingShopIds = const [];
   bool loadingAddresses = false, quoting = false, placing = false;
   bool addressesFresh = false, collision = false, cartChanged = false;
@@ -51,6 +58,7 @@ class CheckoutController extends CommerceController {
       addressesFresh &&
       addressId != null &&
       intent != null &&
+      shipping.ready &&
       !cartChanged;
   bool get canPlace =>
       editable &&
@@ -59,6 +67,7 @@ class CheckoutController extends CommerceController {
       _reviewedInput != null &&
       quote!.paymentMethod == 'cod' &&
       quote!.summary.currency == 'PHP' &&
+      quote!.groups.every((g) => g.shipping.supported) &&
       !cartChanged;
 
   bool begin(CheckoutIntent value) {
@@ -67,8 +76,10 @@ class CheckoutController extends CommerceController {
     vouchers = const [];
     result = null;
     cartChanged = false;
+    shipping.reset(preserveUnresolved: false);
     invalidateQuote();
     notifyListeners();
+    if (addressesFresh && addressId != null) unawaited(loadShippingOptions());
     return true;
   }
 
@@ -83,6 +94,7 @@ class CheckoutController extends CommerceController {
   void onCartChanged() {
     if (intent?.mode != 'cart' || pending != null) return;
     cartChanged = true;
+    shipping.invalidate();
     invalidateQuote();
     if (!disposed) notifyListeners();
   }
@@ -93,7 +105,32 @@ class CheckoutController extends CommerceController {
     }
     addressId = id;
     invalidateQuote();
+    shipping.invalidate();
     notifyListeners();
+    unawaited(loadShippingOptions());
+  }
+
+  void chooseProvider(String shopId, String organizationId) {
+    final hadReview = quote != null;
+    if (!editable || !shipping.select(shopId, organizationId)) return;
+    invalidateQuote();
+    error = hadReview
+        ? 'Shipping provider changed. Review your order again before placing.'
+        : null;
+    fieldErrors = const {};
+    notifyListeners();
+  }
+
+  Future<void> loadShippingOptions() async {
+    if (!editable ||
+        !addressesFresh ||
+        addressId == null ||
+        intent == null ||
+        cartChanged) {
+      return;
+    }
+    invalidateQuote();
+    await shipping.load(CheckoutInput(intent!, addressId!, vouchers));
   }
 
   void chooseVoucher(
@@ -115,6 +152,24 @@ class CheckoutController extends CommerceController {
     invalidateQuote();
     error = 'Voucher selection changed. Get a new quote and review the totals.';
     notifyListeners();
+    unawaited(loadShippingOptions());
+  }
+
+  /// Only an editable review may leave for collection; frozen placement is untouched.
+  bool openVoucherCollection(String id) {
+    if (!editable ||
+        quote == null ||
+        !quote!.groups.any(
+          (g) => g.candidates.any(
+            (v) => v.id == id && v.reason == 'VOUCHER_NOT_CLAIMED',
+          ),
+        )) {
+      return false;
+    }
+    invalidateQuote();
+    error = 'After collecting, review your order again and select the voucher.';
+    notifyListeners();
+    return true;
   }
 
   void removeVoucher(String id) {
@@ -122,6 +177,7 @@ class CheckoutController extends CommerceController {
     vouchers = List.unmodifiable(vouchers.where((v) => v.voucherId != id));
     invalidateQuote();
     notifyListeners();
+    unawaited(loadShippingOptions());
   }
 
   Future<void> loadAddresses() async {
@@ -135,6 +191,7 @@ class CheckoutController extends CommerceController {
     final generation = epoch;
     loadingAddresses = true;
     addressesFresh = false;
+    shipping.invalidate();
     invalidateQuote();
     error = null;
     notifyListeners();
@@ -164,6 +221,9 @@ class CheckoutController extends CommerceController {
         notifyListeners();
       }
     }
+    if (current(generation, credential) && addressesFresh) {
+      await loadShippingOptions();
+    }
   }
 
   Future<void> getQuote() async {
@@ -172,7 +232,12 @@ class CheckoutController extends CommerceController {
     final generation = epoch;
     invalidateQuote();
     final query = _query;
-    final input = CheckoutInput(intent!, addressId!, vouchers);
+    final input = CheckoutInput(
+      intent!,
+      addressId!,
+      vouchers,
+      logisticsSelections: shipping.selections,
+    );
     quoting = true;
     error = null;
     fieldErrors = const {};
@@ -190,7 +255,10 @@ class CheckoutController extends CommerceController {
         });
       }
     } on ApiFailure catch (value) {
-      if (current(generation, credential) && query == _query) failure(value);
+      if (current(generation, credential) && query == _query) {
+        failure(value);
+        if (shippingFailureCodes.contains(value.code)) shipping.invalidate();
+      }
     } finally {
       if (current(generation, credential) && query == _query) {
         quoting = false;
@@ -209,6 +277,24 @@ class CheckoutController extends CommerceController {
       throw const ApiFailure(FailureKind.decode);
     }
     final items = value.groups.expand((g) => g.items).toList();
+    final optionsShopIds = shipping.options!.groups
+        .map((g) => g.shop.id.toLowerCase())
+        .toSet();
+    if (value.groups.length != optionsShopIds.length ||
+        !optionsShopIds.containsAll(
+          value.groups.map((g) => g.shop.id.toLowerCase()),
+        )) {
+      throw const ApiFailure(FailureKind.decode);
+    }
+    for (final selection in input.logisticsSelections) {
+      final group = value.groups
+          .where((g) => g.shop.id.toLowerCase() == selection.shopId)
+          .firstOrNull;
+      if (group == null ||
+          group.shipping.organizationId != selection.organizationId) {
+        throw const ApiFailure(FailureKind.decode);
+      }
+    }
     if (input.intent.mode == 'cart') {
       final ids = items.map((i) => i.cartItemId).toSet();
       if (ids.length != items.length ||
@@ -237,8 +323,18 @@ class CheckoutController extends CommerceController {
     }
   }
 
-  Future<CheckoutBatch?> place() async {
+  Future<CheckoutBatch?> place({CheckoutQuote? confirmedQuote}) async {
+    if (confirmedQuote != null &&
+        (!identical(confirmedQuote, quote) || expired)) {
+      if (editable) {
+        invalidateQuote();
+        error = 'Your order review changed or expired. Review again before placing.';
+        notifyListeners();
+      }
+      return null;
+    }
     if (!canPlace) return null;
+    _placementUncertain = false;
     pending = PendingPlacement(
       key: requireUuid(uuid()),
       payload: _reviewedInput!.toJson(quoteId: quote!.id),
@@ -264,6 +360,9 @@ class CheckoutController extends CommerceController {
       return null;
     }
     final generation = epoch;
+    final hadUncertainOutcome = _placementUncertain;
+    // Until a current response is classified, an interrupted exchange is unresolved.
+    _placementUncertain = true;
     placing = true;
     error = null;
     fieldErrors = const {};
@@ -286,9 +385,11 @@ class CheckoutController extends CommerceController {
       }
       result = value;
       pending = null;
+      _placementUncertain = false;
       _pendingShopIds = const [];
       intent = null;
       vouchers = const [];
+      shipping.reset(preserveUnresolved: false);
       invalidateQuote();
       if (frozen.cartMode) await cart.load();
       if (!current(generation, credential)) return null;
@@ -300,14 +401,35 @@ class CheckoutController extends CommerceController {
         'IDEMPOTENCY_KEY_REUSED',
         'QUOTE_ALREADY_PLACED',
       ].contains(value.code);
-      if (value.uncertain || collision) {
+      final quoteRejected =
+          value.status == 409 &&
+          const [
+            'QUOTE_EXPIRED',
+            'QUOTE_INPUT_CHANGED',
+            'QUOTE_STALE',
+          ].contains(value.code);
+      _placementUncertain = hadUncertainOutcome || value.uncertain;
+      // Resource denial clears projections, not an earlier unresolved request.
+      if (value.status == 403 || value.status == 404) {
+        addresses = const [];
+        addressId = null;
+        addressesFresh = false;
+        vouchers = const [];
+        shipping.reset(preserveUnresolved: false);
+        invalidateQuote();
+      }
+      if (collision || (_placementUncertain && !quoteRejected)) {
         error = collision
             ? 'Placement could not be reconciled. Check Orders; another placement is blocked.'
+            : value.status == 429
+            ? 'The service is limiting requests. Your earlier order is still unconfirmed. Wait before retrying the exact placement; do not place another order.'
             : 'The placement outcome is uncertain. Retry the exact request to check it; do not place another order.';
       } else {
         pending = null;
+        _placementUncertain = false;
         _pendingShopIds = const [];
         invalidateQuote();
+        if (shippingFailureCodes.contains(value.code)) shipping.invalidate();
         error =
             '${value.description} Get a fresh quote and review before placing again.';
       }
@@ -325,8 +447,12 @@ class CheckoutController extends CommerceController {
     invalidateQuote();
     if (!preserveUnresolved) {
       pending = null;
+      _placementUncertain = false;
       _pendingShopIds = const [];
       collision = false;
+    } else if (pending != null) {
+      // A consent interruption can hide the response of an in-flight request.
+      _placementUncertain = true;
     }
     intent = null;
     addressId = null;
@@ -336,8 +462,30 @@ class CheckoutController extends CommerceController {
     loadingAddresses = placing = false;
     addressesFresh = false;
     cartChanged = false;
+    shipping.reset(preserveUnresolved: false);
+  }
+
+  @override
+  void dispose() {
+    shipping.removeListener(notifyListeners);
+    super.dispose();
+    shipping.dispose();
   }
 }
+
+const shippingFailureCodes = {
+  'LOGISTICS_SELECTION_REQUIRED',
+  'LOGISTICS_SELECTION_INVALID',
+  'LOGISTICS_PROVIDER_UNAVAILABLE',
+  'SHIPPING_COVERAGE_UNAVAILABLE',
+  'PICKUP_ADDRESS_REQUIRED',
+  'SHIPPING_RATE_UNAVAILABLE',
+  'LOGISTICS_RATE_NOT_ACCEPTED',
+  'SHIPPING_DATA_REQUIRED',
+  'SHIPPING_DIMENSIONS_UNSUPPORTED',
+  'SHIPPING_WEIGHT_UNSUPPORTED',
+  'ROUTE_RATE_LIMIT_EXCEEDED',
+};
 
 /// A small immutable selection reference; eligibility is checked against the quote.
 class CheckoutVoucherCandidate {

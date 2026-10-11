@@ -4,6 +4,7 @@ import '../../../core/networking/wire.dart';
 import '../../checkout/data/batch_models.dart';
 import '../../checkout/data/commerce_address.dart';
 import '../../checkout/data/voucher_models.dart';
+import '../../checkout/data/shipping_models.dart';
 import 'tracking_models.dart';
 
 const orderGroups = [
@@ -56,6 +57,10 @@ class BuyerOrder {
     group = w.string('group');
     groupLabel = w.string('groupLabel');
     shop = CommerceShop.parse(w.object('shop'), order: true);
+    final provider = w.field('shippingProvider');
+    shippingProvider = provider == null
+        ? null
+        : ShippingProvider.parse(provider);
     items = w.list('items', (v) => SnapshotItem.parse(v, reviewable: true));
     address = CommerceAddress.parse(
       w.object('deliveryAddress'),
@@ -95,6 +100,7 @@ class BuyerOrder {
   late final String? batchId;
   late final DateTime placedAt, latestTrackingAt;
   late final CommerceShop shop;
+  late final ShippingProvider? shippingProvider;
   late final List<SnapshotItem> items;
   late final CommerceAddress address;
   late final List<SnapshotVoucher> vouchers;
@@ -140,6 +146,10 @@ class OrderSummary {
     id = w.uuid('id');
     reference = w.string('reference');
     shop = CommerceShop.parse(w.object('shop'), order: true);
+    final provider = w.field('shippingProvider');
+    shippingProvider = provider == null
+        ? null
+        : ShippingProvider.parse(provider);
     final preview = w.field('itemPreview');
     item = preview == null ? null : ItemPreview.parse(preview);
     lineCount = nonnegative(w, 'lineCount');
@@ -161,6 +171,7 @@ class OrderSummary {
       groupLabel,
       detailUrl;
   late final CommerceShop shop;
+  late final ShippingProvider? shippingProvider;
   late final ItemPreview? item;
   late final int lineCount, itemCount;
   late final DateTime latestTrackingAt;
@@ -175,8 +186,9 @@ class ItemPreview {
     name = w.string('productName');
     variantName = w.nullableString('variantName');
     quantity = w.positiveInt('quantity');
+    imageUrl = w.optionalString('imageUrl');
   }
-  late final String? productId, variantName;
+  late final String? productId, variantName, imageUrl;
   late final String name;
   late final int quantity;
 }

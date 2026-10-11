@@ -58,7 +58,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     builder: (context, _) => ShoppingPage(
       appBar: AppBar(title: const Text('Product')),
       body: _loaded(context),
-      bottomBar: !_wide(context) && _controller.product != null
+      bottomBar:
+          !_wide(context) &&
+              !_compactHeight(context) &&
+              _controller.product != null
           ? PurchaseBar(child: _purchaseActions())
           : null,
     ),
@@ -69,6 +72,11 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               pageSpacing(context) * 2) >=
           840 &&
       catalogTextScale(context) <= 1.5;
+
+  bool _compactHeight(BuildContext context) =>
+      MediaQuery.sizeOf(context).height -
+          MediaQuery.viewInsetsOf(context).bottom <
+      500;
 
   Widget _purchaseActions() => ProductPurchaseActions(
     key: _actionsKey,
@@ -213,7 +221,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                           child: Text(widget.dependencies.savedStatus!.error!),
                         ),
                 ),
-                if (wide) _purchaseActions(),
+                if (wide || _compactHeight(context)) _purchaseActions(),
                 const SizedBox(height: 20),
                 Text('Shop', style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 8),
@@ -307,33 +315,36 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         final state = session.active ? savedStatus.isSaved(productId) : null;
         final saved = state == true;
         final pending = session.active && savedStatus.isPending(productId);
-        return IconButton.filledTonal(
-          tooltip: session.active && state == null
-              ? 'Check Wishlist status'
-              : saved
-              ? 'Remove from Wishlist'
-              : 'Save to Wishlist',
-          onPressed: pending || savedStatus.coolingDown
-              ? null
-              : () {
-                  if (!session.active) {
-                    context.push(
-                      '/login?returnTo=${Uri.encodeComponent('/products/$productId')}',
-                    );
-                    return;
-                  }
-                  if (state == null) {
-                    savedStatus.loadStatuses([productId]);
-                    return;
-                  }
-                  savedStatus.setSaved(productId, !saved);
-                },
-          icon: pending
-              ? const SizedBox.square(
-                  dimension: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : Icon(saved ? Icons.favorite : Icons.favorite_border),
+        return SizedBox.square(
+          dimension: 48,
+          child: IconButton.filledTonal(
+            tooltip: session.active && state == null
+                ? 'Check Wishlist status'
+                : saved
+                ? 'Remove from Wishlist'
+                : 'Save to Wishlist',
+            onPressed: pending || savedStatus.coolingDown
+                ? null
+                : () {
+                    if (!session.active) {
+                      context.push(
+                        '/login?returnTo=${Uri.encodeComponent('/products/$productId')}',
+                      );
+                      return;
+                    }
+                    if (state == null) {
+                      savedStatus.loadStatuses([productId]);
+                      return;
+                    }
+                    savedStatus.setSaved(productId, !saved);
+                  },
+            icon: pending
+                ? const SizedBox.square(
+                    dimension: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Icon(saved ? Icons.favorite : Icons.favorite_border),
+          ),
         );
       },
     );

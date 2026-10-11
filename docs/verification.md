@@ -22,7 +22,7 @@ For each phase record backend commit/configuration, target/origin, Flutter SDK/a
 - [ ] Profile/password/preference fields are allow-listed; current bearer survives account password change, other tokens are revoked, reset revokes all tokens; email remains read-only. Private avatar bytes cannot leak to another account/cache.
 - [ ] Android/browser multipart uses `photo`/`image`, exact under-10-MiB limit and allowed types; cancel/permission/corruption/spoof/size/throttle/consent/storage failure and uncertain response reconciliation work; review partial photos are not duplicated blindly.
 - [ ] Cart same-configuration merge/increment, separate variants, variation replacement/merge, server stock/visibility conflicts and unavailable lines work; uncertain additive writes do not auto-replay.
-- [ ] Buy Now leaves Cart unchanged; selected Cart checkout creates atomic one-Order-per-Shop batches; address/serviceability/rate changes invalidate quotes; no provider selection or local payable calculation appears.
+- [ ] Buy Now leaves Cart unchanged; selected Cart checkout creates atomic one-Order-per-Shop batches; address/serviceability/rate/provider changes invalidate quotes; current per-Shop provider options, choice/fallback and revised DTOs pass G25 adoption checks; no local payable calculation appears.
 - [ ] Voucher UUID/targeting, one App per batch, per-benefit limits/reciprocal stacking, zero-saving redemption, caps/rounding and limited-capacity conflicts are verified; no wallet/claim/code-entry endpoint is assumed.
 - [ ] Place response loss/timeouts and exact-key replay create one batch/reservation/redemption; changed payload/key conflicts, fresh quote review and process-death uncertainty follow documented limits.
 - [ ] Owned Orders/tracking hide foreign data; status tabs/capabilities match server; maps remain unavailable; cancellation/address correction races with Seller processing, releases/snapshots and revision/idempotency work without refund promises.
@@ -63,6 +63,24 @@ states across 320–1440px, landscape and text scales 1/1.5/2. Checkout mount/re
 keeps an existing controller listener mounted to detect build-phase notifications.
 Product dividers span the complete item, below wrapped actions. Manual localhost:8766
 browser inspection and installed Android/TalkBack remain unverified for this change.
-The user-reported quote HTTP 500 is a missing backend table, recorded in the
-[integration gaps](references/integration-gaps.md#reported-checkout-deployment-failure--2026-10-05).
+Historical user reports describe a missing-table quote HTTP 500 followed by storefront
+provider-quotation failure. Current resolution remains unverified; see the
+[integration gaps](references/integration-gaps.md#reported-checkout-provider-failures--2026-10-05).
 Builds and synthetic checks do not establish successful live quotes or COD placement.
+
+## New backend contract adoption gates — 2026-10-09
+
+- [ ] Verify controlled live/device [per-Shop shipping selection](api/shipping-selection.md). Current options, choice/fallback, frozen recovery and DTO adoption have [synthetic client evidence](references/shipping-selection-verification.md); deployed-provider/commerce and installed Android/TalkBack gates remain open (G25).
+- [ ] Adopt [private chat media](api/chat-media.md): upload/readiness, ordered binding on Send, exact supported retries, authenticated content/preview delivery and private account cleanup. Verify Android/browser file handling and installed-device behavior (G26).
+
+The handoff's reviewed backend revision is separate from current client adoption and the
+unidentified deployed API revision. Earlier Phase 3/4 checks certify their dated client scope;
+this documentation sync executes no live commerce, attachment exchange or Flutter acceptance.
+[Local sync evidence](references/webapp-docs-sync-2026-10-09.md) records preservation and document checks.
+
+## Accessibility across journeys — 2026-10-10
+
+Local widget, build and synthetic-browser results are recorded in
+[accessibility journeys verification](references/accessibility-journeys-verification.md).
+The installed Android/TalkBack and controlled live-API browser gates remain
+open; the synthetic run does not complete the broad device/API acceptance item.

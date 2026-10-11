@@ -136,9 +136,13 @@ class ApiClient {
     required String filename,
     required String mimeType,
     required SessionLease lease,
+    Map<String, String> fields = const {},
+    String? idempotencyKey,
     void Function(int sent, int total)? onSendProgress,
+    CancelToken? cancelToken,
   }) async {
     final multipart = FormData.fromMap({
+      ...fields,
       fieldName: MultipartFile.fromBytes(
         bytes,
         filename: filename,
@@ -152,7 +156,9 @@ class ApiClient {
       lease: lease,
       deadline: uploadDeadline,
       retryRead: false,
+      headers: {'Idempotency-Key': ?idempotencyKey},
       onSendProgress: onSendProgress,
+      cancelToken: cancelToken,
     );
     if (response.data is! Map<String, dynamic>) {
       throw const ApiFailure(FailureKind.decode);
@@ -171,6 +177,7 @@ class ApiClient {
     ResponseType? responseType,
     Map<String, Object?> headers = const {},
     void Function(int sent, int total)? onSendProgress,
+    CancelToken? cancelToken,
   }) async {
     final baseUri = config.apiUri(path);
     if (queryParameters != null &&
@@ -192,7 +199,7 @@ class ApiClient {
     final uri = query == null
         ? baseUri
         : baseUri.replace(queryParameters: query);
-    final cancellation = CancelToken();
+    final cancellation = cancelToken ?? CancelToken();
     lease?.attach(cancellation);
     try {
       return await _exchange(
@@ -257,7 +264,7 @@ class ApiClient {
                 },
               ),
             );
-        if (lease != null && !lease.isCurrent()) {
+        if (cancellation.isCancelled || lease != null && !lease.isCurrent()) {
           throw const ApiFailure(FailureKind.cancelled);
         }
         if (response.statusCode == null ||

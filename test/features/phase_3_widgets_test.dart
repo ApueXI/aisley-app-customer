@@ -228,7 +228,19 @@ void main() {
         h.adapter.requests.where((r) => r.uri.path.endsWith('/cancel')),
         isEmpty,
       );
-      await tester.tap(find.text('Keep Order'));
+      final keepOrder = find.text('Keep Order');
+      await Scrollable.ensureVisible(
+        tester.element(keepOrder),
+        alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
+      );
+      await tester.pumpAndSettle();
+      final keepButton = find.ancestor(
+        of: keepOrder,
+        matching: find.byType(TextButton),
+      );
+      expect(tester.getSize(keepButton).height, greaterThanOrEqualTo(48));
+      expect(keepButton.hitTestable(), findsOneWidget);
+      await tester.tap(keepOrder);
       await tester.pumpAndSettle();
       expect(h.commerce.mutations.pending(customerId), isNull);
       h.commerce.checkout.invalidateQuote();

@@ -111,7 +111,10 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                     ),
                   ],
                   if (_controller.order != null) ...[
-                    OrderFacts(_controller.order!),
+                    OrderFacts(
+                      _controller.order!,
+                      discovery: widget.dependencies.discovery!,
+                    ),
                     if (widget.dependencies.communication != null) ...[
                       Wrap(
                         spacing: 8,

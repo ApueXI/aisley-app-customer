@@ -31,6 +31,7 @@ class _CourierInboxScreenState extends State<CourierInboxScreen> {
   @override
   Widget build(BuildContext context) => ForegroundPoll(
     refresh: controller.load,
+    busy: () => controller.loading || controller.paging,
     visible: () => !widget.embedded || marketplaceDesktop(context),
     paused: () =>
         controller.offline ||
@@ -48,6 +49,7 @@ class _CourierInboxScreenState extends State<CourierInboxScreen> {
                   InboxRow(e.id, e.label, e.preview, e.unread, !e.sendAllowed),
               ],
               loading: controller.loading,
+              stale: controller.stale,
               loaded: controller.loaded,
               paging: controller.paging,
               more: controller.trail.next != null,
@@ -103,13 +105,18 @@ class _CourierThreadScreenState extends State<CourierThreadScreen> {
                         embedded: true,
                       ),
                 title: c.conversation?.label ?? 'Courier message',
+                media: c.media,
+                mediaContext: c.mediaContext,
                 rows: [
                   for (final e in c.messages)
                     MessageRow(e.id, e.sequence, e.body, e.mine, e.role, e.at),
                 ],
                 draft: c.pending?.body['body'] as String? ?? c.draft,
                 changed: (v) => c.draft = v,
-                clearDraft: () => c.draft = '',
+                clearDraft: () {
+                  c.draft = '';
+                  c.media?.clear();
+                },
                 send: c.send,
                 retry: c.retry,
                 refresh: c.load,

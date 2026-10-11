@@ -47,3 +47,7 @@ The backend contract baseline remains `57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50`
 - The initial sandboxed Flutter command could not write its SDK cache; subsequent commands passed with approved cache access. Parsed all documentation JSON and checked whitespace, duplicated fixtures, SDK agreement and unchanged tracked application files.
 
 No feature-code analysis, Flutter tests, Android/web builds, installed-device/browser checks or live API acceptance ran. These dependency/scaffold checks do not complete any Buyer feature or resolve remaining storage, plugin runtime, deployment or release gates.
+
+## Selective webapp contract merge — 2026-10-09
+
+[Local sync evidence](webapp-docs-sync-2026-10-09.md) and its validation record distinguish the supplied newer shipping/media contracts from client adoption. Original dated checks/evidence remain preserved; no application or backend runtime verification is established by this merge.
