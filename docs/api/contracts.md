@@ -71,3 +71,14 @@ Current source inspection `22b0a48f9575ead182d03c35ab87345711c23b90` is separate
 ## Voucher collection delta — 2026-10-11
 
 [Discovery, collection and wallet](voucher-collection.md) supplies the seven additive operations, DTO, availability, natural replay and Checkout collection gate.
+
+## Order image adoption — 2026-10-11
+
+Current Laravel `5d55ecf` exposes nullable `imageUrl` in Order `itemPreview`, purchased
+items, Checkout quote items and batch items. Buyer parses preview/detail/batch fields
+as optional nullable strings for older-server compatibility and renders thumbnails
+in Order history/detail using existing trusted public-media reads without credentials.
+Failed or unsupported URLs use the placeholder; no storage URL is constructed.
+The image reflects current approved variant media, Product default/first approved
+gallery media, or the existing legacy thumbnail projection; purchase facts stay frozen.
+Checkout presentation adoption is outside G30. See [verification](../references/order-images-verification.md).

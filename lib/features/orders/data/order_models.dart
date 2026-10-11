@@ -186,8 +186,9 @@ class ItemPreview {
     name = w.string('productName');
     variantName = w.nullableString('variantName');
     quantity = w.positiveInt('quantity');
+    imageUrl = w.optionalString('imageUrl');
   }
-  late final String? productId, variantName;
+  late final String? productId, variantName, imageUrl;
   late final String name;
   late final int quantity;
 }

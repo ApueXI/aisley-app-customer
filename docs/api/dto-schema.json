@@ -367,6 +367,7 @@
       "productId": "UUID",
       "variantId": "UUID?",
       "productName": "string",
+      "imageUrl": "URL?~",
       "sku": "string?",
       "selectedOptions": "SelectedOption[]",
       "unitPrice": "money",
@@ -458,6 +459,7 @@
       "productId": "UUID?",
       "variantId": "UUID?",
       "productName": "string",
+      "imageUrl": "URL?~",
       "variantName": "string?",
       "sku": "string?",
       "selectedOptions": "SelectedOption[]",
@@ -471,6 +473,7 @@
       "productId": "UUID?",
       "variantId": "UUID?",
       "productName": "string",
+      "imageUrl": "URL?~",
       "variantName": "string?",
       "sku": "string?",
       "selectedOptions": "SelectedOption[]",
@@ -576,6 +579,7 @@
     "ItemPreview": {
       "productId": "UUID?",
       "productName": "string",
+      "imageUrl": "URL?~",
       "variantName": "string?",
       "quantity": "int"
     },

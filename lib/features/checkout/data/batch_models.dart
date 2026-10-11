@@ -63,6 +63,7 @@ class SnapshotItem {
     name = w.string('productName');
     variantName = w.nullableString('variantName');
     sku = w.nullableString('sku');
+    imageUrl = w.optionalString('imageUrl');
     options = w.list('selectedOptions', SelectedOption.parse);
     unitPrice = Money.parse(w.field('unitPrice'));
     quantity = w.positiveInt('quantity');
@@ -72,7 +73,7 @@ class SnapshotItem {
     reviewId = reviewable ? nullableUuid(w, 'reviewId') : null;
   }
   late final String id, name, currency;
-  late final String? productId, variantId, variantName, sku, reviewId;
+  late final String? productId, variantId, variantName, sku, reviewId, imageUrl;
   late final bool canReview;
   late final List<SelectedOption> options;
   late final Money unitPrice, subtotal;

@@ -8,6 +8,7 @@ import '../../../core/ui/marketplace_widgets.dart';
 import '../data/order_models.dart';
 import '../../checkout/presentation/shipping_details.dart';
 import 'orders_controller.dart';
+import 'order_item_row.dart';
 
 class OrdersScreen extends StatefulWidget {
   const OrdersScreen({super.key, required this.dependencies});
@@ -113,12 +114,19 @@ class _OrdersScreenState extends State<OrdersScreen>
                       businessName: order.shippingProvider?.businessName,
                       fee: order.totals.shipping.display(order.totals.currency),
                     ),
-                    Text(
-                      order.item?.name ?? '${order.lineCount} items',
-                      style: Theme.of(context).textTheme.titleMedium,
+                    OrderItemRow(
+                      imageUrl: order.item?.imageUrl,
+                      name: order.item?.name ?? '${order.lineCount} items',
+                      discovery: widget.dependencies.discovery!,
+                      details: [
+                        Text(
+                          order.item?.name ?? '${order.lineCount} items',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        if (order.item?.variantName != null)
+                          Text(order.item!.variantName!),
+                      ],
                     ),
-                    if (order.item?.variantName != null)
-                      Text(order.item!.variantName!),
                     const SizedBox(height: 8),
                     Text(
                       '${order.itemCount} items · ${order.totals.payable.display(order.totals.currency)}',

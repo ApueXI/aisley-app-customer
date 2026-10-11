@@ -74,7 +74,8 @@
                   ],
                   "unitPrice": "100.00",
                   "quantity": 1,
-                  "lineSubtotal": "100.00"
+                  "lineSubtotal": "100.00",
+                  "imageUrl": null
                 }
               ],
               "availableVouchers": [],
@@ -417,7 +418,8 @@
                   "unitPrice": "100.00",
                   "quantity": 1,
                   "lineSubtotal": "100.00",
-                  "currency": "PHP"
+                  "currency": "PHP",
+                  "imageUrl": null
                 }
               ],
               "address": {
@@ -745,7 +747,8 @@
                   "unitPrice": "100.00",
                   "quantity": 1,
                   "lineSubtotal": "100.00",
-                  "currency": "PHP"
+                  "currency": "PHP",
+                  "imageUrl": null
                 }
               ],
               "address": {
@@ -976,7 +979,8 @@
                       "unitPrice": "100.00",
                       "quantity": 1,
                       "lineSubtotal": "100.00",
-                      "currency": "PHP"
+                      "currency": "PHP",
+                      "imageUrl": null
                     }
                   ],
                   "address": {
@@ -1050,7 +1054,8 @@
                       "unitPrice": "100.00",
                       "quantity": 1,
                       "lineSubtotal": "100.00",
-                      "currency": "PHP"
+                      "currency": "PHP",
+                      "imageUrl": null
                     }
                   ],
                   "address": {

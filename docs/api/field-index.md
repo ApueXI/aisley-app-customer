@@ -529,6 +529,7 @@ Use [operation contracts](operations.md) for envelopes and [machine-readable def
 | `productId` | `UUID` | non-null; required |
 | `variantId` | `UUID` | null allowed; required |
 | `productName` | `string` | non-null; required |
+| `imageUrl` | `URL` | null allowed; older responses may omit |
 | `sku` | `string` | null allowed; required |
 | `selectedOptions` | `SelectedOption[]` | non-null; required |
 | `unitPrice` | `money` | non-null; required |
@@ -644,6 +645,7 @@ Use [operation contracts](operations.md) for envelopes and [machine-readable def
 | `productId` | `UUID` | null allowed; required |
 | `variantId` | `UUID` | null allowed; required |
 | `productName` | `string` | non-null; required |
+| `imageUrl` | `URL` | null allowed; older responses may omit |
 | `variantName` | `string` | null allowed; required |
 | `sku` | `string` | null allowed; required |
 | `selectedOptions` | `SelectedOption[]` | non-null; required |
@@ -660,6 +662,7 @@ Use [operation contracts](operations.md) for envelopes and [machine-readable def
 | `productId` | `UUID` | null allowed; required |
 | `variantId` | `UUID` | null allowed; required |
 | `productName` | `string` | non-null; required |
+| `imageUrl` | `URL` | null allowed; older responses may omit |
 | `variantName` | `string` | null allowed; required |
 | `sku` | `string` | null allowed; required |
 | `selectedOptions` | `SelectedOption[]` | non-null; required |
@@ -798,6 +801,7 @@ Use [operation contracts](operations.md) for envelopes and [machine-readable def
 | --- | --- | --- |
 | `productId` | `UUID` | null allowed; required |
 | `productName` | `string` | non-null; required |
+| `imageUrl` | `URL` | null allowed; older responses may omit |
 | `variantName` | `string` | null allowed; required |
 | `quantity` | `int` | non-null; required |
 
