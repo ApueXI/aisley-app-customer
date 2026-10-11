@@ -136,10 +136,13 @@ class ApiClient {
     required String filename,
     required String mimeType,
     required SessionLease lease,
+    Map<String, String> fields = const {},
+    String? idempotencyKey,
     void Function(int sent, int total)? onSendProgress,
     CancelToken? cancelToken,
   }) async {
     final multipart = FormData.fromMap({
+      ...fields,
       fieldName: MultipartFile.fromBytes(
         bytes,
         filename: filename,
@@ -153,6 +156,7 @@ class ApiClient {
       lease: lease,
       deadline: uploadDeadline,
       retryRead: false,
+      headers: {'Idempotency-Key': ?idempotencyKey},
       onSendProgress: onSendProgress,
       cancelToken: cancelToken,
     );

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'message_row.dart';
+import '../../../core/chat_media/draft_controller.dart';
+import '../../../core/chat_media/image_widgets.dart';
 import 'message_bubble.dart';
 export 'message_row.dart';
 
@@ -12,6 +14,7 @@ import '../../../core/ui/form_page.dart';
 import '../../../core/communication/text_rules.dart';
 
 export 'inbox_view.dart';
+part 'message_composer.dart';
 
 class MessageThreadView extends StatefulWidget {
   const MessageThreadView({
@@ -45,8 +48,12 @@ class MessageThreadView extends StatefulWidget {
     this.fieldError,
     this.coolingDown = false,
     this.inbox,
+    this.media,
+    this.mediaContext = const {},
   });
   final String title, draft;
+  final ChatMediaDraftController? media;
+  final Map<String, Object?> mediaContext;
   final List<MessageRow> rows;
   final bool loading,
       paging,
@@ -85,6 +92,7 @@ class _MessageThreadViewState extends State<MessageThreadView> {
   @override
   void initState() {
     super.initState();
+    widget.media?.addListener(_mediaChanged);
     _scroll.addListener(_displayed);
     WidgetsBinding.instance.addPostFrameCallback((_) => _displayed());
   }
@@ -117,6 +125,15 @@ class _MessageThreadViewState extends State<MessageThreadView> {
       }
       _displayed();
     });
+  }
+
+  void _draftChanged(String value) {
+    widget.changed(value);
+    setState(() {});
+  }
+
+  void _mediaChanged() {
+    if (mounted) setState(() {});
   }
 
   void _displayed({bool retry = false}) {
@@ -163,7 +180,10 @@ class _MessageThreadViewState extends State<MessageThreadView> {
   Future<void> _leave() async {
     if (_confirming) return;
     _confirming = true;
-    if (_text.text.isNotEmpty || widget.sending) {
+    if (_text.text.isNotEmpty ||
+        widget.sending ||
+        widget.pending ||
+        widget.media?.hasImages == true) {
       final leave = await confirmDiscard(
         context,
         widget.pending || widget.sending
@@ -189,6 +209,7 @@ class _MessageThreadViewState extends State<MessageThreadView> {
 
   @override
   void dispose() {
+    widget.media?.removeListener(_mediaChanged);
     _text.dispose();
     _focus.dispose();
     _scroll.dispose();
@@ -199,7 +220,12 @@ class _MessageThreadViewState extends State<MessageThreadView> {
   Widget build(BuildContext context) {
     if (marketplaceDesktop(context)) _inboxMounted = true;
     return PopScope(
-      canPop: _allowPop || _text.text.isEmpty && !widget.sending,
+      canPop:
+          _allowPop ||
+          _text.text.isEmpty &&
+              !widget.sending &&
+              !widget.pending &&
+              widget.media?.hasImages != true,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop) _leave();
       },
@@ -285,7 +311,7 @@ class _MessageThreadViewState extends State<MessageThreadView> {
                     Padding(
                       key: _rows.putIfAbsent(row.id, () => GlobalKey()),
                       padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: MessageBubble(row: row),
+                      child: MessageBubble(row: row, media: widget.media),
                     ),
                   if (widget.readError != null) ...[
                     Text(widget.readError!),
@@ -300,76 +326,7 @@ class _MessageThreadViewState extends State<MessageThreadView> {
                     Text(
                       'Read only. ${widget.reason ?? 'Sending is currently unavailable.'}',
                     ),
-                  if (widget.pending) ...[
-                    const Text(
-                      'Your message is unconfirmed. Retry the original message to check whether it was sent.',
-                    ),
-                    TextButton(
-                      onPressed:
-                          widget.sending ||
-                              widget.loading ||
-                              widget.coolingDown ||
-                              widget.conflict
-                          ? null
-                          : widget.retry,
-                      child: const Text('Retry exact message'),
-                    ),
-                  ],
-                  if (widget.conflict)
-                    TextButton(
-                      onPressed:
-                          widget.loading || widget.sending || !widget.allowed
-                          ? null
-                          : () async {
-                              if (await confirmAction(
-                                context,
-                                title: 'Review changed conversation',
-                                message: 'The previous request was rejected. Review current permissions and send the draft as a new attempt?',
-                                action: 'Review draft',
-                              )) {
-                                widget.reviewConflict();
-                              }
-                            },
-                      child: const Text('Review conflict'),
-                    ),
-                  Form(
-                    key: _form,
-                    child: TextFormField(
-                      controller: _text,
-                      focusNode: _focus,
-                      enabled:
-                          widget.allowed && !widget.pending && !widget.sending,
-                      minLines: 2,
-                      maxLines: 6,
-                      decoration: InputDecoration(
-                        labelText: 'Message',
-                        helperText: 'Plain text, up to 2,000 characters',
-                        errorText: widget.fieldError,
-                      ),
-                      validator: (v) => plainTextError(v, 2000),
-                      onChanged: (v) {
-                        widget.changed(v);
-                        setState(() {});
-                      },
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  FilledButton(
-                    onPressed:
-                        !widget.allowed ||
-                            widget.pending ||
-                            widget.conflict ||
-                            widget.sending ||
-                            widget.loading ||
-                            widget.coolingDown
-                        ? null
-                        : () {
-                            if (validateForm(_form.currentState!)) {
-                              widget.send();
-                            }
-                          },
-                    child: Text(widget.sending ? 'Sending…' : 'Send message'),
-                  ),
+                  ..._composer(),
                   TextButton(
                     onPressed:
                         widget.loading || widget.sending || widget.coolingDown

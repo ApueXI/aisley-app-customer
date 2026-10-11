@@ -3,7 +3,7 @@ feature: courier-messaging
 role: Customer
 platform: Flutter / Dart
 phase: 4
-flutter_status: Text implemented at 57e9eb2; media adoption pending G26
+flutter_status: Text and images implemented locally; video/document and live/device acceptance open G26
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 ---
@@ -59,7 +59,7 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 - Uncertain first send survives polling and cannot rebind to replacement Courier silently.
 - History limit1–50 default 20; newest-first page selection with ascending output; merge by UUID/sequence.
 - Poll visible online 15s and focus/reconnect; no push/background guarantees or offline queue.
-- Caption≤2,000; media pending G26 in Flutter. No edit/delete/presence/calls/proof sharing or Customer delivery completion.
+- Caption≤2,000; images adopted locally; video/documents pending G26 in Flutter. No edit/delete/presence/calls/proof sharing or Customer delivery completion.
 - Clear transcript/draft/key/timers on identity/scoped denial; keep safe readonly UI for ended relation.
 - Test accepted eligibility vs offer/unaccepted/invalid affiliation, foreign Order, reassignment privacy
   and delivery close.
@@ -224,4 +224,6 @@ Follow [architecture](../../../architecture.md), [setup](../../../setup.md) and
 
 ## Additive media contract — 2026-10-06; synced 2026-10-09
 
-The implemented Laravel [private media API](../../../api/chat-media.md) adds ordered `attachment_ids` to start/reply and `attachments` to messages. Optional captions and existing scoped history rules apply. This scoped addition supersedes earlier text-only media exclusions without changing existing Flutter implementation/acceptance status; Buyer media adoption remains pending (G26).
+The implemented Laravel [private media API](../../../api/chat-media.md) adds ordered `attachment_ids` to start/reply and `attachments` to messages. Optional captions and existing scoped history rules apply. This scoped addition supersedes earlier text-only media exclusions with image-only Flutter adoption and partial acceptance; Buyer image adoption is implemented locally; video/document and live/device gates remain open (G26).
+
+Local evidence: [image checks](../../../references/dashboard-chat-images-verification.md).

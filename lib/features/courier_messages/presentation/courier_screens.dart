@@ -105,13 +105,18 @@ class _CourierThreadScreenState extends State<CourierThreadScreen> {
                         embedded: true,
                       ),
                 title: c.conversation?.label ?? 'Courier message',
+                media: c.media,
+                mediaContext: c.mediaContext,
                 rows: [
                   for (final e in c.messages)
                     MessageRow(e.id, e.sequence, e.body, e.mine, e.role, e.at),
                 ],
                 draft: c.pending?.body['body'] as String? ?? c.draft,
                 changed: (v) => c.draft = v,
-                clearDraft: () => c.draft = '',
+                clearDraft: () {
+                  c.draft = '';
+                  c.media?.clear();
+                },
                 send: c.send,
                 retry: c.retry,
                 refresh: c.load,

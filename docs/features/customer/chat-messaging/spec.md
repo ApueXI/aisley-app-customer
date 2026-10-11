@@ -3,7 +3,7 @@ feature: chat-messaging
 role: Customer
 platform: Flutter / Dart
 phase: 4
-flutter_status: Text implemented at 57e9eb2; media adoption pending G26
+flutter_status: Text and images implemented locally; video/document and live/device acceptance open G26
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 ---
@@ -23,7 +23,7 @@ Shop/Product/owned Order → first valid message → one reused Shop thread → 
 - Use conversations and customer_shop; start shop_id/body with optional Product/Order context, server-derived Seller. Thread persists only on committed first message and is reused across contexts.
 - Text ≤2,000, UUID start/send key, server sequence/time/mine; read body uses sequence. Shop list/history envelopes are items/next_cursor, inbox adds unread_count. Context availability and send_allowed come from server.
 - Poll visible online only, freeze uncertain body/context/key, and retain pending first-send through polling. Older cursor gaps remain reachable and monotonic read is separate from all other channels/notifications/tickets.
-- Seller permission loss disables sends while scoped history remains readable. Flutter remains text-only pending G26; no typing/presence/edit/delete/Admin blanket transcript access/offline queue.
+- Seller permission loss disables sends while scoped history remains readable. Flutter supports private images; video/document adoption remains open G26; no typing/presence/edit/delete/Admin blanket transcript access/offline queue.
 
 The local bundle supplies the implementation contract. Upstream paths are optional provenance only.
 Use this feature with its prerequisite session/consent boundary and the related shopping or communication
@@ -61,7 +61,7 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 - Seller inactive/permission loss disables sends while authorized scoped history remains readable.
 - Incoming messages do not steal input focus or force scrolling away from older history; expose
   new-message cue.
-- Media is pending G26 in Flutter; no edit/delete/presence/calls/offline queue/Admin transcript access is provided.
+- Images are adopted locally; video/document support remains open G26; no edit/delete/presence/calls/offline queue/Admin transcript access is provided.
 - Test start reuse across Product/Order, foreign context, missing/changed UUID key, server plain text and
   readonly Seller.
 - Test late polling vs pending start, older-history gaps, monotonic read, throttled same-key retry and
@@ -222,4 +222,6 @@ Follow [architecture](../../../architecture.md), [setup](../../../setup.md) and
 
 ## Additive media contract — 2026-10-06; synced 2026-10-09
 
-The Laravel backend now supports private image, MP4 and document attachments for existing role-authorized relationships. [Media API](../../../api/chat-media.md) supersedes text-only attachment restrictions in this copied snapshot, permits optional caption with ready attachment IDs, and defines limits, state and exact retry. Buyer Flutter media adoption remains pending (G26); prior client status and acceptance evidence are preserved.
+The Laravel backend now supports private image, MP4 and document attachments for existing role-authorized relationships. [Media API](../../../api/chat-media.md) supersedes text-only attachment restrictions in this copied snapshot, permits optional caption with ready attachment IDs, and defines limits, state and exact retry. Flutter image upload, status/retry, explicit image-only send and authenticated rendering are implemented locally. Video/document and live/device acceptance remain open (G26).
+
+Local evidence: [image checks](../../../references/dashboard-chat-images-verification.md).

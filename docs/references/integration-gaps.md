@@ -27,7 +27,7 @@ Baseline reviewed 2026-10-03. Phases 1–4 are implemented with verification rec
 | G13 | General notification list/detail/read exists; unread-count/read-all and push device registration absent | Per-page unread is not an exact global badge; no invented unread-count, native push/background guarantee | Notifications; 4 |
 | G14 | Wishlist alerts, voucher wallet/authoring, online payments, returns/refunds, live GPS/ETA and broader account controls deferred | Clear unavailable state or omit action; source enum value alone is not implemented workflow | Owning platform features; later |
 | G15 | Profile/review multipart lacks durable image replay; profile metadata inspection has no explicit numeric dimension cap or demonstrated bounded full decode/rewrite | Reconcile uncertainty, retain partial review progress; backend upload hardening/retention requires owner decision | Upload/security; 2/4/5 |
-| G16 | Three channels implemented; retention/abuse policy, operational two-worker races/live exchanges remain release gates | Foreground HTTP polling and scoped read-only state; Laravel private media is implemented, Flutter adoption remains G26; no Admin blanket transcript access | Messaging/API/Flutter; 4/5 |
+| G16 | Three channels implemented; retention/abuse policy, operational two-worker races/live exchanges remain release gates | Foreground HTTP polling and scoped read-only state; Laravel private media is implemented, Flutter image support is implemented locally; video/document and live/device gates remain G26; no Admin blanket transcript access | Messaging/API/Flutter; 4/5 |
 | G17 | Support ticket notifications/linked records/attachments deferred; requester UI says description but API uses body | Only subject/category/body create, revision-checked reply; pending/inactive Customers have no exception | Support; 4 |
 | G18 | Sanctum token expiration currently null; no refresh/revoke-all/session registry API | Secure restore and /me revalidation; current-token logout, documented password token effects; no invented refresh schedule | Security/Auth; 1/5 |
 | G19 | Portable contracts now cover inspected behavior; canonical historical wording remains optional evidence | Local specs/typed contracts govern implementation; log live contract differences separately | Documentation resolved; each phase |
@@ -83,7 +83,7 @@ Current resolution, API origins, deployed revisions, database schema and enabled
 
 | ID | Gap / required action | Owner / gate |
 | --- | --- | --- |
-| G26 | Laravel private chat attachments, additive message DTOs and runtime controls are implemented; the local Flutter evidence demonstrates text-chat workflows only. Adopt upload/status/retry, explicit binding/send, authenticated image/video/document delivery and private lifecycle cleanup. | Buyer/API; communication/device acceptance |
+| G26 | Laravel private chat attachments, additive message DTOs and runtime controls are implemented; local Flutter now adopts images with upload/status/retry, explicit binding/send and private lifecycle cleanup. Video/document playback/download and live/installed-device acceptance remain open. | Buyer/API; communication/device acceptance |
 
 General-notification unread-count/read-all/native push remain unavailable under G13. The newer web chat-alert API is separate from that inbox; this synchronization claims no Flutter alert adoption.
 

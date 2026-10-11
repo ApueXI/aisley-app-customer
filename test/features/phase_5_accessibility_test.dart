@@ -184,7 +184,16 @@ void main() {
                 isEmpty,
               );
             } else if (feature == 'communication') {
-              await tester.ensureVisible(find.byType(TextFormField));
+              await tester.scrollUntilVisible(
+                find.byType(TextFormField),
+                160,
+                scrollable: find
+                    .descendant(
+                      of: find.byKey(const ValueKey('message-detail')),
+                      matching: find.byType(Scrollable),
+                    )
+                    .first,
+              );
               await tester.tap(find.byType(TextFormField));
               await tester.enterText(
                 find.byType(TextFormField),

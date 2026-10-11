@@ -1,4 +1,6 @@
 import '../../../core/networking/wire.dart';
+import '../../../core/chat_media/attachment.dart';
+import '../../../core/chat_media/message_attachments.dart';
 import '../../../core/commerce/commerce_value.dart';
 
 class LogisticsConversation {
@@ -35,12 +37,15 @@ class LogisticsMessage {
     id = w.uuid('id');
     sequence = w.positiveInt('sequence');
     body = w.string('body');
+    attachments = messageAttachments(w.field('attachments'));
+
     mine = w.boolean('mine');
     role = w.string('sender_role');
     at = w.timestamp('created_at');
     conversationId = w.uuid('conversation_id');
   }
   late final String id, body, role;
+  late final List<ChatAttachment> attachments;
   late final int sequence;
   late final bool mine;
   late final DateTime? at;
