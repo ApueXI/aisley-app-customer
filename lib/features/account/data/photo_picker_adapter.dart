@@ -18,12 +18,13 @@ class PickedBuyerImage {
 enum PickerRecovery { none, interrupted, failed }
 
 class PhotoPickerAdapter {
-  PhotoPickerAdapter({ImagePicker? picker, bool? nativeRecovery})
+  PhotoPickerAdapter({ImagePicker? picker, bool? nativeRecovery, this.maxBytes})
     : _picker = picker ?? ImagePicker(),
       _nativeRecovery =
           nativeRecovery ??
           (!kIsWeb && defaultTargetPlatform == TargetPlatform.android);
   final ImagePicker _picker;
+  final int? maxBytes;
   final bool _nativeRecovery;
   bool _picking = false;
   Future<PickerRecovery>? _recovery;
@@ -40,6 +41,12 @@ class PhotoPickerAdapter {
       );
       if (file == null) return null;
       final length = await file.length();
+      final limit = maxBytes;
+      if (limit != null && length > limit) {
+        throw const BuyerImageValidationException(
+          'Choose an image at most 8 MB (8,000,000 bytes).',
+        );
+      }
       final name = file.name;
       final mimeType = file.mimeType ?? _mimeFromName(name);
       if (!validProfilePhoto(
@@ -54,6 +61,11 @@ class PhotoPickerAdapter {
       final builder = BytesBuilder(copy: false);
       // Bounded portable read, including browser Blob-backed XFiles.
       await for (final chunk in file.openRead(0, length)) {
+        if (limit != null && builder.length + chunk.length > limit) {
+          throw const BuyerImageValidationException(
+            'Choose an image at most 8 MB (8,000,000 bytes).',
+          );
+        }
         if (builder.length + chunk.length >= profilePhotoLimit) {
           throw const BuyerImageValidationException(
             'Photo must be smaller than 10 MiB.',

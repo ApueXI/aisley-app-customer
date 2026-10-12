@@ -57,7 +57,9 @@ class _ChatImageComposerState extends State<ChatImageComposer>
             icon: const Icon(Icons.add_photo_alternate_outlined),
             label: Text(c.selecting ? 'Selecting image…' : 'Add image'),
           ),
-          const Text('JPEG, PNG or WebP under 10 MiB each · Up to 5 images'),
+          const Text(
+            'JPEG, PNG or WebP at most 8 MB (8,000,000 bytes) each · Up to 5 images',
+          ),
           if (c.error != null)
             Semantics(liveRegion: true, child: Text(c.error!)),
           for (final item in c.items)

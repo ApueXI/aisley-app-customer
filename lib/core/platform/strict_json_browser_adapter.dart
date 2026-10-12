@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:js_interop';
 import 'dart:typed_data';
@@ -23,6 +24,7 @@ extension type _JsUint8Array._(JSObject _) implements JSObject {
 }
 
 extension type _FetchResponse(JSObject _) implements JSObject {
+  external _FetchStream? get body;
   external int get status;
   external _FetchHeaders get headers;
   external JSPromise<JSString> text();
@@ -31,6 +33,20 @@ extension type _FetchResponse(JSObject _) implements JSObject {
 
 extension type _FetchHeaders(JSObject _) implements JSObject {
   external void forEach(JSFunction callback);
+}
+
+extension type _FetchStream(JSObject _) implements JSObject {
+  external _FetchReader getReader();
+}
+
+extension type _FetchReader(JSObject _) implements JSObject {
+  external JSPromise<_FetchChunk> read();
+  external JSPromise<JSAny?> cancel();
+}
+
+extension type _FetchChunk(JSObject _) implements JSObject {
+  external bool get done;
+  external _JsUint8Array get value;
 }
 
 /// Browser Fetch transport with omitted cookies, rejected redirects and bytes.
@@ -54,7 +70,7 @@ class StrictJsonBrowserAdapter implements HttpClientAdapter {
     }
     final controller = _AbortController();
     _controllers.add(controller);
-    var cancelled = false;
+    var cancelled = false, streaming = false;
     cancelFuture?.then((_) {
       cancelled = true;
       controller.abort();
@@ -117,6 +133,43 @@ class StrictJsonBrowserAdapter implements HttpClientAdapter {
           headers[name.toDart.toLowerCase()] = [value.toDart];
         }).toJS,
       );
+      if (options.responseType == ResponseType.stream) {
+        final reader = response.body?.getReader();
+        if (reader == null) {
+          throw const FormatException('Missing response stream.');
+        }
+        streaming = true;
+        Stream<Uint8List> chunks() async* {
+          try {
+            while (!cancelled) {
+              final chunk = await reader.read().toDart;
+              if (chunk.done) break;
+              final value = chunk.value;
+              final bytes = Uint8List(value.length);
+              for (var i = 0; i < value.length; i++) {
+                bytes[i] = value[i];
+              }
+              yield bytes;
+            }
+          } finally {
+            controller.abort();
+            _controllers.remove(controller);
+            try {
+              await reader.cancel().toDart;
+            } catch (_) {}
+          }
+        }
+
+        return ResponseBody(
+          chunks(),
+          response.status,
+          headers: headers,
+          onClose: () {
+            controller.abort();
+            _controllers.remove(controller);
+          },
+        );
+      }
       if (options.responseType == ResponseType.bytes) {
         final buffer = await response.arrayBuffer().toDart;
         final view = _JsUint8Array(buffer);
@@ -138,7 +191,7 @@ class StrictJsonBrowserAdapter implements HttpClientAdapter {
             : DioExceptionType.connectionError,
       );
     } finally {
-      _controllers.remove(controller);
+      if (!streaming) _controllers.remove(controller);
     }
   }
 

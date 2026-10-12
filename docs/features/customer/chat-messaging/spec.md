@@ -3,7 +3,7 @@ feature: chat-messaging
 role: Customer
 platform: Flutter / Dart
 phase: 4
-flutter_status: Text and images implemented locally; video/document and live/device acceptance open G26
+flutter_status: Text/images and received video/documents implemented locally; live/device acceptance open G26
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 ---
@@ -222,6 +222,6 @@ Follow [architecture](../../../architecture.md), [setup](../../../setup.md) and
 
 ## Additive media contract — 2026-10-06; synced 2026-10-09
 
-The Laravel backend now supports private image, MP4 and document attachments for existing role-authorized relationships. [Media API](../../../api/chat-media.md) supersedes text-only attachment restrictions in this copied snapshot, permits optional caption with ready attachment IDs, and defines limits, state and exact retry. Flutter image upload, status/retry, explicit image-only send and authenticated rendering are implemented locally. Video/document and live/device acceptance remain open (G26).
+The Laravel backend now supports private image, MP4 and document attachments for existing role-authorized relationships. [Media API](../../../api/chat-media.md) supersedes text-only attachment restrictions in this copied snapshot, permits optional caption with ready attachment IDs, and defines limits, state and exact retry. Flutter image upload, status/retry, explicit image-only send and authenticated rendering are implemented locally. Receive-only video/document consumption and 8,000,000-byte image selection are implemented locally; video/document uploads and live/device acceptance remain open (G26).
 
-Local evidence: [image checks](../../../references/dashboard-chat-images-verification.md).
+Local evidence: [private media checks](../../../references/private-media-verification.md) and [image checks](../../../references/dashboard-chat-images-verification.md).

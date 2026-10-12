@@ -5,8 +5,10 @@ import '../networking/api_client.dart';
 import '../networking/api_failure.dart';
 import '../../features/account/data/photo_picker_adapter.dart';
 import 'attachment.dart';
+import 'content_repository.dart';
 
-class ApiChatMediaRepository implements ChatMediaRepository {
+class ApiChatMediaRepository
+    implements ChatMediaRepository, ChatMediaContentRepository {
   ApiChatMediaRepository(this.api, this.lease, {this.onDenial});
   final ApiClient api;
   final SessionLease? Function() lease;
@@ -51,7 +53,7 @@ class ApiChatMediaRepository implements ChatMediaRepository {
   });
   @override
   Future<SelectedChatImage?> pick() async {
-    final image = await PhotoPickerAdapter().pick();
+    final image = await PhotoPickerAdapter(maxBytes: 8000000).pick();
     return image == null
         ? null
         : SelectedChatImage(image.bytes, image.filename, image.mimeType);
@@ -86,13 +88,34 @@ class ApiChatMediaRepository implements ChatMediaRepository {
   });
   @override
   Future<Uint8List> image(String url) => _call((c) async {
-    final bytes = await api.requestBytes(
-      chatImagePath(url, 'customer'),
-      lease: c,
-    );
-    if (bytes.isEmpty || bytes.length >= 10485760) {
-      throw const FormatException();
+    final read = ChatMediaRead();
+    try {
+      return await api.privateMediaBytes(
+        chatImagePath(url, 'customer'),
+        maxBytes: 10485759,
+        mimeType: 'image/*',
+        lease: c,
+        isCurrent: () => read.isCurrent,
+        cancelled: read.cancelled,
+      );
+    } finally {
+      read.cancel();
     }
-    return bytes;
   });
+  @override
+  Future<Uint8List> content(
+    ChatAttachment attachment,
+    ChatMediaRead read, {
+    bool preview = false,
+  }) => _call(
+    (c) async => api.privateMediaBytes(
+      attachmentPath(attachment, 'customer', preview),
+      maxBytes: preview ? 10485759 : historicalMediaLimit(attachment),
+      mimeType: preview ? 'image/jpeg' : attachment.mimeType,
+      expectedBytes: preview ? null : attachment.byteSize,
+      lease: c,
+      isCurrent: () => read.isCurrent,
+      cancelled: read.cancelled,
+    ),
+  );
 }

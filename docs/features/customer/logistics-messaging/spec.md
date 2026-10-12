@@ -3,7 +3,7 @@ feature: logistics-messaging
 role: Customer
 platform: Flutter / Dart
 phase: 4
-flutter_status: Text and images implemented locally; video/document and live/device acceptance open G26
+flutter_status: Text/images and received video/documents implemented locally; live/device acceptance open G26
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 ---
@@ -21,7 +21,7 @@ Active owned Order → Order-context first message → current Logistics thread 
 
 - Use logistics-conversations and kind customer_logistics; first message body/context_type:order/context_id plus UUID key. API resolves current organization/hub from Shipment or compatible waybill, never Buyer recipient choice.
 - Payment-wait/placed/preprocessing/terminal and in-transfer/invalid-handler states cannot start/send; API eligibility is authoritative. Ended context retains original participant read-only history; replacement handler never inherits private text.
-- Use operational data/meta, send body only, read last_read_sequence; channel owns its cursor/unread/pending key. Bounded foreground polling/frozen uncertain sends; images adopted locally; video/documents pending G26; no provider picker/task mutations/offline queue.
+- Use operational data/meta, send caption/ready image IDs, read last_read_sequence; channel owns its cursor/unread/pending key. Bounded foreground polling/frozen uncertain sends; images adopted locally; receive-only video/documents implemented; uploads/live/device pending G26; no provider picker/task mutations/offline queue.
 
 The local bundle supplies the implementation contract. Upstream paths are optional provenance only.
 Use this feature with its prerequisite session/consent boundary and the related shopping or
@@ -223,6 +223,6 @@ Follow [architecture](../../../architecture.md), [setup](../../../setup.md) and
 
 ## Additive media contract — 2026-10-06; synced 2026-10-09
 
-The implemented Laravel [private media API](../../../api/chat-media.md) adds ordered `attachment_ids` to start/reply and `attachments` to messages. Optional captions and existing scoped history rules apply. This scoped addition supersedes earlier text-only media exclusions with image-only Flutter adoption and partial acceptance; Buyer image adoption is implemented locally; video/document and live/device gates remain open (G26).
+The implemented Laravel [private media API](../../../api/chat-media.md) adds ordered `attachment_ids` to start/reply and `attachments` to messages. Optional captions and existing scoped history rules apply. This scoped addition supersedes earlier text-only media exclusions with image-only Flutter adoption and partial acceptance; Buyer image adoption is implemented locally; receive-only video/document consumption and 8,000,000-byte image selection are implemented locally; video/document uploads and live/device gates remain open (G26).
 
-Local evidence: [image checks](../../../references/dashboard-chat-images-verification.md).
+Local evidence: [private media checks](../../../references/private-media-verification.md) and [image checks](../../../references/dashboard-chat-images-verification.md).

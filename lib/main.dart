@@ -1,3 +1,5 @@
+import 'core/chat_media/media_platform.dart';
+
 import 'package:flutter/material.dart';
 
 import 'app/app_dependencies.dart';
@@ -5,8 +7,9 @@ import 'app/buyer_app.dart';
 import 'app/theme.dart';
 import 'core/config/app_config.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await cleanAbandonedChatMedia();
   try {
     runApp(
       BuyerApp(

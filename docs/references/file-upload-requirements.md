@@ -18,3 +18,5 @@ scanning or change their image-only fields and uncertain-upload behavior.
 - Use field-addressable `422`, auth/role/resource denial and `429` feedback; show formats/limit before selection, progress while sending and committed success only after persistence. Keep safe IDs/outcomes in operational logs, excluding bytes/private URLs/evidence.
 
 Current feature-specific config: review limit 5 images, edge limit 8,000 pixels and total 40,000,000; profile validation lacks the same explicit numeric dimension enforcement and its metadata inspection does not demonstrate bounded full decoding/rewrite. Treat that as a backend gap, not proof that a shared maximum is deployed. Scanning, per-purpose size changes, responsive derivatives, moderation, evidence retention and cleanup windows need owning decisions before release claims.
+
+Chat images use the separately approved inclusive 8,000,000-byte new-upload limit; general profile/registration/review rules above retain their owning limits. See [private chat media](../api/chat-media.md) for historical retrieval, received video/document consumption and image-only mobile selection.

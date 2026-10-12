@@ -29,7 +29,11 @@ class MessageBubble extends StatelessWidget {
           SelectableText(row.body),
           if (media != null)
             for (final attachment in row.attachments)
-              PrivateChatImage(attachment: attachment, controller: media!),
+              PrivateChatImage(
+                key: ValueKey(attachment.id),
+                attachment: attachment,
+                controller: media!,
+              ),
           if (row.context != null) Text(row.context!),
           if (row.at != null)
             Text(
