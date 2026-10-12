@@ -7,6 +7,7 @@ flutter_status: Implemented; acceptance partial
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 upload_recovery_revision: 2026-10-10
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
+documentation_synced_on: 2026-10-12
 ---
 
 # Profile, password, photo and preference
@@ -21,7 +22,7 @@ Account → independent profile/photo/password form → confirmed change → ref
 
 - Read private allow-listed account DTO; PATCH profile uses permitted names/contact/sex/birth_date. Email/role/status/approval are read-only; no client owner ID.
 - Password PATCH requires current_password and confirmed replacement; current bearer survives and other tokens are revoked. Email/MFA/device-list/delete/export remain deferred.
-- Photo multipart uses photo and authenticated bytes/private reread/remove; refetch uncertain replacement before another upload. Promotion PATCH uses promotional_in_app_opted_in boolean, default off and separate from consent. Clear private forms/media on identity loss.
+- Photo multipart uses photo and authenticated bytes/private reread/remove; refetch uncertain replacement before another upload. Promotion PATCH uses promotional_in_app_opted_in boolean, default off and separate from consent. Clear private forms/media on identity loss. Laravel bounds profile images to 8000 pixels per edge/40 million total, performs isolated full decode/rewrite, and rejects processing failures with 422 on photo while preserving the prior image (B04).
 
 The local bundle supplies the implementation contract. Upstream paths are optional provenance only.
 Use this feature with its prerequisite session/consent boundary and the related shopping or communication
@@ -154,16 +155,8 @@ universal error envelope.
 
 ### Responsibility and state ownership
 
-- `AccountRepository` owns typed transport, parsing and owned cache access; inject dependencies through
-  AppDependencies.
-- `ProfileViewModel` owns feature transitions, draft/query state and deliberate actions; inject dependencies
-  through AppDependencies.
-- `PasswordViewModel` owns feature transitions, draft/query state and deliberate actions; inject dependencies
-  through AppDependencies.
-- `PhotoViewModel` owns feature transitions, draft/query state and deliberate actions; inject dependencies
-  through AppDependencies.
-- `PreferenceViewModel` owns feature transitions, draft/query state and deliberate actions; inject
-  dependencies through AppDependencies.
+- ApiAccountRepository owns typed transport/parsing; AppDependencies supplies dependencies.
+- ProfileController, PasswordController, PhotoController and PromotionPreferenceController owns current feature state and deliberate actions.
 - Screens compose focused sections/forms/history; reusable widgets render typed state and forward callbacks.
 - Use ChangeNotifier/ListenableBuilder with immutable DTO snapshots. No HTTP or JSON guesses in build().
 - Keep independent forms/actions separately busy and preserve safe input after recoverable validation/network

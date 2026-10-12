@@ -1,6 +1,9 @@
 # Buyer Flutter documentation bundle
 
-Historical baseline: **`7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0`**. Adopted client contract inspection: **2026-10-03**, checkout **`57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50`**. Supplied webapp backend review: **2026-10-09**, **`0a6aaa8096196e2c26822ac0281d5d30675511a8`**; current shipping is adopted with live/device G25 gates open; media adoption remains G26. Buyer Flutter implementation: **Phases 1–4 implemented; live/device acceptance remains partial**. See [Phase 4 evidence](references/phase-4-verification.md), [Phase 3 evidence](references/phase-3-verification.md), [Phase 2 evidence](references/phase-2-verification.md) and [Phase 1 evidence](references/phase-1-verification.md).
+> Current status and inspected revisions: [October 12 synchronization](references/synchronization-2026-10-12.md). Dated reports below retain their original verification scope; client sources belong to the corresponding standalone Flutter repository.
+
+
+Historical baseline: **`7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0`**. Adopted client contract inspection: **2026-10-03**, checkout **`57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50`**. Supplied webapp backend review: **2026-10-09**, **`0a6aaa8096196e2c26822ac0281d5d30675511a8`**; current shipping is adopted with live/device G25 gates open; media is implemented locally; live/device acceptance remains G27. Buyer Flutter implementation: **Phases 1–4 implemented; live/device acceptance remains partial**. See [Phase 4 evidence](references/phase-4-verification.md), [Phase 3 evidence](references/phase-3-verification.md), [Phase 2 evidence](references/phase-2-verification.md) and [Phase 1 evidence](references/phase-1-verification.md).
 
 This portable bundle defines a new standalone Flutter/Dart Customer app targeting Android, with the same application tested in a local browser. Laravel, Sanctum, PostgreSQL, and configured blob storage remain the platform backend. `customer` is the only persisted/API role; Buyer is product terminology.
 
@@ -35,11 +38,11 @@ Copy **this directory's complete contents** into the standalone repository's `do
 
 The [documentation validation record](references/documentation-validation.md) records completed checks and their limits.
 
-The handoff includes complete feature contracts, a concrete stable SDK/package blueprint, synthetic examples and all nineteen unchanged PSGC reference assets with attribution/checksums. The original documentation handoff included no Flutter implementation, credentials or server configuration; this repository now implements Phases 1–4 under lib/ and Phase 5 local verification tooling. Copy the assets using [setup](setup.md). Local documents supply implementation authority; upstream source paths/hashes are optional audit provenance. A missing monorepo checkout is not an implementation dependency.
+The handoff includes complete feature contracts, a concrete stable SDK/package blueprint, synthetic examples and all nineteen unchanged PSGC reference assets with attribution/checksums. The original documentation handoff included no Flutter implementation, credentials or server configuration; the standalone Buyer Flutter project implements Phases 1–4 under lib/ and Phase 5 local verification tooling. Copy the assets using [setup](setup.md). Local documents supply implementation authority; upstream source paths/hashes are optional audit provenance. A missing monorepo checkout is not an implementation dependency.
 
 Configured backend origins, approved test accounts, localhost CORS/header visibility and suitable public map credentials remain external deployment inputs. Validate live integration against the deployed backend; record material differences and actual Flutter results in Progress without rewriting the historical baseline.
 
-This standalone repository tracks the bundle at `docs/`. Upstream relocation to
+The standalone Buyer project tracks this bundle at `docs/`; the platform keeps it at `docs/docs-mobile-buyer/`. Upstream relocation to
 `docs/docs-mobile-buyer/` in `c5ce0cc` and the original ignored `docs/cabigan/`
 location remain historical provenance. Copy the complete bundle when handing it off.
 
@@ -57,7 +60,7 @@ The supplied webapp handoff reviews Laravel `0a6aaa8096196e2c26822ac0281d5d30675
 from this client's adopted `57e9eb2` baseline. [Per-Shop shipping selection](api/shipping-selection.md)
 adds provider options, frozen selections and revised quote/Order projections (G25).
 [Private chat media](api/chat-media.md) adds runtime-gated attachment upload/processing/delivery
-and explicit message binding (G26). Both remain pending Flutter adoption; earlier tests describe
+and explicit message binding (G26). Both are adopted locally; live/device gates remain open. Earlier tests describe
 the original client contracts. See [the local sync record](references/webapp-docs-sync-2026-10-09.md)
 and [integration gaps](references/integration-gaps.md). Local implementation history, SDK metadata,
 MapLibre evidence and required sign-in/account-only recency remain the implementation record.
@@ -72,6 +75,6 @@ records synthetic client checks; deployed-provider, live commerce and installed-
 
 Buyer now implements [discovery, collection and wallet](api/voucher-collection.md) with explicit Checkout requote against Laravel `7e89b391`. [Verification](references/voucher-collection-verification.md) distinguishes source/synthetic checks from deployed/live/installed-device gates. Historical general and shipping baselines remain preserved.
 
-## G26 private media adoption — 2026-10-12
+## Private media adoption — shared G27, audit G26 (2026-10-12)
 
 Buyer implements receive-only video/document consumption and inclusive 8 MB image selection against Laravel `28fc740`. [Verification](references/private-media-verification.md) separates local checks from storage/worker/scanner, deployed exchange and installed-device acceptance. Mobile video/document uploads remain outside this release.

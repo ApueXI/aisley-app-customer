@@ -389,7 +389,7 @@ Named types define all nested fields locally. Status201 replay semantics vary: S
 - Request: reason optional nullable string≤500; UUID header; placed COD only.
 - Response: HTTP 200; `{data:Order}`.
 - Retry: UUID Idempotency-Key required. Freeze payload/key; exact retry only after uncertain outcome. Changed intent uses a new key after reconciliation.
-- Notes: Laravel rechecks current ownership and visibility.
+- Notes: Only recipient/contact may change at identical trimmed location and seven-decimal pin; location changes return 422 ADDRESS_LOCATION_CHANGE_NOT_ALLOWED on address_id. Edited original rows are allowed; frozen prices/provider/routes stay unchanged.
 - [Synthetic examples](examples/order-modification-cancellation.json).
 
 ## op-036
@@ -400,7 +400,7 @@ Named types define all nested fields locally. Status201 replay semantics vary: S
 - Request: address_id owned shipping UUID; expected_revision optional nullable int≥1 (send deliveryAddress.version); UUID header; placed COD only.
 - Response: HTTP 200; `{data:Order}`.
 - Retry: UUID Idempotency-Key required. Freeze payload/key; exact retry only after uncertain outcome. Changed intent uses a new key after reconciliation.
-- Notes: Laravel rechecks current ownership and visibility.
+- Notes: Only recipient/contact may change at identical trimmed location and seven-decimal pin; location changes return 422 ADDRESS_LOCATION_CHANGE_NOT_ALLOWED on address_id. Edited original rows are allowed; frozen prices/provider/routes stay unchanged.
 - [Synthetic examples](examples/order-modification-cancellation.json).
 
 ## op-037
@@ -1146,3 +1146,14 @@ Current shipping inspection: `22b0a48f9575ead182d03c35ab87345711c23b90`; impleme
 ### Voucher operation records
 
 Stable `voucher-collection-001` through `voucher-collection-007` in [operation index](operation-index.json) follow the endpoint order in [collection contract](voucher-collection.md). [Synthetic examples](examples/voucher-collection.json) include public nulls, private status and platform/Shop collection confirmations.
+
+## shop-context-001
+
+`GET /api/v1/customer/conversations/shops/{shop}`
+
+- Access: Active Customer + consent; server-scoped existing thread or available prospective Shop.
+- Request: Shop UUID; no body.
+- Response: HTTP 200; `{data:ShopAvailabilityProjection}` with nullable conversation_id.
+- Retry: Bounded read retry; reject obsolete session responses. Missing/unavailable prospective context returns scoped 404.
+- Notes: availability describes Shop business status; this read creates no conversation. Flutter adoption is pending.
+- [Synthetic example](examples/shop-context.json).

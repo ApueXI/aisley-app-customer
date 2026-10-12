@@ -7,6 +7,7 @@ flutter_status: Implemented including shipping and G31 Checkout thumbnails; live
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 current_contract_inspected_checkout: 22b0a48f9575ead182d03c35ab87345711c23b90
+documentation_synced_on: 2026-10-12
 ---
 
 # COD checkout and placement
@@ -148,12 +149,8 @@ universal error envelope.
 
 ### Responsibility and state ownership
 
-- `CheckoutRepository` owns typed transport, parsing and owned cache access; inject dependencies
-  through AppDependencies.
-- `CheckoutViewModel` owns feature transitions, draft/query state and deliberate actions; inject
-  dependencies through AppDependencies.
-- `PendingPlacement` owns feature transitions, draft/query state and deliberate actions; inject
-  dependencies through AppDependencies.
+- CheckoutRepository owns typed transport/parsing; AppDependencies supplies dependencies.
+- CheckoutController, CheckoutShippingController and PendingPlacement owns current feature state and deliberate actions.
 - Screens compose sections; shared ProductItemRow/CatalogImage use trusted public media without credentials.
   Loading/fallbacks preserve item facts and actions; callbacks remain owned by their feature.
 - Use ChangeNotifier/ListenableBuilder with immutable DTO snapshots. No HTTP or JSON guesses in
@@ -226,5 +223,5 @@ Follow [architecture](../../../architecture.md), [setup](../../../setup.md) and
 
 Shipping adoption 2026-10-09: [G25 evidence](../../../references/shipping-selection-verification.md) records current client checks.
 Live/device commerce and deployment configuration remain open under G25.
-
 Voucher collection adoption: [G28 contract](../../../api/voucher-collection.md) and [client evidence](../../../references/voucher-collection-verification.md).
+[B06 funding contract](../../../api/legacy-voucher-funding.md): quote rejects unaffordable legacy Shop shipping vouchers with 409 VOUCHER_FUNDING_INSUFFICIENT; placement uses QUOTE_STALE on vouchers before effects. Flutter-specific adoption checks remain open.

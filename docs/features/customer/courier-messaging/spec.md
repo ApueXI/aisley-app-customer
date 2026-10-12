@@ -3,9 +3,10 @@ feature: courier-messaging
 role: Customer
 platform: Flutter / Dart
 phase: 4
-flutter_status: Text/images and received video/documents implemented locally; live/device acceptance open G26
+flutter_status: Text/images and received video/documents implemented locally; live/device acceptance open G27
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
+documentation_synced_on: 2026-10-12
 ---
 
 # Delivery Courier messages
@@ -59,7 +60,7 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 - Uncertain first send survives polling and cannot rebind to replacement Courier silently.
 - History limit1–50 default 20; newest-first page selection with ascending output; merge by UUID/sequence.
 - Poll visible online 15s and focus/reconnect; no push/background guarantees or offline queue.
-- Caption≤2,000; images adopted locally; receive-only video/documents implemented; uploads/live/device pending G26 in Flutter. No edit/delete/presence/calls/proof sharing or Customer delivery completion.
+- Caption≤2,000; images adopted locally; receive-only video/documents implemented; uploads/live/device pending G27 in Flutter. No edit/delete/presence/calls/proof sharing or Customer delivery completion.
 - Clear transcript/draft/key/timers on identity/scoped denial; keep safe readonly UI for ended relation.
 - Test accepted eligibility vs offer/unaccepted/invalid affiliation, foreign Order, reassignment privacy
   and delivery close.
@@ -99,7 +100,7 @@ Full per-operation access/status notes and synthetic bodies are in
 [this feature’s examples](../../../api/examples/courier-messaging.json).
 Examples are source-derived synthetic fixtures, not live captures or usable test accounts.
 
-Current media requests accept ordered distinct `attachment_ids:UUID[]`≤5, ready/same scope/≤50 MiB; at least text or attachments is required (G26).
+Current media requests accept ordered distinct `attachment_ids:UUID[]`≤5, ready/same scope/≤50 MiB; at least text or attachments is required (G27).
 
 ### Response fields and nesting
 
@@ -148,12 +149,8 @@ universal error envelope.
 
 ### Responsibility and state ownership
 
-- `CourierChatRepository` owns typed transport, parsing and owned cache access; inject dependencies
-  through AppDependencies.
-- `CourierInboxViewModel` owns feature transitions, draft/query state and deliberate actions; inject
-  dependencies through AppDependencies.
-- `CourierThreadViewModel` owns feature transitions, draft/query state and deliberate actions; inject
-  dependencies through AppDependencies.
+- CourierChatRepository owns typed transport/parsing; AppDependencies supplies dependencies.
+- CourierInboxController and CourierThreadController owns current feature state and deliberate actions.
 - Screens compose focused sections/forms/history; reusable widgets render typed state and forward
   callbacks.
 - Use ChangeNotifier/ListenableBuilder with immutable DTO snapshots. No HTTP or JSON guesses in build().
@@ -224,6 +221,6 @@ Follow [architecture](../../../architecture.md), [setup](../../../setup.md) and
 
 ## Additive media contract — 2026-10-06; synced 2026-10-09
 
-The implemented Laravel [private media API](../../../api/chat-media.md) adds ordered `attachment_ids` to start/reply and `attachments` to messages. Optional captions and existing scoped history rules apply. This scoped addition supersedes earlier text-only media exclusions with image-only Flutter adoption and partial acceptance; Buyer image adoption is implemented locally; receive-only video/document consumption and 8,000,000-byte image selection are implemented locally; video/document uploads and live/device gates remain open (G26).
+The implemented Laravel [private media API](../../../api/chat-media.md) adds ordered `attachment_ids` to start/reply and `attachments` to messages. Optional captions and existing scoped history rules apply. This scoped addition supersedes earlier text-only media exclusions with image-only Flutter adoption and partial acceptance; Buyer image adoption is implemented locally; receive-only video/document consumption and 8,000,000-byte image selection are implemented locally; video/document uploads and live/device gates remain open (G27).
 
 Local evidence: [private media checks](../../../references/private-media-verification.md) and [image checks](../../../references/dashboard-chat-images-verification.md).

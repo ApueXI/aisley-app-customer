@@ -170,5 +170,9 @@ Do not modify server configuration to satisfy these inputs from the mobile task.
 ## Current backend contract adoption
 
 The [webapp handoff sync](references/webapp-docs-sync-2026-10-09.md) imports newer shipping and
-private chat-media contracts. Flutter still adopts backend `57e9eb2`; G25/G26 remain pending.
+private chat-media contracts. Flutter still adopts backend `57e9eb2`; G25/G27 retain live/device acceptance gates.
 Changing documentation does not change package pins, application behavior or deployed configuration.
+
+## Current media dependencies
+
+The committed pubspec/lockfile adds video_player 2.11.1, path_provider 2.1.6 and web 1.1.1 for private receive-only video/document consumption. Preserve those selected versions; the older package tables record historical resolution. No package installation or build was run for this synchronization.

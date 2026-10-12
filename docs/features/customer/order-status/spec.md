@@ -8,6 +8,7 @@ backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 current_contract_inspected_checkout: 22b0a48f9575ead182d03c35ab87345711c23b90
 current_contract_inspected_order_images: 5d55ecf379c7646dedcae5a3170cfcb61093db26
+documentation_synced_on: 2026-10-12
 ---
 
 # Owned Orders and tracking
@@ -150,14 +151,8 @@ universal error envelope.
 
 ### Responsibility and state ownership
 
-- `OrderRepository` owns typed transport, parsing and owned cache access; inject dependencies through
-  AppDependencies.
-- `OrderListViewModel` owns feature transitions, draft/query state and deliberate actions; inject
-  dependencies through AppDependencies.
-- `OrderDetailViewModel` owns feature transitions, draft/query state and deliberate actions; inject
-  dependencies through AppDependencies.
-- `TimelinePager` owns feature transitions, draft/query state and deliberate actions; inject
-  dependencies through AppDependencies.
+- OrderRepository owns typed transport/parsing; AppDependencies supplies dependencies.
+- OrdersController and OrderDetailController owns current feature state and deliberate actions.
 - Screens compose focused sections/forms/history; reusable widgets render typed state and forward
   callbacks.
 - Use ChangeNotifier/ListenableBuilder with immutable DTO snapshots. No HTTP or JSON guesses in build().

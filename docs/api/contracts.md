@@ -22,7 +22,7 @@ There is no universal casing/envelope. Account, catalog, Address and Order Resou
 | Wishlist/history | Cursor Resource collection `{data,links,meta}`; Wishlist items carry Product and saved time, history `{product,lastViewedAt}`. Guest resolver is `{items}`; merge result `{data:{mergedProductIds,mergedCount}}` |
 | Quote | `data:{quoteId,expiresAt,mode,paymentMethod,address,groups,summary}`; groups include lines, server totals, `shippingQuote`, `availableVouchers`, `appliedVouchers` |
 | Batch | `data:{id,currency,placedAt,orders}`; each Order has immutable items/address/vouchers/shipping/totals and its own reference/status/detailUrl |
-| Order | `data` with reference/status/group labels, safe Shop, items/review hints, `deliveryAddress.version`, payment, snapshots/totals, timeline/count/hasMore, trackingUrl, safe delivery Courier, unavailable `map`, server actions |
+| Order | `data` with reference/status/group labels, safe Shop, items/review hints, `deliveryAddress.version` and nullable seven-decimal latitude/longitude, payment, snapshots/totals, timeline/count/hasMore, trackingUrl, safe delivery Courier, unavailable `map`, server actions |
 | Q&A | Page collection `{data,links,meta}`; item `{id,question,askedAt,answer,answeredAt,sellerLabel}` with nullable unanswered fields |
 | Review | `data` Resource includes `id,rating,body,verifiedPurchase,authorLabel,createdAt,photos,sellerResponse`; author is a safe label; Seller response read-only |
 | Tracking | Page Resource collection `{data,links,meta}`; safe event keys are in OrderTrackingResource. Order list adds `filters:{selected,tabs}` alongside its Resource page |
@@ -38,7 +38,7 @@ For `buy_now`, send `mode`, `buy_now:{product_id,variant_id:null|UUID,quantity}`
 
 Placement adds `quote_id` and UUID `Idempotency-Key`; success is `200 {data:CheckoutBatch}` including replay. Defaults currently make quote lifetime 15 minutes; honor returned `expiresAt`. Retain exact key, quote and normalized intent after uncertainty. `409 IDEMPOTENCY_KEY_REUSED` means changed payload under one key; `QUOTE_ALREADY_PLACED` prevents another key for an already placed quote. `QUOTE_EXPIRED`, `QUOTE_INPUT_CHANGED`, `QUOTE_STALE` require reviewed refresh. No GET-by-key endpoint exists.
 
-Quote candidates contain voucher `id,code,issuerType,benefitType,valueType,value,maximumDiscount,minimumSpend,termsSummary,validFrom,validUntil,paymentMethod,stackableWith,scope,eligible,reason,saving`. Select UUIDs with target Shop, not typed voucher codes. Applied fields include qualifying basis and discount amount; placed snapshots retain terms. Zero-saving selected vouchers still redeem. Cancellation currently does not restore redemption capacity.
+Quote candidates contain voucher `id,name,code,issuerType,benefitType,valueType,value,maximumDiscount,minimumSpend,termsSummary,validFrom,validUntil,paymentMethod,stackableWith,scope,eligible,reason,saving`. Select UUIDs with target Shop, not typed voucher codes. Applied fields include name, qualifying basis and discount amount; Checkout Batch snapshots retain name and terms. Default pairing permits one discount and one shipping per Shop, and one App of each benefit per batch; see [voucher update](voucher-selection-update.md). Zero-saving selected vouchers still redeem. Cancellation currently does not restore redemption capacity.
 
 ## Mutation details
 
@@ -50,7 +50,7 @@ Quote candidates contain voucher `id,code,issuerType,benefitType,valueType,value
 | Guest resolver | `productIds:[UUID]`, at most 12; public read through POST, no private history |
 | History merge | `items:[{productId,viewedAt?}]`, at most 12 by current config; timestamps not future and within configured age; malformed/duplicate input is validation, unavailable Products omitted |
 | Cancel | optional `reason` ≤500; UUID key; owned eligible `placed` Order |
-| Address correction | `address_id`, optional nullable integer `expected_revision` ≥1; UUID key; server state/serviceability lock |
+| Address correction | `address_id`, optional nullable integer `expected_revision` ≥1; UUID key; server state lock; recipient/contact only at identical trimmed location and seven-decimal pin, otherwise `422 ADDRESS_LOCATION_CHANGE_NOT_ALLOWED` |
 | Q&A create | `question`, UUID key; visible Product; current maximum 1,000 characters |
 | Review create | `rating` integer 1–5, `body` plain text ≤2,000; no UUID-header requirement; identical Order Item replay returns same Review, changed content conflicts |
 | Profile photo | multipart `photo`; no upload idempotency promise; authenticated private reread/removal |
@@ -94,3 +94,6 @@ fallback. Images describe current media; authoritative prices, names, options,
 quantities, placement payloads and exact-retry keys retain their existing ownership.
 See [G31 verification](../references/checkout-images-verification.md) for actual
 client checks and separately open live/device acceptance.
+
+
+The [B06 funding delta](legacy-voucher-funding.md) rejects unaffordable legacy Shop shipping choices. Candidate reason and quote rejection use `VOUCHER_FUNDING_INSUFFICIENT`; placement uses existing `409 QUOTE_STALE` on `vouchers` before effects. DTO/request shapes and committed exact-key replay remain unchanged; external Flutter adoption is unverified.

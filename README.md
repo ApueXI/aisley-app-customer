@@ -9,8 +9,8 @@ and communicate with Shops, Logistics and Couriers from one app.
 - Registration, sign-in, secure session restoration, recovery and policy consent.
 - Home, Product/Shop search, Shop browsing, Product details, Wishlist and Recently Viewed.
 - Profile, password, photo and address management, with offline PSGC address selectors and optional maps.
-- Cart, Buy Now, server-priced COD checkout, vouchers, Orders and tracking, eligible cancellation and same-location recipient/contact correction.
-- Separate Shop/Logistics/Courier messages, notification inbox, Product Q&A, purchase-verified reviews/photos and support tickets.
+- Cart, Buy Now, per-Shop shipping selection, server-priced COD checkout, voucher discovery/collection/wallet, Order/Checkout thumbnails, tracking, and eligible cancellation/same-location contact correction.
+- Separate Shop/Logistics/Courier messages with image uploads and received MP4/documents, notification inbox, Product Q&A, purchase-verified reviews/photos and support tickets.
 - Repeatable local verification and a documented acceptance runbook.
 
 | Platform | Current support |
@@ -248,3 +248,8 @@ Optional address maps use MapLibre for rendering and Geoapify for address lookup
 and light raster tiles. `MAPS_ENABLED` defaults to false; enable it with an approved
 `GEOAPIFY_PUBLIC_API_KEY`. Coordinate entry and manual address saving remain available.
 See [map setup](docs/maps-location-api.md) and [verification](docs/references/maplibre-verification.md).
+
+
+## Current contract audit — 2026-10-12
+
+See [synchronization evidence](docs/references/synchronization-2026-10-12.md) and [current gaps](docs/references/integration-gaps.md). Shipping, collection/wallet, thumbnails and private media have local implementation evidence. Applied/Batch voucher names, same-benefit replacement, Order coordinate parsing and Shop-context adoption retain explicit gaps. Deployed commerce/media, installed Android/TalkBack and production configuration/signing remain open. Historical verification results were not rerun for this documentation update.

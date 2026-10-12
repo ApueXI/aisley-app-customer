@@ -344,6 +344,8 @@ Use [operation contracts](operations.md) for envelopes and [machine-readable def
 | `region` | `string` | non-null; required |
 | `postalCode` | `string` | non-null; required |
 | `country` | `string` | non-null; required |
+| `latitude` | `decimal string` | null allowed; required (2026-10-10 B02) |
+| `longitude` | `decimal string` | null allowed; required (2026-10-10 B02) |
 
 ## Cart
 
@@ -538,9 +540,12 @@ Use [operation contracts](operations.md) for envelopes and [machine-readable def
 
 ## Voucher
 
+2026-10-11 quote additions: `distributionMode: automatic|claim_required` and `collectionUrl: string?`, required in the current backend. Discovery/wallet uses the separate [CustomerVoucher DTO](voucher-collection.md#customervoucher-dto).
+
 | Wire field | Type | Null / omission |
 | --- | --- | --- |
 | `id` | `UUID` | non-null; required |
+| `name` | `string` | non-null; required (2026-10-09 update) |
 | `code` | `string` | non-null; required |
 | `issuerType` | `string` | non-null; required |
 | `benefitType` | `string` | non-null; required |
@@ -572,6 +577,7 @@ Use [operation contracts](operations.md) for envelopes and [machine-readable def
 | Wire field | Type | Null / omission |
 | --- | --- | --- |
 | `id` | `UUID` | non-null; required |
+| `name` | `string` | non-null; required (2026-10-09 update) |
 | `code` | `string` | non-null; required |
 | `issuerType` | `string` | non-null; required |
 | `benefitType` | `string` | non-null; required |
@@ -678,6 +684,7 @@ Use [operation contracts](operations.md) for envelopes and [machine-readable def
 | Wire field | Type | Null / omission |
 | --- | --- | --- |
 | `id` | `UUID` | null allowed; required |
+| `name` | `string` | non-null; required (2026-10-09 update) |
 | `code` | `string` | non-null; required |
 | `issuerType` | `string` | non-null; required |
 | `benefitType` | `string` | non-null; required |
@@ -919,6 +926,7 @@ Use [operation contracts](operations.md) for envelopes and [machine-readable def
 | `id` | `UUID` | non-null; required |
 | `name` | `string` | non-null; required |
 | `slug` | `string` | null allowed; required |
+| `availability` | `online|offline|vacation` | non-null; required |
 
 ## ShopMessage
 
@@ -1302,3 +1310,11 @@ See [private media](chat-media.md) for lifecycle, authorization and transport.
 ## CustomerVoucher collection adoption — 2026-10-11
 
 The complete [CustomerVoucher fields](voucher-collection.md#customervoucher-dto) and `VoucherShop` are typed in [DTO schema](dto-schema.json). All fields are required, including nullable values; public personalized fields are null. Quote names/distribution/collection URL are additive; older candidate fixtures remain supported without authorizing collection from missing metadata. `termsSummary` is nullable in current source. Private statuses are never stored in the public cache.
+
+## ShopAvailabilityProjection
+
+| Wire field | Type | Null / omission |
+| --- | --- | --- |
+| `shop` | `ChatShop` | non-null; required |
+| `conversation_id` | `UUID` | null allowed; required |
+| `send_allowed` | `bool` | non-null; required |

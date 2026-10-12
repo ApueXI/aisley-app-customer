@@ -6,6 +6,7 @@ phase: 2
 flutter_status: Implemented; acceptance partial
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
+documentation_synced_on: 2026-10-12
 ---
 
 # Address Book and defaults
@@ -152,16 +153,8 @@ universal error envelope.
 
 ### Responsibility and state ownership
 
-- `AddressRepository` owns typed transport, parsing and owned cache access; inject dependencies through
-  AppDependencies.
-- `AddressListViewModel` owns feature transitions, draft/query state and deliberate actions; inject
-  dependencies through AppDependencies.
-- `AddressFormViewModel` owns feature transitions, draft/query state and deliberate actions; inject
-  dependencies through AppDependencies.
-- `PsgcLoader` owns safe platform access without widget HTTP calls; inject dependencies through
-  AppDependencies.
-- `MapPinDialog` owns lookup/GPS/confirmation; `AddressPinMap` owns bounded preparation/lifecycle.
-  Injectable `AddressMapAdapter` owns the MapLibre view, draggable pin, camera updates and disposal.
+- AddressRepository owns typed transport/parsing; AppDependencies supplies dependencies.
+- AddressController owns current feature state and deliberate actions.
 - Screens compose focused sections/forms/history; reusable widgets render typed state and forward
   callbacks.
 - Use ChangeNotifier/ListenableBuilder with immutable DTO snapshots. No HTTP or JSON guesses in build().

@@ -23,7 +23,7 @@ For each phase record backend commit/configuration, target/origin, Flutter SDK/a
 - [ ] Android/browser multipart uses `photo`/`image`, exact under-10-MiB limit and allowed types; cancel/permission/corruption/spoof/size/throttle/consent/storage failure and uncertain response reconciliation work; review partial photos are not duplicated blindly.
 - [ ] Cart same-configuration merge/increment, separate variants, variation replacement/merge, server stock/visibility conflicts and unavailable lines work; uncertain additive writes do not auto-replay.
 - [ ] Buy Now leaves Cart unchanged; selected Cart checkout creates atomic one-Order-per-Shop batches; address/serviceability/rate/provider changes invalidate quotes; current per-Shop provider options, choice/fallback and revised DTOs pass G25 adoption checks; no local payable calculation appears.
-- [ ] Voucher UUID/targeting, one App per batch, per-benefit limits/reciprocal stacking, zero-saving redemption, caps/rounding and limited-capacity conflicts are verified; no wallet/claim/code-entry endpoint is assumed.
+- [ ] Voucher UUID/targeting, one App of each benefit per batch, per-benefit limits/default opposite-benefit pairing, zero-saving redemption, caps/rounding and limited-capacity conflicts are verified; collection/wallet follow the implemented contract; no code-entry endpoint is assumed.
 - [ ] Place response loss/timeouts and exact-key replay create one batch/reservation/redemption; changed payload/key conflicts, fresh quote review and process-death uncertainty follow documented limits.
 - [ ] Owned Orders/tracking hide foreign data; status tabs/capabilities match server; maps remain unavailable; cancellation/address correction races with Seller processing, releases/snapshots and revision/idempotency work without refund promises.
 - [ ] Shop/Logistics/Courier first send/reply/read/cursor flows work with live counterparts; channel identities/envelopes stay separate, unaccepted final-mile offers deny contact, ended custody/reassignment preserve scoped history and forbid sends.
@@ -71,7 +71,7 @@ Builds and synthetic checks do not establish successful live quotes or COD place
 ## New backend contract adoption gates — 2026-10-09
 
 - [ ] Verify controlled live/device [per-Shop shipping selection](api/shipping-selection.md). Current options, choice/fallback, frozen recovery and DTO adoption have [synthetic client evidence](references/shipping-selection-verification.md); deployed-provider/commerce and installed Android/TalkBack gates remain open (G25).
-- [ ] Adopt [private chat media](api/chat-media.md): upload/readiness, ordered binding on Send, exact supported retries, authenticated content/preview delivery and private account cleanup. Verify Android/browser file handling and installed-device behavior (G26).
+- [ ] Verify adopted [private chat media](api/chat-media.md) against live/runtime/device acceptance: upload/readiness, ordered binding on Send, exact supported retries, authenticated content/preview delivery and private account cleanup. Verify Android/browser file handling and installed-device behavior (G26).
 
 The handoff's reviewed backend revision is separate from current client adoption and the
 unidentified deployed API revision. Earlier Phase 3/4 checks certify their dated client scope;
@@ -84,3 +84,7 @@ Local widget, build and synthetic-browser results are recorded in
 [accessibility journeys verification](references/accessibility-journeys-verification.md).
 The installed Android/TalkBack and controlled live-API browser gates remain
 open; the synthetic run does not complete the broad device/API acceptance item.
+
+## Current adoption and remaining checks — 2026-10-12
+
+Shipping, collection/wallet, Order/Checkout thumbnails and image/received MP4/document chat are implemented locally. See [current audit](references/synchronization-2026-10-12.md). Voucher names/pairing, Order coordinates and Shop-context adoption retain explicit gaps. All live/deployed/installed-device and signing checks require their own evidence.

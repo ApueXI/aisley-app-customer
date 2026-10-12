@@ -62,3 +62,10 @@ Current source: `22b0a48f9575ead182d03c35ab87345711c23b90`; Buyer adoption gap G
 | 409 ROUTE_RATE_LIMIT_EXCEEDED | no field; route participant parcel limit blocks quote |
 
 Options discovery omits quotation failures. Non-limit route participant tariff/rate/service/category failures degrade to unplanned and are not returned as direct HTTP errors; successful unplanned quotes can later be held at Seller pickup. See [shipping selection](shipping-selection.md). Changed selections produce QUOTE_INPUT_CHANGED, or IDEMPOTENCY_KEY_REUSED for a changed uncertain-placement payload. Synthetic scenarios and error records are not executed backend tests.
+
+
+As of the 2026-10-10 backend B05 fix, checked-in Laravel CORS explicitly exposes `Retry-After` for approved origins, including the default Buyer browser origin `http://localhost:8766`. Browser clients can read the original delta-seconds or HTTP-date value even on credentialed requests; native header behavior is unchanged. Local synthetic middleware/browser checks are separate from deployed API and actual Flutter cooldown acceptance. Deployment must refresh cached Laravel configuration and verify the header from the approved origin; an absent/invalid header still follows the existing unavailable-cooldown handling.
+
+## Legacy voucher funding — 2026-10-10
+
+For the 2026-10-10 [B06 legacy voucher funding delta](legacy-voucher-funding.md), quote `409 VOUCHER_FUNDING_INSUFFICIENT` binds to `vouchers` and requires changing the selection. Candidate reason uses the same code with zero displayed saving. Placement maps the shortfall to existing `409 QUOTE_STALE` on `vouchers` with no effects: refresh and require reviewed Place. Unknown/uncertain placement responses still retain the frozen request; committed exact-key replay remains valid.
