@@ -140,7 +140,11 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                       ),
                       const SizedBox(height: 16),
                       if (c.quote != null)
-                        QuoteReview(quote: c.quote!, controller: c)
+                        QuoteReview(
+                          quote: c.quote!,
+                          controller: c,
+                          discovery: widget.dependencies.discovery!,
+                        )
                       else
                         MarketSection(
                           title: 'Order items',

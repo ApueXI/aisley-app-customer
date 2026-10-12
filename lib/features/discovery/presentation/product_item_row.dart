@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
-import '../../discovery/data/discovery_repository.dart';
-import '../../discovery/presentation/catalog_image.dart';
+import '../data/discovery_repository.dart';
+import 'catalog_image.dart';
 
-/// Current public Product media complements the immutable purchased-item facts.
-class OrderItemRow extends StatelessWidget {
-  const OrderItemRow({
+/// Public Product media beside authoritative item facts in checkout and Orders.
+class ProductItemRow extends StatelessWidget {
+  const ProductItemRow({
     super.key,
     required this.imageUrl,
     required this.name,

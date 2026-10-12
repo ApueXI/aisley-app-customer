@@ -82,3 +82,15 @@ Failed or unsupported URLs use the placeholder; no storage URL is constructed.
 The image reflects current approved variant media, Product default/first approved
 gallery media, or the existing legacy thumbnail projection; purchase facts stay frozen.
 Checkout presentation adoption is outside G30. See [verification](../references/order-images-verification.md).
+
+
+## Checkout image adoption — 2026-10-12 (G31)
+
+Buyer now also parses optional nullable `QuoteItem.imageUrl` and renders 64px
+Product thumbnails in Checkout review and batch results through the same shared
+`ProductItemRow`/`CatalogImage` public-media loader used by Orders. Older omitted
+fields, null/empty URLs and rejected/unavailable/corrupt media use the existing
+fallback. Images describe current media; authoritative prices, names, options,
+quantities, placement payloads and exact-retry keys retain their existing ownership.
+See [G31 verification](../references/checkout-images-verification.md) for actual
+client checks and separately open live/device acceptance.

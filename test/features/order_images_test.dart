@@ -11,7 +11,7 @@ import 'package:aisley_mobile_buyer/core/networking/api_failure.dart';
 import 'package:aisley_mobile_buyer/features/checkout/data/batch_models.dart';
 import 'package:aisley_mobile_buyer/features/orders/data/order_models.dart';
 import 'package:aisley_mobile_buyer/features/orders/presentation/order_detail_screen.dart';
-import 'package:aisley_mobile_buyer/features/orders/presentation/order_item_row.dart';
+import 'package:aisley_mobile_buyer/features/discovery/presentation/product_item_row.dart';
 import 'package:aisley_mobile_buyer/features/orders/presentation/orders_screen.dart';
 
 import '../support/commerce_harness.dart';
@@ -130,7 +130,7 @@ void main() {
               ? OrderDetailScreen(dependencies: dependencies, id: customerId)
               : OrdersScreen(dependencies: dependencies),
         );
-        expect(find.byType(OrderItemRow), findsOneWidget);
+        expect(find.byType(ProductItemRow), findsOneWidget);
         expect(find.byType(Image), findsOneWidget);
         expect(
           tester.widget<Image>(find.byType(Image)).semanticLabel,
@@ -190,7 +190,7 @@ void main() {
           OrderDetailScreen(dependencies: dependencies, id: customerId),
         );
         expect(find.byIcon(Icons.image_outlined), findsOneWidget);
-        expect(find.byType(OrderItemRow), findsOneWidget);
+        expect(find.byType(ProductItemRow), findsOneWidget);
         expect(find.textContaining('Purchased items'), findsOneWidget);
         await tester.scrollUntilVisible(find.text('Cancel Order'), 200);
         expect(find.text('Cancel Order'), findsOneWidget);
@@ -220,7 +220,7 @@ void main() {
   ) async {
     summary['data'][0]['itemPreview'] = null;
     await show(tester, OrdersScreen(dependencies: dependencies));
-    expect(find.byType(OrderItemRow), findsOneWidget);
+    expect(find.byType(ProductItemRow), findsOneWidget);
     expect(find.byIcon(Icons.image_outlined), findsOneWidget);
     expect(find.byType(Image), findsNothing);
     expect(tester.takeException(), isNull);
@@ -242,7 +242,7 @@ void main() {
             size: Size(width, 844),
             scale: 2,
           );
-          expect(find.byType(OrderItemRow), findsOneWidget);
+          expect(find.byType(ProductItemRow), findsOneWidget);
           expect(tester.getSize(find.byType(Image)), const Size(64, 64));
           expect(tester.takeException(), isNull);
         },
@@ -286,7 +286,7 @@ void main() {
       await tester.pump();
       delayed.complete(imageReply());
       await tester.pumpAndSettle();
-      expect(find.byType(OrderItemRow), findsNothing);
+      expect(find.byType(ProductItemRow), findsNothing);
       expect(find.byType(Image), findsNothing);
       expect(tester.takeException(), isNull);
     });

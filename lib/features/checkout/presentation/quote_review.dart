@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../vouchers/data/customer_voucher.dart';
+import '../../discovery/data/discovery_repository.dart';
+import '../../discovery/presentation/product_item_row.dart';
 
 import '../../../core/ui/marketplace_widgets.dart';
 import '../data/quote_models.dart';
@@ -10,9 +12,15 @@ import 'commerce_widgets.dart';
 import 'shipping_details.dart';
 
 class QuoteReview extends StatelessWidget {
-  const QuoteReview({super.key, required this.quote, required this.controller});
+  const QuoteReview({
+    super.key,
+    required this.quote,
+    required this.controller,
+    required this.discovery,
+  });
   final CheckoutQuote quote;
   final CheckoutController controller;
+  final DiscoveryRepository discovery;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -43,9 +51,11 @@ class QuoteReview extends StatelessWidget {
                 const SizedBox(height: 12),
                 for (final item in group.items)
                   ProductBoundaryCard(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+                    child: ProductItemRow(
+                      imageUrl: item.imageUrl,
+                      name: item.name,
+                      discovery: discovery,
+                      details: [
                         Text('${item.name} × ${item.quantity}'),
                         Text(
                           item.options

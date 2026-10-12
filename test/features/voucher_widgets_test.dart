@@ -8,6 +8,7 @@ import 'package:aisley_mobile_buyer/app/theme.dart';
 import 'package:aisley_mobile_buyer/features/checkout/domain/checkout_intent.dart';
 import 'package:aisley_mobile_buyer/features/checkout/presentation/checkout_controller.dart';
 import 'package:aisley_mobile_buyer/features/vouchers/data/voucher_repository.dart';
+import 'package:aisley_mobile_buyer/features/discovery/data/discovery_repository.dart';
 import 'package:aisley_mobile_buyer/features/vouchers/presentation/voucher_screens.dart';
 import 'package:aisley_mobile_buyer/features/vouchers/presentation/shop_vouchers_section.dart';
 
@@ -29,6 +30,7 @@ void main() {
       launcher: h.dependencies().launcher,
       client: h.api,
       commerce: h.commerce,
+      discovery: DiscoveryRepository(api: h.api, session: h.session),
       addresses: h.dependencies().addresses,
       vouchers: VoucherRepository(h.api),
     );
@@ -36,6 +38,7 @@ void main() {
   tearDown(() {
     d.voucherCollection?.dispose();
     d.vouchers?.dispose();
+    d.discovery?.dispose();
     h.dispose();
   });
   Future<void> settle(WidgetTester tester) async {

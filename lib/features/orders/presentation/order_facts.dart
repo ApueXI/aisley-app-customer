@@ -4,7 +4,7 @@ import '../../checkout/presentation/commerce_widgets.dart';
 import '../../checkout/presentation/shipping_details.dart';
 import '../../discovery/data/discovery_repository.dart';
 import '../data/order_models.dart';
-import 'order_item_row.dart';
+import '../../discovery/presentation/product_item_row.dart';
 
 class OrderFacts extends StatelessWidget {
   const OrderFacts(this.order, {super.key, required this.discovery});
@@ -24,7 +24,7 @@ class OrderFacts extends StatelessWidget {
       for (final item in order.items)
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
-          child: OrderItemRow(
+          child: ProductItemRow(
             imageUrl: item.imageUrl,
             name: item.name,
             discovery: discovery,

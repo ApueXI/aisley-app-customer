@@ -115,3 +115,11 @@ checks from deployed media and installed Android/TalkBack acceptance, which stay
 ## Audit G26 receive-only media — 2026-10-12
 
 [Verification](private-media-verification.md) records local consumption and image-limit adoption. The audit ID refers to private media (Buyer-local G26, portable G27); voucher IDs and historical reports remain unchanged. Runtime/deployed/installed-device acceptance is still open.
+
+
+## Checkout thumbnails — audit G31
+
+G31 is implemented locally in Buyer Checkout review/results using optional nullable
+quote image parsing and shared trusted public-media thumbnails/fallbacks.
+[G31 verification](checkout-images-verification.md) records actual checks separately
+from deployed-media and installed Android/TalkBack acceptance, which remain open.
