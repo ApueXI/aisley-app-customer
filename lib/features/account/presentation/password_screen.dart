@@ -34,7 +34,8 @@ class _PasswordScreenState extends State<PasswordScreen> {
 
   void _changed() {
     _controller.fieldErrors = const {};
-    if (!_controller.saving && _controller.challenge != null) {
+    if (!(_controller.saving || _controller.operationPending) &&
+        _controller.challenge != null) {
       _controller.cancelVerification();
       _code.clear();
     }
@@ -71,13 +72,16 @@ class _PasswordScreenState extends State<PasswordScreen> {
           _current.text.isNotEmpty ||
           _next.text.isNotEmpty ||
           _confirm.text.isNotEmpty,
-      busy: _controller.saving,
+      busy: (_controller.saving || _controller.operationPending),
       children: [
         const Text(
           'Changing your password requires an emailed code. This device stays signed in; other app access tokens are revoked.',
         ),
-        if (_controller.error != null)
-          Semantics(liveRegion: true, child: Text(_controller.error!)),
+        if ((_controller.recoveryMessage ?? _controller.error) != null)
+          Semantics(
+            liveRegion: true,
+            child: Text((_controller.recoveryMessage ?? _controller.error)!),
+          ),
         if (_controller.changed)
           Semantics(
             liveRegion: true,
@@ -104,7 +108,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
               TextFormField(
                 controller: _current,
                 enabled:
-                    !_controller.saving &&
+                    !(_controller.saving || _controller.operationPending) &&
                     _controller.challenge == null &&
                     !_controller.requiresReconciliation,
                 obscureText: _hideCurrent,
@@ -129,7 +133,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
               TextFormField(
                 controller: _next,
                 enabled:
-                    !_controller.saving &&
+                    !(_controller.saving || _controller.operationPending) &&
                     _controller.challenge == null &&
                     !_controller.requiresReconciliation,
                 obscureText: _hideNext,
@@ -153,7 +157,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
               TextFormField(
                 controller: _confirm,
                 enabled:
-                    !_controller.saving &&
+                    !(_controller.saving || _controller.operationPending) &&
                     _controller.challenge == null &&
                     !_controller.requiresReconciliation,
                 obscureText: _hideNext,
@@ -178,7 +182,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
           TextFormField(
             controller: _code,
             autofocus: true,
-            enabled: !_controller.saving,
+            enabled: !(_controller.saving || _controller.operationPending),
             keyboardType: TextInputType.number,
             autofillHints: const [AutofillHints.oneTimeCode],
             maxLength: 6,
@@ -189,9 +193,11 @@ class _PasswordScreenState extends State<PasswordScreen> {
           ),
           OutlinedButton(
             onPressed:
-                _controller.saving ||
+                (_controller.saving || _controller.operationPending) ||
                     _controller.coolingDown ||
-                    _controller.challenge!.resendSeconds > 0
+                    _controller.challenge!.resendSeconds > 0 ||
+                    _controller.requiresReconciliation ||
+                    _controller.requestBlocked
                 ? null
                 : _requestCode,
             child: Text(
@@ -203,23 +209,27 @@ class _PasswordScreenState extends State<PasswordScreen> {
         ],
         FilledButton(
           onPressed:
-              _controller.saving ||
+              (_controller.saving || _controller.operationPending) ||
                   _controller.coolingDown ||
                   _controller.requiresReconciliation ||
                   _controller.requestBlocked ||
+                  (_controller.challenge == null &&
+                      _controller.resendBlocked) ||
                   (_controller.challenge?.expired ?? false)
               ? null
               : _submit,
           child: Text(
-            _controller.saving
+            (_controller.saving || _controller.operationPending)
                 ? 'Please wait…'
                 : _controller.challenge == null
-                ? 'Send verification code'
+                ? _controller.requestSeconds > 0
+                      ? 'Request code in ${_controller.requestSeconds}s'
+                      : 'Send verification code'
                 : 'Verify and update password',
           ),
         ),
         TextButton(
-          onPressed: _controller.saving
+          onPressed: (_controller.saving || _controller.operationPending)
               ? null
               : () {
                   _controller.cancelVerification();
