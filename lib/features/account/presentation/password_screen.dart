@@ -20,6 +20,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
   final _form = GlobalKey<FormState>();
   final _current = TextEditingController(), _next = TextEditingController();
   final _confirm = TextEditingController();
+  final _code = TextEditingController();
   bool _hideCurrent = true, _hideNext = true;
 
   @override
@@ -33,6 +34,10 @@ class _PasswordScreenState extends State<PasswordScreen> {
 
   void _changed() {
     _controller.fieldErrors = const {};
+    if (!_controller.saving && _controller.challenge != null) {
+      _controller.cancelVerification();
+      _code.clear();
+    }
     if (mounted) setState(() {});
   }
 
@@ -40,6 +45,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
     _current.clear();
     _next.clear();
     _confirm.clear();
+    _code.clear();
   }
 
   @override
@@ -52,6 +58,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
     _current.dispose();
     _next.dispose();
     _confirm.dispose();
+    _code.dispose();
     super.dispose();
   }
 
@@ -67,7 +74,7 @@ class _PasswordScreenState extends State<PasswordScreen> {
       busy: _controller.saving,
       children: [
         const Text(
-          'Changing your password preserves this session and revokes other sessions.',
+          'Changing your password requires an emailed code. This device stays signed in; other app access tokens are revoked.',
         ),
         if (_controller.error != null)
           Semantics(liveRegion: true, child: Text(_controller.error!)),
@@ -96,6 +103,10 @@ class _PasswordScreenState extends State<PasswordScreen> {
             children: [
               TextFormField(
                 controller: _current,
+                enabled:
+                    !_controller.saving &&
+                    _controller.challenge == null &&
+                    !_controller.requiresReconciliation,
                 obscureText: _hideCurrent,
                 enableSuggestions: false,
                 autocorrect: false,
@@ -117,6 +128,10 @@ class _PasswordScreenState extends State<PasswordScreen> {
               ),
               TextFormField(
                 controller: _next,
+                enabled:
+                    !_controller.saving &&
+                    _controller.challenge == null &&
+                    !_controller.requiresReconciliation,
                 obscureText: _hideNext,
                 enableSuggestions: false,
                 autocorrect: false,
@@ -137,6 +152,10 @@ class _PasswordScreenState extends State<PasswordScreen> {
               ),
               TextFormField(
                 controller: _confirm,
+                enabled:
+                    !_controller.saving &&
+                    _controller.challenge == null &&
+                    !_controller.requiresReconciliation,
                 obscureText: _hideNext,
                 enableSuggestions: false,
                 autocorrect: false,
@@ -150,31 +169,101 @@ class _PasswordScreenState extends State<PasswordScreen> {
             ],
           ),
         ),
+        if (_controller.challenge != null) ...[
+          Text(
+            'Your verification email is queued for ${_controller.challenge!.maskedEmail}. Check your inbox and spam folder. The latest code expires ten minutes after requesting it.',
+          ),
+          if (_controller.challenge!.expired)
+            const Text('This code has expired. Request a new code.'),
+          TextFormField(
+            controller: _code,
+            autofocus: true,
+            enabled: !_controller.saving,
+            keyboardType: TextInputType.number,
+            autofillHints: const [AutofillHints.oneTimeCode],
+            maxLength: 6,
+            decoration: InputDecoration(
+              labelText: 'Verification code',
+              errorText: _controller.fieldErrors['verification_code'],
+            ),
+          ),
+          OutlinedButton(
+            onPressed:
+                _controller.saving ||
+                    _controller.coolingDown ||
+                    _controller.challenge!.resendSeconds > 0
+                ? null
+                : _requestCode,
+            child: Text(
+              _controller.challenge!.resendSeconds > 0
+                  ? 'Resend in ${_controller.challenge!.resendSeconds}s'
+                  : 'Resend code',
+            ),
+          ),
+        ],
         FilledButton(
           onPressed:
               _controller.saving ||
                   _controller.coolingDown ||
-                  _controller.requiresReconciliation
+                  _controller.requiresReconciliation ||
+                  _controller.requestBlocked ||
+                  (_controller.challenge?.expired ?? false)
               ? null
               : _submit,
-          child: Text(_controller.saving ? 'Changing…' : 'Change password'),
+          child: Text(
+            _controller.saving
+                ? 'Please wait…'
+                : _controller.challenge == null
+                ? 'Send verification code'
+                : 'Verify and update password',
+          ),
+        ),
+        TextButton(
+          onPressed: _controller.saving
+              ? null
+              : () {
+                  _controller.cancelVerification();
+                  _clearDraft();
+                  setState(() {});
+                },
+          child: const Text('Cancel'),
         ),
       ],
     ),
   );
 
-  Future<void> _submit() async {
-    if (!validateForm(_form.currentState!)) return;
-    final success = await _controller.change(
+  Future<void> _requestCode() async {
+    final success = await _controller.requestCode(
       currentPassword: _current.text,
       password: _next.text,
       confirmation: _confirm.text,
     );
+    if (success && mounted) _code.clear();
+  }
+
+  Future<void> _submit() async {
+    if (!validateForm(_form.currentState!)) return;
+    if (_controller.challenge == null) {
+      await _requestCode();
+      return;
+    }
+    if (!RegExp(r'^[0-9]{6}$').hasMatch(_code.text)) {
+      setState(() {
+        _controller.fieldErrors = {
+          'verification_code': 'Enter the six-digit code.',
+        };
+      });
+      return;
+    }
+    final success = await _controller.change(
+      currentPassword: _current.text,
+      password: _next.text,
+      confirmation: _confirm.text,
+      verificationCode: _code.text,
+    );
     if (!mounted) return;
-    if (success) {
-      _current.clear();
-      _next.clear();
-      _confirm.clear();
+    if (success || _controller.requiresReconciliation) {
+      _clearDraft();
       setState(() {});
     } else {
       validateForm(_form.currentState!);

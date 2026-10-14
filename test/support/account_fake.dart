@@ -1,3 +1,5 @@
+import 'package:aisley_mobile_buyer/features/account/data/password_challenge.dart';
+
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -43,12 +45,33 @@ class FakeAccountRepository implements AccountRepository {
     return onProfile == null ? value : onProfile!(input);
   }
 
+  int codeRequests = 0;
+  Future<PasswordChallenge> Function()? onRequestCode;
+  @override
+  Future<PasswordChallenge> requestPasswordCode(
+    SessionLease lease, {
+    required String currentPassword,
+    required String password,
+    required String confirmation,
+  }) async {
+    codeRequests++;
+    if (onRequestCode != null) return onRequestCode!();
+    return PasswordChallenge(
+      id: '00000000-0000-4000-8000-000000000001',
+      maskedEmail: 'b***@example.test',
+      expiresAt: DateTime.now().add(const Duration(minutes: 10)),
+      resendAt: DateTime.now().add(const Duration(seconds: 60)),
+    );
+  }
+
   @override
   Future<void> updatePassword(
     SessionLease lease, {
     required String currentPassword,
     required String password,
     required String confirmation,
+    required String challengeId,
+    required String verificationCode,
   }) async {
     passwordWrites++;
     if (onPassword != null) await onPassword!();
