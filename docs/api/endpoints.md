@@ -24,6 +24,7 @@ Customer feature routes generally include `throttle:120,1`; focused throttles ar
 | `GET` | `/api/v1/customer/account` | Active Customer + consent | 120,1 | `Customer\AccountController@show` |
 | `GET` | `/api/v1/customer/account/notification-preferences` | Active Customer + consent | 120,1 | `Customer\PromotionPreferenceController@show` |
 | `PATCH` | `/api/v1/customer/account/notification-preferences` | Active Customer + consent | 120,1, 30,1 | `Customer\PromotionPreferenceController@update` |
+| `POST` | `/api/v1/customer/account/password/verification-code` | Active Customer + consent | password-change-code; 60s resend / 5 per rolling hour | `Account\PasswordChangeCodeController` |
 | `PATCH` | `/api/v1/customer/account/password` | Active Customer + consent | 120,1, customer-account-password | `Customer\AccountController@updatePassword` |
 | `PATCH` | `/api/v1/customer/account/profile` | Active Customer + consent | 120,1 | `Customer\AccountController@updateProfile` |
 | `POST` | `/api/v1/customer/account/profile-photo` | Active Customer + consent | 120,1, customer-profile-photo | `Customer\AccountController@uploadProfilePhoto` |
@@ -247,11 +248,11 @@ Customer feature routes generally include `throttle:120,1`; focused throttles ar
 - There is no Buyer push-device registration, notification unread-count/read-all, voucher code-entry, native-reset-link, applicant-status, live-location, delivery-POD, online-payment, returns/refunds or arbitrary-user messaging API promised by this inventory.
 - Customer methods differ from other roles: account password is PATCH, avatar part is photo, review part image, Q&A part question, support description part body, Shop read sequence versus operational read last_read_sequence.
 
-The current [103 typed operation records](operation-index.json) cover the 95 historical operations, logistics-options and seven chat-media operations with synthetic JSON or binary metadata examples. Auxiliary address-options remain optional; media consumes returned URLs. [Standalone requests/envelopes](operations.md) are authoritative local definitions, with no monorepo reading dependency.
+The current [111 typed operation records](operation-index.json) cover the 95 historical operations, logistics-options and seven chat-media operations with synthetic JSON or binary metadata examples. Auxiliary address-options remain optional; media consumes returned URLs. [Standalone requests/envelopes](operations.md) are authoritative local definitions, with no monorepo reading dependency.
 
 ## Additive chat media endpoints — 2026-10-06
 
-[Private media](chat-media.md) defines Customer GET/POST `/api/v1/customer/chat-attachments`, GET/DELETE `/{id}`, POST `/{id}/retry`, GET `/{id}/content` and GET `/{id}/preview`. All three existing chat start/reply routes accept ordered `attachment_ids`; messages add `attachments`. Runtime gated; Buyer Flutter adoption pending.
+[Private media](chat-media.md) defines Customer GET/POST `/api/v1/customer/chat-attachments`, GET/DELETE `/{id}`, POST `/{id}/retry`, GET `/{id}/content` and GET `/{id}/preview`. All three existing chat start/reply routes accept ordered `attachment_ids`; messages add `attachments`. Runtime gated; Buyer adoption implemented; live/device gates open.
 
 The 2026-10-09 [supplied route snapshot](../references/routes-2026-10-09.json) includes the media addition. Its review revision is separate from client adoption and the unidentified deployed API revision.
 
@@ -268,3 +269,21 @@ The [collection contract](voucher-collection.md) adds seven methods after the hi
 | GET | `/api/v1/customer/voucher-statuses` | Active Customer + consent | 120,1 | CustomerVoucherController@statuses |
 | POST | `/api/v1/customer/vouchers/{voucher}/claim` | Active Customer + consent | 120,1 | CustomerVoucherController@claim |
 | POST | `/api/v1/customer/shops/{slug}/vouchers/{voucher}/claim` | Active Customer + consent | 120,1 | CustomerVoucherController@shopClaim |
+
+
+## Current Shop context operation
+
+| Method | Path | Access | Throttle | Controller |
+| --- | --- | --- | --- | --- |
+| `GET` | `/api/v1/customer/conversations/shops/{shop}` | Active Customer + consent | 120,1 | `Customer\ConversationController@shopContext` |
+
+This operation is included in the current operation index; historical route snapshots retain their original counts.
+
+## Registration OTP endpoints — 2026-10-14
+
+| Method | Path | Access | Limits | Handler |
+| --- | --- | --- | --- | --- |
+| POST | `/api/v1/customer/auth/registration/verification-code` | Public | Email-role rolling quota and IP/hour | `Auth\RegistrationEmailController@requestCode` |
+| POST | `/api/v1/customer/auth/registration/verify-email` | Public | Five incorrect codes; IP/minute | `Auth\RegistrationEmailController@verify` |
+
+Existing registration requires `email_verification_token`; see [contract](../registration-email.md).

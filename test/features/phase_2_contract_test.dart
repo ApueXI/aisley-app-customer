@@ -160,6 +160,41 @@ void main() {
     });
   });
 
+  test('password code request uses authenticated POST and parses the required challenge', () async {
+    final adapter = CaptureAdapter(
+      (_) => jsonReply(fixture('account-management', 'op-112'), status: 202),
+    );
+    final api = ApiClient(
+      testConfig,
+      privateClient: Dio()..httpClientAdapter = adapter,
+    );
+    addTearDown(api.close);
+    final lease = SessionLease('synthetic-test-token', () => true, (_) {});
+    addTearDown(() => lease.cancellation.cancel());
+    final result = await ApiAccountRepository(api).requestPasswordCode(
+      lease,
+      currentPassword: 'Synthetic123',
+      password: 'Synthetic456',
+      confirmation: 'Synthetic456',
+    );
+    expect(result.id, '11111111-1111-4111-8111-111111111111');
+    expect(result.maskedEmail, 'b***@example.invalid');
+    expect(adapter.requests.single.method, 'POST');
+    expect(
+      adapter.requests.single.uri.path,
+      '/api/v1/customer/account/password/verification-code',
+    );
+    expect(adapter.requests.single.data, {
+      'current_password': 'Synthetic123',
+      'password': 'Synthetic456',
+      'password_confirmation': 'Synthetic456',
+    });
+    expect(
+      adapter.requests.single.headers['Authorization'],
+      'Bearer synthetic-test-token',
+    );
+  });
+
   test('account operations use full profile/password/preference bodies and authenticated multipart/image bytes', () async {
     final adapter = CaptureAdapter((options) {
       final path = options.uri.path;
@@ -202,6 +237,8 @@ void main() {
       currentPassword: 'Synthetic123',
       password: 'Synthetic456',
       confirmation: 'Synthetic456',
+      challengeId: '00000000-0000-4000-8000-000000000001',
+      verificationCode: '123456',
     );
     expect(
       await repository.profilePhoto(
@@ -242,6 +279,8 @@ void main() {
       'current_password': 'Synthetic123',
       'password': 'Synthetic456',
       'password_confirmation': 'Synthetic456',
+      'challenge_id': '00000000-0000-4000-8000-000000000001',
+      'verification_code': '123456',
     });
     expect(adapter.requests[3].uri.queryParameters, {'v': '2'});
     expect(adapter.requests.last.data, {'promotional_in_app_opted_in': false});

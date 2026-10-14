@@ -1,3 +1,5 @@
+import 'package:aisley_mobile_buyer/features/account/data/password_challenge.dart';
+
 import 'dart:async';
 import 'dart:typed_data';
 
@@ -306,11 +308,17 @@ void main() {
       );
     final password = PasswordController(session, repo);
     addTearDown(password.dispose);
+    await password.requestCode(
+      currentPassword: 'Synthetic123',
+      password: 'Synthetic456',
+      confirmation: 'Synthetic456',
+    );
     expect(
       await password.change(
         currentPassword: 'Synthetic123',
         password: 'Synthetic456',
         confirmation: 'Synthetic456',
+        verificationCode: '123456',
       ),
       isFalse,
     );
@@ -320,14 +328,75 @@ void main() {
       currentPassword: 'Synthetic123',
       password: 'Synthetic456',
       confirmation: 'Synthetic456',
+      verificationCode: '123456',
     );
     expect(password.requiresReconciliation, isTrue);
     await password.change(
       currentPassword: 'Synthetic123',
       password: 'Synthetic456',
       confirmation: 'Synthetic456',
+      verificationCode: '123456',
     );
     expect(repo.passwordWrites, 2);
+  });
+
+  test('password change cannot submit before requesting a code and cancellation clears the challenge', () async {
+    final repo = FakeAccountRepository();
+    final controller = PasswordController(session, repo);
+    addTearDown(controller.dispose);
+    expect(
+      await controller.change(
+        currentPassword: 'Synthetic123',
+        password: 'Synthetic456',
+        confirmation: 'Synthetic456',
+        verificationCode: '123456',
+      ),
+      isFalse,
+    );
+    expect(repo.passwordWrites, 0);
+    expect(
+      await controller.requestCode(
+        currentPassword: 'Synthetic123',
+        password: 'Synthetic456',
+        confirmation: 'Synthetic456',
+      ),
+      isTrue,
+    );
+    expect(
+      await controller.requestCode(
+        currentPassword: 'Synthetic123',
+        password: 'Synthetic456',
+        confirmation: 'Synthetic456',
+      ),
+      isFalse,
+    );
+    expect(repo.codeRequests, 1);
+    controller.cancelVerification();
+    expect(controller.challenge, isNull);
+  });
+
+  test('late email challenge cannot return after an account switch', () async {
+    final late = Completer<PasswordChallenge>();
+    final repo = FakeAccountRepository()..onRequestCode = () => late.future;
+    final controller = PasswordController(session, repo);
+    addTearDown(controller.dispose);
+    final pending = controller.requestCode(
+      currentPassword: 'Synthetic123',
+      password: 'Synthetic456',
+      confirmation: 'Synthetic456',
+    );
+    await switchTo('22222222-2222-4222-8222-222222222222');
+    late.complete(
+      PasswordChallenge(
+        id: '00000000-0000-4000-8000-000000000001',
+        maskedEmail: 'b***@example.test',
+        expiresAt: DateTime.now().add(const Duration(minutes: 10)),
+        resendAt: DateTime.now().add(const Duration(minutes: 1)),
+      ),
+    );
+    expect(await pending, isFalse);
+    expect(controller.challenge, isNull);
+    expect(controller.saving, isFalse);
   });
 
   test(

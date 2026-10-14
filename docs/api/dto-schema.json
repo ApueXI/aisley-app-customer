@@ -238,7 +238,9 @@
       "province": "string",
       "region": "string",
       "postalCode": "string",
-      "country": "string"
+      "country": "string",
+      "latitude": "coordinate?",
+      "longitude": "coordinate?"
     },
     "Cart": {
       "id": "UUID",
@@ -408,7 +410,8 @@
       "issuerType": "string",
       "benefitType": "string",
       "qualifyingBasis": "money",
-      "discountAmount": "money"
+      "discountAmount": "money",
+      "name": "string"
     },
     "ShippingQuote": {
       "serviceable": "bool",
@@ -491,7 +494,8 @@
       "benefitType": "string",
       "qualifyingBasis": "money",
       "discountAmount": "money",
-      "termsSummary": "string"
+      "termsSummary": "string",
+      "name": "string"
     },
     "OrderVoucher": {
       "id": "UUID?",
@@ -663,7 +667,8 @@
     "ChatShop": {
       "id": "UUID",
       "name": "string",
-      "slug": "string?"
+      "slug": "string?",
+      "availability": "online|offline|vacation"
     },
     "ShopMessage": {
       "id": "UUID",
@@ -965,6 +970,28 @@
       "id": "UUID",
       "name": "string",
       "slug": "string"
+    },
+    "ShopAvailabilityProjection": {
+      "shop": "ChatShop",
+      "conversation_id": "UUID?",
+      "send_allowed": "bool"
+    },
+    "PasswordChangeChallenge": {
+      "challenge_id": "UUID",
+      "masked_email": "string",
+      "expires_at": "timestamp",
+      "resend_available_at": "timestamp"
+    },
+    "RegistrationEmailChallenge": {
+      "message": "string",
+      "challenge_id": "UUID",
+      "expires_at": "ISO-8601",
+      "resend_available_at": "ISO-8601"
+    },
+    "RegistrationEmailProof": {
+      "message": "string",
+      "email_verification_token": "64-character hex string",
+      "expires_at": "ISO-8601"
     }
   },
   "adopted_client_checkout": "57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50",
@@ -974,6 +1001,9 @@
     "client_adoption": "pending"
   },
   "contract_updates": {
-    "voucher_collection": "2026-10-11: Buyer discovery, Shop/platform collection, wallet and explicit Checkout requote adopt Laravel 7e89b391; live/device/deployment gates remain open."
-  }
+    "voucher_collection": "2026-10-11: Buyer discovery, Shop/platform collection, wallet and explicit Checkout requote adopt Laravel 7e89b391; live/device/deployment gates remain open.",
+    "2026-10-09": "Voucher, AppliedVoucher and BatchVoucher add name; see voucher-selection-update.md. External Flutter adoption remains G26.",
+    "order_contact_correction": "2026-10-10 B02: recipient/contact-only corrections at identical complete trimmed location and seven-decimal pin; nullable Order coordinates added; external adopted baseline unchanged."
+  },
+  "current_source_inspection": "240eefddd4e2e2eea2f9558beec0292efa2121fe"
 }

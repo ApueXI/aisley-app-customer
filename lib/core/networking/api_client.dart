@@ -6,6 +6,9 @@ import 'package:dio/dio.dart';
 
 import '../config/app_config.dart';
 import 'api_failure.dart';
+import 'bounded_media_adapter.dart';
+
+part 'private_media_transport.dart';
 
 /// An in-memory credential bound to one controller generation.
 class SessionLease {
@@ -58,6 +61,9 @@ class ApiClient {
         headers: {'Accept': 'application/json'},
       );
     }
+    this.privateClient.httpClientAdapter = BoundedMediaAdapter(
+      this.privateClient.httpClientAdapter,
+    );
   }
   final AppConfig config;
   final Dio publicClient, privateClient;

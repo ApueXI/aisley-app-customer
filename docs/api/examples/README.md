@@ -34,3 +34,5 @@ Read [operation contracts](../operations.md) and [wire definitions](../field-ind
 - [Chat media](chat-media.json) provides synthetic upload/status/retry/removal/authorized-read and attachment-message examples for the additive 2026-10-06 contract; external Flutter media adoption remains pending.
 
 [Voucher collection fixtures](voucher-collection.json) record all seven additive operations, with public/private separation and natural claim replay; these are synthetic, not live API evidence.
+
+[Shop context](shop-context.json) adds the current availability projection; all examples remain synthetic.

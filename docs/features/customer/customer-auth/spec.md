@@ -6,6 +6,7 @@ phase: 1
 flutter_status: Implemented; target acceptance pending
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
+documentation_synced_on: 2026-10-12
 ---
 
 # Customer authentication
@@ -17,7 +18,7 @@ native reset links deferred.
 
 Flutter: **implemented; target acceptance pending**. See the Phase 1 verification record for evidence.
 
-Profile/credentials → pending/no credential → Admin decision outside app → device-token login → /me → consent.
+Email → OTP → profile/credentials → pending/no credential → Admin decision outside app → device-token login → /me → consent.
 
 - Register only supported profile/credential keys; no applicant status polling or imported Courier evidence keys. Login sends device_name and securely stores the returned Customer-scoped token on Android and local web.
 - Distinguish credentials-first INVALID_CREDENTIALS from pending/rejected/suspended/inactive denial, throttling and network/storage failure. No identity may self-approve.
@@ -34,6 +35,7 @@ screen; public backend methods/envelopes remain unchanged. Auth/recovery/Terms/P
 Phone/tablet padding, natural content heights and keyboard/text resizing follow [Buyer design](../../../design-buyer.md).
 
 ## MUST
+- Registration now requires email-first OTP and `email_verification_token`; see [registration email contract](../../../registration-email.md) for exact endpoints, limits, errors, retry, proof expiry, and client behavior. Adopted locally on 2026-10-14; deployed/device acceptance remains open.
 
 ### Feature behavior and boundaries
 
@@ -146,14 +148,8 @@ universal error envelope.
 
 ### Responsibility and state ownership
 
-- `AuthRepository` owns typed transport, parsing and owned cache access; inject dependencies through
-  AppDependencies.
-- `LoginViewModel` owns feature transitions, draft/query state and deliberate actions; inject dependencies
-  through AppDependencies.
-- `RegistrationViewModel` owns feature transitions, draft/query state and deliberate actions; inject
-  dependencies through AppDependencies.
-- `RecoveryViewModel` owns feature transitions, draft/query state and deliberate actions; inject
-  dependencies through AppDependencies.
+- ApiAuthRepository owns typed transport/parsing; AppDependencies supplies dependencies.
+- SessionController and the Login/Registration/Recovery form state owns current feature state and deliberate actions.
 - Screens compose focused sections/forms/history; reusable widgets render typed state and forward callbacks.
 - Use ChangeNotifier/ListenableBuilder with immutable DTO snapshots. No HTTP or JSON guesses in build().
 - Keep independent forms/actions separately busy and preserve safe input after recoverable

@@ -7,6 +7,7 @@ flutter_status: Implemented including 22b0a48 shipping; live/device acceptance p
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 current_contract_inspected_checkout: 22b0a48f9575ead182d03c35ab87345711c23b90
+documentation_synced_on: 2026-10-12
 ---
 
 # Order cancellation and address correction
@@ -14,7 +15,7 @@ current_contract_inspected_checkout: 22b0a48f9575ead182d03c35ab87345711c23b90
 ## WHAT
 
 Backend: Eligible placed COD mutations, locked reservations, new address snapshots and replay
-implemented; shipping-rate revalidation gap remains.
+implemented; contact-only corrections preserve frozen location, shipping and prices (B02).
 
 Flutter: **implemented including current shipping selection/projections**. See [G25 evidence](../../../references/shipping-selection-verification.md); live-account/device gates remain open.
 
@@ -22,7 +23,7 @@ Owned eligible Order → confirm cancellation or select saved shipping row → l
 
 - Only server-eligible placed COD/pending-payment Orders with required records and no pickup/waybill/task may change. Seller processing closes the window; no invented grace timer.
 - Cancel uses optional reason ≤500 and UUID key, releases only its reserved stock once and makes no refund/payment-reversal promise. Modification uses address_id, optional expected_revision and UUID key, validating own complete shipping row and creating new immutable version/history.
-- The inspected service does not recalculate the saved shipping rate/coverage on address correction. Record G21 and coordinate material-location handling with backend owner; never derive a replacement fee or serviceability locally.
+- The 2026-10-10 B02 fix preserves frozen shipping/provider/route: Laravel rejects location changes with 422 ADDRESS_LOCATION_CHANGE_NOT_ALLOWED. Geographic repricing remains deferred; client adoption/live verification remain G21.
 - On 409 refetch capabilities; freeze uncertain key/payload for exact replay. No quantity/variant/voucher/price/status changes. Address Book edits do not modify Order snapshots.
 
 The current [shipping contract](../../../api/shipping-selection.md) governs provider selection and DTOs;
@@ -66,6 +67,7 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
   published-rate/coverage recalculation.
 - G21 permits only recipient/contact changes with identical trimmed street lines/localities/postal/country;
   normalize empty optional line two to null and block differing or unverifiable locations.
+- Server requires identical seven-decimal pins or both pairs absent; Buyer Order coordinates are not yet parsed (G21).
 - Address version in returned Order is refreshed along with actions/timeline/totals after success.
 - Another Shop Order in the same Batch has independent status/cancellation; never cancel Batch
   implicitly.
@@ -112,7 +114,7 @@ unsupported actions.
 | --- | --- |
 | `Order` | `id: UUID`, `reference: string`, `checkoutBatchId: UUID?`, `placedAt: timestamp`, `latestTrackingAt: timestamp`, `status: string`, `statusLabel: string`, `group: string`, `groupLabel: string`, `shop: OrderShop`, `shippingProvider: ShippingProvider?`, `items: ReviewableItem[]`, `deliveryAddress: DeliveryAddress`, `payment: Payment`, `vouchers: OrderVoucher[]`, `totals: Totals`, `timeline: Tracking[]`, `timelineCount: int`, `timelineHasMore: bool`, `trackingUrl: URL`, `delivery: Delivery?`, `map: UnavailableMap`, `actions: OrderActions` |
 | `OrderActions` | `canCancel: bool`, `canModify: bool`, `canReview: bool`, `modifiableFields: string[]` |
-| `DeliveryAddress` | `version: int`, `recipientName: string`, `contactNumber: string`, `addressLine1: string`, `addressLine2: string?`, `barangay: string`, `cityMunicipality: string`, `province: string`, `region: string`, `postalCode: string`, `country: string` |
+| `DeliveryAddress` | `version: int`, `recipientName: string`, `contactNumber: string`, `addressLine1: string`, `addressLine2: string?`, `barangay: string`, `cityMunicipality: string`, `province: string`, `region: string`, `postalCode: string`, `country: string`, `latitude: coordinate?`, `longitude: coordinate?` |
 
 ### Errors, ownership and recovery
 
@@ -143,12 +145,8 @@ require a universal error envelope.
 
 ### Responsibility and state ownership
 
-- `OrderMutationRepository` owns typed transport, parsing and owned cache access; inject
-  dependencies through AppDependencies.
-- `CancelViewModel` owns feature transitions, draft/query state and deliberate actions; inject
-  dependencies through AppDependencies.
-- `AddressCorrectionViewModel` owns feature transitions, draft/query state and deliberate actions;
-  inject dependencies through AppDependencies.
+- OrderRepository owns typed transport/parsing; AppDependencies supplies dependencies.
+- OrderMutationController owns current feature state and deliberate actions.
 - Screens compose focused sections/forms/history; reusable widgets render typed state and forward
   callbacks.
 - Use ChangeNotifier/ListenableBuilder with immutable DTO snapshots. No HTTP or JSON guesses in

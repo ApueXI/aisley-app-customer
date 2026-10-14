@@ -6,6 +6,7 @@ import '../../../core/commerce/commerce_controller.dart';
 import '../../../core/networking/api_failure.dart';
 import '../../../core/ui/form_page.dart';
 import '../data/batch_models.dart';
+import '../../discovery/presentation/product_item_row.dart';
 import 'commerce_widgets.dart';
 import 'shipping_details.dart';
 
@@ -116,7 +117,15 @@ class _BatchResultScreenState extends State<BatchResultScreen> {
                       '${order.status} · ${order.paymentMethod} · ${order.paymentStatus}',
                     ),
                     for (final item in order.items)
-                      Text('${item.name} × ${item.quantity}'),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: ProductItemRow(
+                          imageUrl: item.imageUrl,
+                          name: item.name,
+                          discovery: widget.dependencies.discovery!,
+                          details: [Text('${item.name} × ${item.quantity}')],
+                        ),
+                      ),
                     AddressSnapshotView(order.address),
                     TotalsView(order.totals),
                     ShippingDetails(

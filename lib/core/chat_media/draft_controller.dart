@@ -58,7 +58,7 @@ class ChatMediaDraftController extends ChangeNotifier {
       if (!_current(stamp) || locked || image == null) return;
       final extension = image.filename.split('.');
       if (image.bytes.isEmpty ||
-          image.bytes.length >= 10485760 ||
+          image.bytes.length > 8000000 ||
           extension.length != 2 ||
           !const [
             'jpg',
@@ -76,7 +76,7 @@ class ChatMediaDraftController extends ChangeNotifier {
                 (n, e) => n + e.image.bytes.length,
               ) >
               52428800) {
-        error = 'Choose JPEG, PNG or WebP under 10 MiB, with one filename extension.';
+        error = 'Choose JPEG, PNG or WebP at most 8 MB (8,000,000 bytes), with one filename extension.';
         return;
       }
       final item = ChatImageDraft(image, Map.unmodifiable(context), _uuid());
@@ -127,6 +127,8 @@ class ChatMediaDraftController extends ChangeNotifier {
     if (_disposed ||
         locked ||
         item.busy ||
+        item.state == 'rejected' ||
+        item.state == 'deleted' ||
         !items.contains(item) ||
         (item.retryAt != null && DateTime.now().isBefore(item.retryAt!))) {
       return;
@@ -160,7 +162,12 @@ class ChatMediaDraftController extends ChangeNotifier {
           e.retryAfter ?? const Duration(seconds: 30),
         );
       }
-      if (item.attachment == null) item.state = 'uncertain';
+      if (e.status == 422) {
+        item.state = 'rejected';
+        item.error = 'This image was rejected. Remove it and choose another.';
+      } else if (item.attachment == null) {
+        item.state = 'uncertain';
+      }
     } catch (_) {
       if (_current(stamp)) {
         item.error = 'Image upload unconfirmed. Retry the original request.';

@@ -6,7 +6,7 @@
       "feature": "checkout-order",
       "method": "POST",
       "path": "/api/v1/customer/checkout/quote",
-      "request_contract": "mode cart|buy_now; exactly cart_item_ids distinct UUID[] min1 OR buy_now product_id UUID, present nullable variant_id UUID, quantity1\u20132147483647; address_id owned UUID; payment_method cod; optional vouchers max20 {voucher_id distinct UUID,target_shop_id UUID}; optional logistics_selections max50 {shop_id distinct UUID,logistics_organization_id UUID}; no owner/prices/status. ",
+      "request_contract": "mode cart|buy_now; exactly cart_item_ids distinct UUID[] min1 OR buy_now product_id UUID, present nullable variant_id UUID, quantity1–2147483647; address_id owned UUID; payment_method cod; optional vouchers max20 {voucher_id distinct UUID,target_shop_id UUID}; optional logistics_selections max50 {shop_id distinct UUID,logistics_organization_id UUID}; no owner/prices/status. ",
       "response_contract": "{data:Quote}",
       "status": 200,
       "retry": "No idempotency key; each deliberate quote request creates a new expiring quote, never places or reserves.",
@@ -233,7 +233,7 @@
           "feature": "checkout-order",
           "status": 422,
           "code": "APP_VOUCHER_LIMIT",
-          "message": "Only one App voucher may be used per checkout batch.",
+          "message": "Only one App voucher of each benefit type may be used per checkout batch.",
           "field": "vouchers"
         },
         {
@@ -241,13 +241,6 @@
           "status": 422,
           "code": "VOUCHER_BENEFIT_LIMIT",
           "message": "Only one voucher of each benefit type may apply to a Shop order.",
-          "field": "vouchers"
-        },
-        {
-          "feature": "checkout-order",
-          "status": 422,
-          "code": "VOUCHERS_NOT_STACKABLE",
-          "message": "The selected vouchers cannot be combined.",
           "field": "vouchers"
         },
         {
@@ -355,7 +348,7 @@
       "feature": "checkout-order",
       "method": "POST",
       "path": "/api/v1/customer/checkout/place",
-      "request_contract": "mode cart|buy_now; exactly cart_item_ids distinct UUID[] min1 OR buy_now product_id UUID, present nullable variant_id UUID, quantity1\u20132147483647; address_id owned UUID; payment_method cod; optional vouchers max20 {voucher_id distinct UUID,target_shop_id UUID}; optional logistics_selections max50 {shop_id distinct UUID,logistics_organization_id UUID}; no owner/prices/status. quote_id UUID + UUID header.",
+      "request_contract": "mode cart|buy_now; exactly cart_item_ids distinct UUID[] min1 OR buy_now product_id UUID, present nullable variant_id UUID, quantity1–2147483647; address_id owned UUID; payment_method cod; optional vouchers max20 {voucher_id distinct UUID,target_shop_id UUID}; optional logistics_selections max50 {shop_id distinct UUID,logistics_organization_id UUID}; no owner/prices/status. quote_id UUID + UUID header.",
       "response_contract": "{data:Batch}",
       "status": 200,
       "retry": "UUID Idempotency-Key required. Freeze payload/key; exact retry only after uncertain outcome. Changed intent uses a new key after reconciliation.",
@@ -581,7 +574,7 @@
           "feature": "checkout-order",
           "status": 422,
           "code": "APP_VOUCHER_LIMIT",
-          "message": "Only one App voucher may be used per checkout batch.",
+          "message": "Only one App voucher of each benefit type may be used per checkout batch.",
           "field": "vouchers"
         },
         {
@@ -589,13 +582,6 @@
           "status": 422,
           "code": "VOUCHER_BENEFIT_LIMIT",
           "message": "Only one voucher of each benefit type may apply to a Shop order.",
-          "field": "vouchers"
-        },
-        {
-          "feature": "checkout-order",
-          "status": 422,
-          "code": "VOUCHERS_NOT_STACKABLE",
-          "message": "The selected vouchers cannot be combined.",
           "field": "vouchers"
         },
         {
@@ -910,7 +896,7 @@
           "feature": "checkout-order",
           "status": 422,
           "code": "APP_VOUCHER_LIMIT",
-          "message": "Only one App voucher may be used per checkout batch.",
+          "message": "Only one App voucher of each benefit type may be used per checkout batch.",
           "field": "vouchers"
         },
         {
@@ -918,13 +904,6 @@
           "status": 422,
           "code": "VOUCHER_BENEFIT_LIMIT",
           "message": "Only one voucher of each benefit type may apply to a Shop order.",
-          "field": "vouchers"
-        },
-        {
-          "feature": "checkout-order",
-          "status": 422,
-          "code": "VOUCHERS_NOT_STACKABLE",
-          "message": "The selected vouchers cannot be combined.",
           "field": "vouchers"
         },
         {
@@ -1095,7 +1074,7 @@
       "feature": "checkout-order",
       "method": "POST",
       "path": "/api/v1/customer/checkout/logistics-options",
-      "request_contract": "mode cart|buy_now; exactly cart_item_ids distinct UUID[] min1 OR buy_now product_id UUID, present nullable variant_id UUID, quantity1\u20132147483647; address_id owned UUID; payment_method cod; optional vouchers max20 {voucher_id distinct UUID,target_shop_id UUID}; optional logistics_selections max50 {shop_id distinct UUID,logistics_organization_id UUID}; no owner/prices/status. ",
+      "request_contract": "mode cart|buy_now; exactly cart_item_ids distinct UUID[] min1 OR buy_now product_id UUID, present nullable variant_id UUID, quantity1–2147483647; address_id owned UUID; payment_method cod; optional vouchers max20 {voucher_id distinct UUID,target_shop_id UUID}; optional logistics_selections max50 {shop_id distinct UUID,logistics_organization_id UUID}; no owner/prices/status. ",
       "response_contract": "{data:LogisticsOptions}",
       "status": 200,
       "retry": "Read-only calculation via POST; no quote, reservation or durable key. Retry the same intent with bounded backoff and session/query guards.",
@@ -1513,10 +1492,10 @@
       "status": 422,
       "body": {
         "code": "APP_VOUCHER_LIMIT",
-        "message": "Only one App voucher may be used per checkout batch.",
+        "message": "Only one App voucher of each benefit type may be used per checkout batch.",
         "errors": {
           "vouchers": [
-            "Only one App voucher may be used per checkout batch."
+            "Only one App voucher of each benefit type may be used per checkout batch."
           ]
         }
       }

@@ -59,13 +59,14 @@ class QuoteItem {
     variantId = nullableUuid(w, 'variantId');
     name = w.string('productName');
     sku = w.nullableString('sku');
+    imageUrl = w.optionalString('imageUrl');
     options = w.list('selectedOptions', SelectedOption.parse);
     unitPrice = Money.parse(w.field('unitPrice'));
     quantity = w.positiveInt('quantity');
     subtotal = Money.parse(w.field('lineSubtotal'));
   }
   late final String productId, name;
-  late final String? cartItemId, variantId, sku;
+  late final String? cartItemId, variantId, sku, imageUrl;
   late final List<SelectedOption> options;
   late final Money unitPrice, subtotal;
   late final int quantity;

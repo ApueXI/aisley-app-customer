@@ -1,3 +1,4 @@
+import 'package:aisley_mobile_buyer/features/account/presentation/password_screen.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -95,6 +96,47 @@ void main() {
     );
     await tester.pumpAndSettle();
   }
+
+  testWidgets(
+    'password change requests email then requires a six digit code before updating',
+    (tester) async {
+      final repo = dependencies.accounts! as FakeAccountRepository;
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: buyerTheme(),
+          home: PasswordScreen(dependencies: dependencies),
+        ),
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Current password'),
+        'Synthetic123',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'New password'),
+        'Synthetic456',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Confirm new password'),
+        'Synthetic456',
+      );
+      await tester.ensureVisible(find.text('Send verification code'));
+      await tester.tap(find.text('Send verification code'));
+      await tester.pumpAndSettle();
+      expect(repo.codeRequests, 1);
+      expect(repo.passwordWrites, 0);
+      expect(find.textContaining('b***@example.test'), findsOneWidget);
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Verification code'),
+        '123456',
+      );
+      await tester.ensureVisible(find.text('Verify and update password'));
+      await tester.tap(find.text('Verify and update password'));
+      await tester.pumpAndSettle();
+      expect(repo.passwordWrites, 1);
+      expect(find.text('Your password was changed.'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
 
   testWidgets(
     'profile hydrates without build errors and exposes date-only and read-only identity',

@@ -79,9 +79,11 @@ class RegistrationInput {
     required this.sex,
     required this.birthDate,
     required this.email,
+    required this.emailVerificationToken,
     required this.password,
     required this.confirmation,
   });
+  final String emailVerificationToken;
   final String firstName,
       lastName,
       contactNumber,
@@ -100,6 +102,7 @@ class RegistrationInput {
     'contact_number': contactNumber.trim(),
     'sex': sex,
     'birth_date': birthDate,
+    'email_verification_token': emailVerificationToken,
     'email': normalizeEmail(email),
     'password': password,
     'password_confirmation': confirmation,

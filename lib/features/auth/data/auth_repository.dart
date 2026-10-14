@@ -1,3 +1,4 @@
+import 'registration_email.dart';
 import '../../../core/networking/api_client.dart';
 import '../../../core/networking/wire.dart';
 import 'auth_models.dart';
@@ -16,11 +17,38 @@ abstract interface class AuthRepository {
   Future<void> logout(SessionLease lease);
 }
 
-class ApiAuthRepository implements AuthRepository {
+class ApiAuthRepository implements AuthRepository, RegistrationEmailRepository {
   ApiAuthRepository(this.client, {required this.deviceName});
   final ApiClient client;
   final String deviceName;
   static const _path = 'customer/auth/';
+  @override
+  Future<RegistrationEmailChallenge> requestRegistrationCode(
+    String email,
+  ) async => RegistrationEmailChallenge.parse(
+    await client.request(
+      'POST',
+      '${_path}registration/verification-code',
+      body: {'email': normalizeEmail(email)},
+    ),
+  );
+  @override
+  Future<RegistrationEmailProof> verifyRegistrationEmail(
+    String email,
+    String challengeId,
+    String code,
+  ) async => RegistrationEmailProof.parse(
+    await client.request(
+      'POST',
+      '${_path}registration/verify-email',
+      body: {
+        'email': normalizeEmail(email),
+        'challenge_id': challengeId,
+        'verification_code': code,
+      },
+    ),
+  );
+
   @override
   Future<LoginResult> login(String email, String password) async =>
       LoginResult.parse(

@@ -6,7 +6,7 @@
       "feature": "order-status",
       "method": "GET",
       "path": "/api/v1/customer/orders",
-      "request_contract": "group optional to_pay|to_prepare|to_ship|out_for_delivery|completed|cancelled_issue; page1\u201310000; per_page1\u201350 default15.",
+      "request_contract": "group optional to_pay|to_prepare|to_ship|out_for_delivery|completed|cancelled_issue; page1–10000; per_page1–50 default15.",
       "response_contract": "{data:OrderSummary[],links:PageLinks,meta:PageMeta,filters:OrderFilters}",
       "status": 200,
       "retry": "Read retry after bounded backoff; reject obsolete session/query generations.",
@@ -275,7 +275,9 @@
             "province": "Synthetic example",
             "region": "Synthetic example",
             "postalCode": "Synthetic example",
-            "country": "Synthetic example"
+            "country": "Synthetic example",
+            "latitude": null,
+            "longitude": null
           },
           "payment": {
             "method": "cod",
@@ -383,7 +385,9 @@
                 "province": "Synthetic example",
                 "region": "Synthetic example",
                 "postalCode": "Synthetic example",
-                "country": "Synthetic example"
+                "country": "Synthetic example",
+                "latitude": null,
+                "longitude": null
               },
               "payment": {
                 "method": "cod",
@@ -438,7 +442,7 @@
       "feature": "order-status",
       "method": "GET",
       "path": "/api/v1/customer/orders/{order}/tracking",
-      "request_contract": "page1\u201310000; per_page1\u201350 default25.",
+      "request_contract": "page1–10000; per_page1–50 default25.",
       "response_contract": "{data:Tracking[],links:PageLinks,meta:PageMeta}",
       "status": 200,
       "retry": "Read retry after bounded backoff; reject obsolete session/query generations.",
@@ -585,5 +589,6 @@
       }
     }
   ],
-  "adopted_client_checkout": "57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50"
+  "adopted_client_checkout": "57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50",
+  "order_contact_contract": "2026-10-10 B02: contact-only server guard and nullable Order coordinates; external adopted baseline and historical metadata retained."
 }

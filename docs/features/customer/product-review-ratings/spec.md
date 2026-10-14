@@ -7,6 +7,7 @@ flutter_status: Implemented; acceptance partial
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 upload_recovery_revision: 2026-10-10
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
+documentation_synced_on: 2026-10-12
 ---
 
 # Verified reviews and ratings
@@ -144,14 +145,8 @@ universal error envelope.
 
 ### Responsibility and state ownership
 
-- `ReviewRepository` owns typed transport, parsing and owned cache access; inject dependencies through
-  AppDependencies.
-- `ReviewListViewModel` owns feature transitions, draft/query state and deliberate actions; inject
-  dependencies through AppDependencies.
-- `ReviewComposerViewModel` owns feature transitions, draft/query state and deliberate actions; inject
-  dependencies through AppDependencies.
-- `ReviewPhotoViewModel` owns feature transitions, draft/query state and deliberate actions; inject
-  dependencies through AppDependencies.
+- ReviewRepository owns typed transport/parsing; AppDependencies supplies dependencies.
+- ReviewListController and ReviewComposerController owns current feature state and deliberate actions.
 - Screens compose focused sections/forms/history; reusable widgets render typed state and forward
   callbacks.
 - Use ChangeNotifier/ListenableBuilder with immutable DTO snapshots. No HTTP or JSON guesses in

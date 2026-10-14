@@ -12,9 +12,9 @@ Named types define all nested fields locally. Status201 replay semantics vary: S
 `POST /api/v1/customer/auth/register`
 
 - Access: Public.
-- Request: Profile fields required: names string≤255, middle_name nullable ≤255, contact_number≤32, sex male|female|non_binary|prefer_not_to_say, birth_date before today; email≤255 normalized lowercase/trim; confirmed password≥8 mixed case + digit. role/status prohibited.
+- Request: Required `email_verification_token` bound to verified Customer/email. Profile fields required: names string≤255, middle_name nullable ≤255, contact_number≤32, sex male|female|non_binary|prefer_not_to_say, birth_date before today; email≤255 normalized lowercase/trim; confirmed password≥8 mixed case + digit. role/status prohibited.
 - Response: HTTP 201; `{message:string,customer:RegistrationCustomer}`.
-- Retry: No durable replay key. After timeout/cancellation, reread authoritative state before a deliberate new action.
+- Retry: No durable replay key. After uncertainty, try sign-in before deliberately resubmitting; there is no applicant polling API.
 - Notes: Laravel rechecks current ownership and visibility.
 - [Synthetic examples](examples/customer-auth.json).
 
@@ -100,7 +100,7 @@ Named types define all nested fields locally. Status201 replay semantics vary: S
 `PATCH /api/v1/customer/account/password`
 
 - Access: Active Customer + consent.
-- Request: current_password required and matches server hash; new password confirmed≥8 mixed case + digit; identity/email/role/status prohibited.
+- Request: `challenge_id` UUID and `verification_code` six-digit string are required after requesting a code; current_password required and matches server hash; new password confirmed≥8 mixed case + digit; identity/email/role/status prohibited.
 - Response: HTTP 200; `{message:string}`.
 - Retry: No durable replay key. After timeout/cancellation, reread authoritative state before a deliberate new action.
 - Notes: Laravel rechecks current ownership and visibility.
@@ -389,7 +389,7 @@ Named types define all nested fields locally. Status201 replay semantics vary: S
 - Request: reason optional nullable string≤500; UUID header; placed COD only.
 - Response: HTTP 200; `{data:Order}`.
 - Retry: UUID Idempotency-Key required. Freeze payload/key; exact retry only after uncertain outcome. Changed intent uses a new key after reconciliation.
-- Notes: Laravel rechecks current ownership and visibility.
+- Notes: Only recipient/contact may change at identical trimmed location and seven-decimal pin; location changes return 422 ADDRESS_LOCATION_CHANGE_NOT_ALLOWED on address_id. Edited original rows are allowed; frozen prices/provider/routes stay unchanged.
 - [Synthetic examples](examples/order-modification-cancellation.json).
 
 ## op-036
@@ -400,7 +400,7 @@ Named types define all nested fields locally. Status201 replay semantics vary: S
 - Request: address_id owned shipping UUID; expected_revision optional nullable int≥1 (send deliveryAddress.version); UUID header; placed COD only.
 - Response: HTTP 200; `{data:Order}`.
 - Retry: UUID Idempotency-Key required. Freeze payload/key; exact retry only after uncertain outcome. Changed intent uses a new key after reconciliation.
-- Notes: Laravel rechecks current ownership and visibility.
+- Notes: Only recipient/contact may change at identical trimmed location and seven-decimal pin; location changes return 422 ADDRESS_LOCATION_CHANGE_NOT_ALLOWED on address_id. Edited original rows are allowed; frozen prices/provider/routes stay unchanged.
 - [Synthetic examples](examples/order-modification-cancellation.json).
 
 ## op-037
@@ -1146,3 +1146,46 @@ Current shipping inspection: `22b0a48f9575ead182d03c35ab87345711c23b90`; impleme
 ### Voucher operation records
 
 Stable `voucher-collection-001` through `voucher-collection-007` in [operation index](operation-index.json) follow the endpoint order in [collection contract](voucher-collection.md). [Synthetic examples](examples/voucher-collection.json) include public nulls, private status and platform/Shop collection confirmations.
+
+## shop-context-001
+
+`GET /api/v1/customer/conversations/shops/{shop}`
+
+- Access: Active Customer + consent; server-scoped existing thread or available prospective Shop.
+- Request: Shop UUID; no body.
+- Response: HTTP 200; `{data:ShopAvailabilityProjection}` with nullable conversation_id.
+- Retry: Bounded read retry; reject obsolete session responses. Missing/unavailable prospective context returns scoped 404.
+- Notes: availability describes Shop business status; this read creates no conversation. Flutter adoption is pending.
+- [Synthetic example](examples/shop-context.json).
+
+## op-112
+
+`POST /api/v1/customer/account/password/verification-code`
+
+- Access: Active Customer + consent, authenticated bearer.
+- Request: `current_password,password,password_confirmation`; recipient derived from authenticated account.
+- Response: HTTP 202; `{message:string,data:PasswordChangeChallenge}`.
+- Retry: Deliberate resend only after 60s/server Retry-After; replaces old challenge. No password mutation occurs.
+- Limits and confirmation: [password email verification](password-change.md).
+
+## op-113
+
+`POST /api/v1/customer/auth/registration/verification-code`
+
+- Access: Public; no bearer.
+- Request: email valid≤255, trimmed/lowercased. role/status/email_verified_at prohibited.
+- Response: HTTP 200; `{message:string,challenge_id:UUID,expires_at:timestamp,resend_available_at:timestamp}`.
+- Retry: Explicit resend only after cooldown; 60 seconds/five sends per email-role per rolling hour; 30 per IP/hour. 429 honors Retry-After.
+- Notes: [Registration email contract](../registration-email.md).
+- [Synthetic examples](examples/customer-auth.json).
+
+## op-114
+
+`POST /api/v1/customer/auth/registration/verify-email`
+
+- Access: Public; no bearer.
+- Request: email valid≤255 normalized; challenge_id UUID; verification_code six ASCII digits as string. role/status/email_verified_at prohibited.
+- Response: HTTP 200; `{message:string,email_verification_token:string,expires_at:timestamp}`.
+- Retry: Explicit retry with same valid challenge/code returns same unexpired proof; 30 per IP/minute. Five incorrect attempts invalidate challenge.
+- Notes: [Registration email contract](../registration-email.md).
+- [Synthetic examples](examples/customer-auth.json).

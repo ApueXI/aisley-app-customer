@@ -6,6 +6,7 @@ phase: 1
 flutter_status: Implemented; target acceptance pending
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
+documentation_synced_on: 2026-10-12
 ---
 
 # Auth-aware navigation
@@ -145,12 +146,8 @@ universal error envelope.
 
 ### Responsibility and state ownership
 
-- `SessionController` owns feature transitions, draft/query state and deliberate actions; inject
-  dependencies through AppDependencies.
-- `TokenStore` owns safe platform access without widget HTTP calls; inject dependencies through
-  AppDependencies.
-- `RouterGuard` owns feature transitions, draft/query state and deliberate actions; inject dependencies
-  through AppDependencies.
+- ApiAuthRepository and ApiPolicyRepository owns typed transport/parsing; AppDependencies supplies dependencies.
+- SessionController and go_router redirects owns current feature state and deliberate actions.
 - Screens compose focused sections/forms/history; reusable widgets render typed state and forward
   callbacks.
 - Use ChangeNotifier/ListenableBuilder with immutable DTO snapshots. No HTTP or JSON guesses in build().

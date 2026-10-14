@@ -1,5 +1,8 @@
 # Buyer Flutter architecture
 
+> Current status and inspected revisions: [October 12 synchronization](references/synchronization-2026-10-12.md). Dated reports below retain their original verification scope; client sources belong to the corresponding standalone Flutter repository.
+
+
 Phases 1–4 implement this blueprint with partial acceptance. See [Phase 4 evidence](references/phase-4-verification.md) and [Phase 3 evidence](references/phase-3-verification.md). Android is the delivery target; responsive web includes desktop browsers, tested locally at localhost:8766; production browser release remains unverified. Existing repositories must merge these choices with their own instructions and record material differences before implementation. Backend contracts were inspected at checkout `57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50`; the historical baseline remains in provenance.
 
 ## Composition and dependencies

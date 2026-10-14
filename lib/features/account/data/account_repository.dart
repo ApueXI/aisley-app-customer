@@ -1,3 +1,5 @@
+import 'password_challenge.dart';
+
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -11,11 +13,19 @@ import '../../../core/networking/api_failure.dart';
 abstract interface class AccountRepository {
   Future<CustomerAccount> account(SessionLease lease);
   Future<CustomerAccount> updateProfile(SessionLease lease, ProfileInput input);
+  Future<PasswordChallenge> requestPasswordCode(
+    SessionLease lease, {
+    required String currentPassword,
+    required String password,
+    required String confirmation,
+  });
   Future<void> updatePassword(
     SessionLease lease, {
     required String currentPassword,
     required String password,
     required String confirmation,
+    required String challengeId,
+    required String verificationCode,
   });
   Future<Uint8List> profilePhoto(SessionLease lease, String? versionedUrl);
   Future<CustomerAccount> uploadPhoto(
@@ -59,11 +69,33 @@ class ApiAccountRepository implements AccountRepository {
   }
 
   @override
+  Future<PasswordChallenge> requestPasswordCode(
+    SessionLease lease, {
+    required String currentPassword,
+    required String password,
+    required String confirmation,
+  }) async {
+    final response = await api.request(
+      'POST',
+      'customer/account/password/verification-code',
+      lease: lease,
+      body: {
+        'current_password': currentPassword,
+        'password': password,
+        'password_confirmation': confirmation,
+      },
+    );
+    return PasswordChallenge.parse(response['data']);
+  }
+
+  @override
   Future<void> updatePassword(
     SessionLease lease, {
     required String currentPassword,
     required String password,
     required String confirmation,
+    required String challengeId,
+    required String verificationCode,
   }) async {
     final response = await api.request(
       'PATCH',
@@ -72,6 +104,8 @@ class ApiAccountRepository implements AccountRepository {
         'current_password': currentPassword,
         'password': password,
         'password_confirmation': confirmation,
+        'challenge_id': challengeId,
+        'verification_code': verificationCode,
       },
       lease: lease,
     );
