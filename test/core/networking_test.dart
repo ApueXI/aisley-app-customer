@@ -13,6 +13,58 @@ import 'package:aisley_mobile_buyer/features/policies/data/policy_repository.dar
 import '../support/fakes.dart';
 
 void main() {
+  test(
+    'registration OTP uses public exact routes and six-digit strings',
+    () async {
+      final adapter = FakeAdapter(
+        (options) => jsonReply(
+          options.uri.path.endsWith('verification-code')
+              ? {
+                  'challenge_id': 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
+                  'expires_at': '2026-10-14T00:10:00Z',
+                  'resend_available_at': '2026-10-14T00:01:00Z',
+                }
+              : {
+                  'email_verification_token': 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+                  'expires_at': '2026-10-14T01:00:00Z',
+                },
+        ),
+      );
+      final client = ApiClient(
+        testConfig,
+        publicClient: Dio()..httpClientAdapter = adapter,
+      );
+      addTearDown(client.close);
+      final repository = ApiAuthRepository(client, deviceName: 'buyer-test');
+      final challenge = await repository.requestRegistrationCode(
+        ' NEW@EXAMPLE.COM ',
+      );
+      expect(
+        adapter.requests.last.uri.path,
+        '/api/v1/customer/auth/registration/verification-code',
+      );
+      expect(adapter.requests.last.data, {'email': 'new@example.com'});
+      final proof = await repository.verifyRegistrationEmail(
+        ' NEW@EXAMPLE.COM ',
+        challenge.id,
+        '012345',
+      );
+      expect(
+        adapter.requests.last.uri.path,
+        '/api/v1/customer/auth/registration/verify-email',
+      );
+      expect(adapter.requests.last.data, {
+        'email': 'new@example.com',
+        'challenge_id': challenge.id,
+        'verification_code': '012345',
+      });
+      expect(
+        adapter.requests.last.headers.keys.map((key) => key.toLowerCase()),
+        isNot(contains('authorization')),
+      );
+      expect(proof.token.length, 64);
+    },
+  );
   test('transient reads retry once while mutations never retry', () async {
     var calls = 0;
     final adapter = FakeAdapter(
@@ -315,6 +367,7 @@ void main() {
       });
       await auth.register(
         const RegistrationInput(
+          emailVerificationToken: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
           firstName: 'Buyer',
           lastName: 'Example',
           contactNumber: '09000000000',
@@ -335,6 +388,7 @@ void main() {
           'contact_number',
           'sex',
           'birth_date',
+          'email_verification_token',
           'email',
           'password',
           'password_confirmation',

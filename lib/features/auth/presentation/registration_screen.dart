@@ -1,3 +1,7 @@
+import '../data/registration_email.dart';
+import 'registration_email_controller.dart';
+import 'registration_email_fields.dart';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -19,6 +23,17 @@ class RegistrationScreen extends StatefulWidget {
 }
 
 class _RegistrationScreenState extends State<RegistrationScreen> {
+  late final RegistrationEmailController _verification;
+
+  @override
+  void initState() {
+    super.initState();
+    _verification = RegistrationEmailController(
+      widget.repository as RegistrationEmailRepository,
+      clock: widget.clock,
+    );
+  }
+
   final _form = GlobalKey<FormState>();
   final _fields = {
     for (final key in [
@@ -56,6 +71,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       field.dispose();
     }
     _action.dispose();
+    _verification.dispose();
     for (final node in _focus.values) {
       node.dispose();
     }
@@ -83,6 +99,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     int max = 255,
   }) => TextFormField(
     controller: _fields[key],
+    readOnly: key == 'email',
     focusNode: _focus[key],
     obscureText: secret,
     enableSuggestions: !secret,
@@ -99,7 +116,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     },
   );
   Future<void> _submit() async {
-    if (!_action.enabled) return;
+    if (!_action.enabled || !_verification.verified) return;
     if (!validateForm(_form.currentState!)) return;
     final input = RegistrationInput(
       firstName: _text('first_name'),
@@ -108,7 +125,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       contactNumber: _text('contact_number'),
       sex: _sex!,
       birthDate: _text('birth_date'),
-      email: _text('email'),
+      email: _verification.verifiedEmail,
+      emailVerificationToken: _verification.proof!.token,
       password: _text('password'),
       confirmation: _text('password_confirmation'),
     );
@@ -121,13 +139,17 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     if (success) {
       context.go('/approval');
     } else {
+      if (_action.failure?.fields.containsKey('email_verification_token') ==
+          true) {
+        _verification.reset();
+      }
       validateForm(_form.currentState!);
     }
   }
 
   @override
   Widget build(BuildContext context) => ListenableBuilder(
-    listenable: _action,
+    listenable: Listenable.merge([_action, _verification]),
     builder: (context, _) => FormPage(
       title: 'Create an account',
       busy: _action.busy,
@@ -148,91 +170,103 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           const Text(
             'The registration result is unconfirmed. Try signing in before deliberately submitting again; registration may already be pending.',
           ),
-        Form(
-          key: _form,
-          child: Column(
-            children: [
-              _field('first_name', 'First name'),
-              const SizedBox(height: 16),
-              _field(
-                'middle_name',
-                'Middle name (optional)',
-                validate: (v) => (v?.length ?? 0) > 255
-                    ? 'Use at most 255 characters.'
-                    : null,
-              ),
-              const SizedBox(height: 16),
-              _field('last_name', 'Last name'),
-              const SizedBox(height: 16),
-              _field(
-                'contact_number',
-                'Contact number',
-                keyboard: TextInputType.phone,
-                max: 32,
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                initialValue: _sex,
-                focusNode: _focus['sex'],
-                isExpanded: true,
-                itemHeight: null,
-                decoration: const InputDecoration(labelText: 'Sex'),
-                items: const [
-                  DropdownMenuItem(value: 'male', child: Text('Male')),
-                  DropdownMenuItem(value: 'female', child: Text('Female')),
-                  DropdownMenuItem(
-                    value: 'non_binary',
-                    child: Text('Non-binary'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'prefer_not_to_say',
-                    child: Text('Prefer not to say'),
-                  ),
-                ],
-                onChanged: (v) {
-                  _action.clearField('sex');
-                  setState(() => _sex = v);
-                },
-                validator: (v) =>
-                    v == null ? 'Select an option.' : _action.fieldError('sex'),
-              ),
-              const SizedBox(height: 16),
-              _field(
-                'birth_date',
-                'Birth date (YYYY-MM-DD)',
-                validate: _birthday,
-                keyboard: TextInputType.datetime,
-              ),
-              const SizedBox(height: 16),
-              _field(
-                'email',
-                'Email',
-                validate: emailError,
-                keyboard: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: 16),
-              _field(
-                'password',
-                'Password',
-                validate: passwordError,
-                secret: true,
-              ),
-              const SizedBox(height: 16),
-              _field(
-                'password_confirmation',
-                'Confirm password',
-                secret: true,
-                validate: (v) => v != _text('password')
-                    ? 'Passwords must match.'
-                    : requiredText(v),
-              ),
-            ],
+        RegistrationEmailFields(
+          controller: _verification,
+          disabled: _action.busy,
+          onVerified: () {
+            _fields['email']!.text = _verification.verifiedEmail;
+          },
+        ),
+        Offstage(
+          offstage: !_verification.verified,
+          child: Form(
+            key: _form,
+            child: Column(
+              children: [
+                _field('first_name', 'First name'),
+                const SizedBox(height: 16),
+                _field(
+                  'middle_name',
+                  'Middle name (optional)',
+                  validate: (v) => (v?.length ?? 0) > 255
+                      ? 'Use at most 255 characters.'
+                      : null,
+                ),
+                const SizedBox(height: 16),
+                _field('last_name', 'Last name'),
+                const SizedBox(height: 16),
+                _field(
+                  'contact_number',
+                  'Contact number',
+                  keyboard: TextInputType.phone,
+                  max: 32,
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  initialValue: _sex,
+                  focusNode: _focus['sex'],
+                  isExpanded: true,
+                  itemHeight: null,
+                  decoration: const InputDecoration(labelText: 'Sex'),
+                  items: const [
+                    DropdownMenuItem(value: 'male', child: Text('Male')),
+                    DropdownMenuItem(value: 'female', child: Text('Female')),
+                    DropdownMenuItem(
+                      value: 'non_binary',
+                      child: Text('Non-binary'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'prefer_not_to_say',
+                      child: Text('Prefer not to say'),
+                    ),
+                  ],
+                  onChanged: (v) {
+                    _action.clearField('sex');
+                    setState(() => _sex = v);
+                  },
+                  validator: (v) => v == null
+                      ? 'Select an option.'
+                      : _action.fieldError('sex'),
+                ),
+                const SizedBox(height: 16),
+                _field(
+                  'birth_date',
+                  'Birth date (YYYY-MM-DD)',
+                  validate: _birthday,
+                  keyboard: TextInputType.datetime,
+                ),
+                const SizedBox(height: 16),
+                _field(
+                  'email',
+                  'Email',
+                  validate: emailError,
+                  keyboard: TextInputType.emailAddress,
+                ),
+                const SizedBox(height: 16),
+                _field(
+                  'password',
+                  'Password',
+                  validate: passwordError,
+                  secret: true,
+                ),
+                const SizedBox(height: 16),
+                _field(
+                  'password_confirmation',
+                  'Confirm password',
+                  secret: true,
+                  validate: (v) => v != _text('password')
+                      ? 'Passwords must match.'
+                      : requiredText(v),
+                ),
+              ],
+            ),
           ),
         ),
-        FilledButton(
-          onPressed: _action.enabled ? _submit : null,
-          child: Text(_action.busy ? 'Submitting…' : 'Register'),
-        ),
+        if (_verification.verified)
+          FilledButton(
+            onPressed: _action.enabled ? _submit : null,
+            child: Text(_action.busy ? 'Submitting…' : 'Register'),
+          ),
         const Text(
           'Address and ID evidence cannot be submitted in this registration flow.',
         ),

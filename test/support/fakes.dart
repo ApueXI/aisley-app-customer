@@ -1,3 +1,5 @@
+import 'package:aisley_mobile_buyer/features/auth/data/registration_email.dart';
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -112,7 +114,25 @@ class MemoryTokenStore implements TokenStore {
   }
 }
 
-class FakeAuth implements AuthRepository {
+class FakeAuth implements AuthRepository, RegistrationEmailRepository {
+  @override
+  Future<RegistrationEmailChallenge> requestRegistrationCode(
+    String email,
+  ) async => RegistrationEmailChallenge(
+    id: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
+    expiresAt: DateTime.now().add(const Duration(minutes: 10)),
+    resendAt: DateTime.now(),
+  );
+  @override
+  Future<RegistrationEmailProof> verifyRegistrationEmail(
+    String email,
+    String challengeId,
+    String code,
+  ) async => RegistrationEmailProof(
+    token: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    expiresAt: DateTime.now().add(const Duration(hours: 1)),
+  );
+
   CustomerIdentity identity = CustomerIdentity.parse(identityJson());
   Future<CustomerIdentity> Function(SessionLease)? onMe;
   Future<LoginResult> Function()? onLogin;
