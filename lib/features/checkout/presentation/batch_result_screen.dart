@@ -9,6 +9,7 @@ import '../data/batch_models.dart';
 import '../../discovery/presentation/product_item_row.dart';
 import 'commerce_widgets.dart';
 import 'shipping_details.dart';
+import 'voucher_savings_summary.dart';
 
 class BatchResultController extends CommerceController {
   BatchResultController(super.session, this.dependencies, this.id);
@@ -134,6 +135,14 @@ class _BatchResultScreenState extends State<BatchResultScreen> {
                           .display(order.totals.currency),
                       routeStatus: order.shipping?.routeStatus,
                     ),
+                    for (final voucher in order.vouchers)
+                      VoucherSavingsSummary(
+                        name: voucher.name,
+                        code: voucher.code,
+                        benefit: voucher.benefit,
+                        discount: voucher.discount,
+                        currency: order.totals.currency,
+                      ),
                     TextButton(
                       onPressed: () => context.push('/orders/${order.id}'),
                       child: const Text('View Order'),
