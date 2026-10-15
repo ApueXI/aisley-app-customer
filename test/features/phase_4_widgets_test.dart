@@ -220,7 +220,16 @@ void main() {
         maxScrolls: 50,
         scrollable: find.byType(Scrollable).first,
       );
-      await tester.tap(find.byType(TextFormField));
+      final composerInput = find.descendant(
+        of: find.byType(TextFormField),
+        matching: find.byType(EditableText),
+      );
+      await Scrollable.ensureVisible(
+        tester.element(composerInput),
+        alignment: .5,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(composerInput);
       await tester.enterText(find.byType(TextFormField), 'Keep focus');
       await tester.pump();
       final field = tester.widget<TextField>(find.byType(TextField));

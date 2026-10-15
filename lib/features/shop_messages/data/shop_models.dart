@@ -4,14 +4,55 @@ import '../../../core/chat_media/message_attachments.dart';
 import '../../../core/networking/api_failure.dart';
 import '../../../core/commerce/commerce_value.dart';
 
+enum ShopAvailability {
+  online,
+  offline,
+  vacation,
+  unknown;
+
+  String get label => switch (this) {
+    online => 'Shop available',
+    offline => 'Shop unavailable',
+    vacation => 'Shop on vacation',
+    unknown => 'Shop availability unavailable',
+  };
+}
+
+class ChatShop {
+  ChatShop.parse(Object? json) {
+    final w = Wire(json);
+    id = w.uuid('id');
+    name = w.string('name');
+    slug = w.nullableString('slug');
+    availability = switch (w.string('availability')) {
+      'online' => ShopAvailability.online,
+      'offline' => ShopAvailability.offline,
+      'vacation' => ShopAvailability.vacation,
+      _ => ShopAvailability.unknown,
+    };
+  }
+  late final String id, name;
+  late final String? slug;
+  late final ShopAvailability availability;
+}
+
+class ShopChatContext {
+  ShopChatContext.parse(Object? json) {
+    final w = Wire(json);
+    shop = ChatShop.parse(w.object('shop'));
+    conversationId = nullableUuid(w, 'conversation_id');
+    sendAllowed = w.boolean('send_allowed');
+  }
+  late final ChatShop shop;
+  late final String? conversationId;
+  late final bool sendAllowed;
+}
+
 class ShopConversation {
   ShopConversation.parse(Object? json) {
     final w = Wire(json);
     id = w.uuid('id');
-    final shop = Wire(w.object('shop'));
-    shopId = shop.uuid('id');
-    label = shop.string('name');
-    slug = shop.nullableString('slug');
+    shop = ChatShop.parse(w.object('shop'));
     if (w.field('customer_name') != null) {
       throw const ApiFailure(FailureKind.decode);
     }
@@ -23,14 +64,16 @@ class ShopConversation {
     unread = nonnegative(w, 'unread_count');
     allowed = w.boolean('send_allowed');
   }
-  late final String id, label;
+  late final String id;
   late final String? preview, reason;
   late final DateTime? at;
   late final int lastSequence, lastRead, unread;
   late final bool allowed;
   bool get sendAllowed => allowed;
-  late final String shopId;
-  late final String? slug;
+  late final ChatShop shop;
+  String get shopId => shop.id;
+  String get label => shop.name;
+  String? get slug => shop.slug;
 }
 
 class ShopMessageContext {

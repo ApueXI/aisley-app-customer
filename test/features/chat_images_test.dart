@@ -42,7 +42,7 @@ void main() {
           'shop' => ShopThreadController(
             h.session,
             h.state.shops,
-            entry: {'shop_id': otherId},
+            entry: {'shop_id': customerId},
             media: media,
           ),
           'logistics' => LogisticsThreadController(

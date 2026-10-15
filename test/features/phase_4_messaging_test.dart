@@ -18,7 +18,7 @@ void main() {
     'shop' =>
       start
           ? h.state.shopThread(
-              shop: otherId,
+              shop: customerId,
               contextType: 'product',
               contextId: customerId,
             )
@@ -390,8 +390,9 @@ void main() {
   test(
     'Scoped denial clears affected channel; 429 retains frozen pending key',
     () async {
-      final shop = h.state.shopThread(shop: otherId),
+      final shop = h.state.shopThread(shop: customerId),
           logistics = h.state.logisticsThread(id: customerId);
+      await shop.load();
       await logistics.load();
       h.reply = (o) => jsonReply(
         {},

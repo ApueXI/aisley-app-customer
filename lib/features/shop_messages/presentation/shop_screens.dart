@@ -103,7 +103,8 @@ class _ShopThreadScreenState extends State<ShopThreadScreen> {
                         dependencies: widget.dependencies,
                         embedded: true,
                       ),
-                title: c.conversation?.label ?? 'Shop message',
+                title: c.shop?.name ?? 'Shop message',
+                subtitle: c.shop?.availability.label,
                 media: c.media,
                 mediaContext: c.mediaContext,
                 rows: [
@@ -140,7 +141,7 @@ class _ShopThreadScreenState extends State<ShopThreadScreen> {
                 reviewConflict: c.reviewConflict,
                 arrivals: c.arrivals,
                 acknowledge: c.acknowledgeArrivals,
-                reason: c.conversation?.reason,
+                reason: c.sendReason,
                 error: c.error,
                 pageError: c.pageError,
                 readError: c.readError,

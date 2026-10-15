@@ -1,4 +1,5 @@
 import '../../../core/networking/api_client.dart';
+import '../../../core/networking/api_failure.dart';
 import '../../../core/networking/wire.dart';
 import '../../../core/networking/cursor_page.dart';
 import '../../../core/commerce/commerce_value.dart';
@@ -8,6 +9,20 @@ class ShopChatRepository {
   ShopChatRepository(this.api);
   final ApiClient api;
   static const base = 'customer/conversations';
+  Future<ShopChatContext> context(SessionLease lease, String shop) async {
+    final value = ShopChatContext.parse(
+      Wire(
+        await api.request(
+          'GET',
+          '$base/shops/${requireUuid(shop)}',
+          lease: lease,
+        ),
+      ).object('data'),
+    );
+    if (value.shop.id != shop) throw const ApiFailure(FailureKind.decode);
+    return value;
+  }
+
   Future<CursorPage<ShopConversation>> inbox(
     SessionLease lease, [
     String? cursor,

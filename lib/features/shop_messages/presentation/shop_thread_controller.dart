@@ -22,9 +22,10 @@ class ShopThreadController extends CommerceController {
     this.repository, {
     this.id,
     this.media,
-    this.entry = const {},
+    Map<String, dynamic> entry = const {},
     String Function()? uuid,
-  }) : uuid = uuid ?? secureUuid;
+  }) : entry = Map.unmodifiable(entry),
+       uuid = uuid ?? secureUuid;
   final ShopChatRepository repository;
   final String Function() uuid;
   final ChatMediaDraftController? media;
@@ -32,7 +33,9 @@ class ShopThreadController extends CommerceController {
       id != null ? {'conversation_id': id} : {'channel': 'shop', ...entry};
   String? id;
   final Map<String, dynamic> entry;
+  ShopChatContext? context;
   ShopConversation? conversation;
+  ChatShop? get shop => conversation?.shop ?? context?.shop;
   List<ShopMessage> messages = const [];
   final trail = CursorTrail();
   ShopPendingMessage? pending;
@@ -46,8 +49,43 @@ class ShopThreadController extends CommerceController {
       conflict = false;
   int arrivals = 0, _readWanted = 0, _readSent = 0;
   bool _reading = false;
-  bool get canSend =>
-      !unavailable && (conversation?.sendAllowed ?? entry.isNotEmpty);
+  bool get canSend {
+    if (lease == null ||
+        unavailable ||
+        shop?.availability == ShopAvailability.unknown) {
+      return false;
+    }
+    if (conversation != null) return conversation!.sendAllowed;
+    final preview = context;
+    if (id != null || preview == null || preview.conversationId != null) {
+      return false;
+    }
+    // Context permission previews a generic start. Laravel validates owned Orders
+    // separately, including their existing vacation exception, when sending.
+    return preview.sendAllowed ||
+        preview.shop.availability == ShopAvailability.vacation &&
+            entry['context_type'] == 'order' &&
+            validUuid(entry['context_id'] as String? ?? '');
+  }
+
+  String? get sendReason {
+    if (loading) return 'Checking this conversation. Please wait.';
+    if (unavailable) return 'This Shop conversation is unavailable.';
+    if (shop?.availability == ShopAvailability.vacation &&
+        conversation == null) {
+      return 'This Shop is on vacation. Try again when it is available.';
+    }
+    return null;
+  }
+
+  void _checkSummary(ShopConversation value, String? target) {
+    final expectedShop = entry['shop_id'] ?? shop?.id;
+    if (target != null && value.id != target ||
+        expectedShop != null && value.shopId != expectedShop) {
+      throw const ApiFailure(FailureKind.decode);
+    }
+  }
+
   Future<void> load({bool more = false}) async {
     final credential = lease;
     final cursor = more ? trail.next : null;
@@ -71,12 +109,28 @@ class ShopThreadController extends CommerceController {
     }
     notifyListeners();
     try {
-      final target = id;
+      var target = id;
+      if (target == null && entry['shop_id'] is String) {
+        final value = await repository.context(
+          credential,
+          entry['shop_id'] as String,
+        );
+        if (!current(stamp, credential)) return;
+        context = value;
+        unavailable = false;
+        // Only a definitive rejection can discover a thread for conflict review.
+        // An uncertain first message keeps its original endpoint and payload.
+        if (pending == null || conflict && pending?.uncertain == false) {
+          target = value.conversationId;
+        }
+      }
       if (target == null) return;
       final summary = await repository.detail(credential, target);
       if (!current(stamp, credential)) return;
+      _checkSummary(summary, target);
       final page = await repository.history(credential, target, cursor);
       if (!current(stamp, credential)) return;
+      id = target;
       unavailable = false;
       conversation = summary;
       final prior = messages.map((e) => e.id).toSet();
@@ -107,6 +161,7 @@ class ShopThreadController extends CommerceController {
       if (summary.lastRead > _readSent) _readSent = summary.lastRead;
     } on ApiFailure catch (e) {
       if (!current(stamp, credential)) return;
+      if (id == null) context = null;
       offline = e.kind == FailureKind.offline || e.kind == FailureKind.timeout;
       if (more) {
         pageError = describeFailure(e);
@@ -197,9 +252,7 @@ class ShopThreadController extends CommerceController {
         record.key,
       );
       if (!current(stamp, credential)) return;
-      if (record.id != null && value.$1.id != record.id) {
-        throw const ApiFailure(FailureKind.decode);
-      }
+      _checkSummary(value.$1, record.id);
       id = value.$1.id;
       conversation = value.$1;
       _merge([value.$2]);
@@ -237,7 +290,7 @@ class ShopThreadController extends CommerceController {
         pending?.uncertain == true ||
         loading ||
         sending ||
-        conversation?.sendAllowed != true) {
+        !canSend) {
       return;
     }
     draft = pending?.body['body'] as String? ?? draft;
@@ -268,6 +321,7 @@ class ShopThreadController extends CommerceController {
         final target = _readWanted;
         final value = await repository.read(credential, id!, target);
         if (!current(stamp, credential)) return;
+        _checkSummary(value, id);
         _readSent = target;
         readError = null;
         if (conversation == null ||
@@ -304,6 +358,7 @@ class ShopThreadController extends CommerceController {
       pending!.uncertain = true;
     }
     conversation = null;
+    context = null;
     messages = const [];
     trail.clear();
     draft = '';

@@ -17,6 +17,7 @@ import 'package:aisley_mobile_buyer/features/shop_messages/presentation/shop_scr
 
 import '../support/commerce_harness.dart';
 import '../support/fakes.dart';
+import '../support/shop_context_fixtures.dart';
 
 void main() {
   late CommerceHarness h;
@@ -25,6 +26,9 @@ void main() {
     h = CommerceHarness();
     await h.initialize();
     h.reply = (r) {
+      if (r.uri.path.contains('/conversations/shops/')) {
+        return jsonReply({'data': shopContext()});
+      }
       if (r.uri.path.endsWith('/home')) {
         return jsonReply(fixture('customer-homepage', 'op-047'));
       }
@@ -194,7 +198,16 @@ void main() {
                     )
                     .first,
               );
-              await tester.tap(find.byType(TextFormField));
+              final composerInput = find.descendant(
+                of: find.byType(TextFormField),
+                matching: find.byType(EditableText),
+              );
+              await Scrollable.ensureVisible(
+                tester.element(composerInput),
+                alignment: .5,
+              );
+              await tester.pumpAndSettle();
+              await tester.tap(composerInput);
               await tester.enterText(
                 find.byType(TextFormField),
                 'Unsent synthetic draft',
