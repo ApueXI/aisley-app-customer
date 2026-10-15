@@ -110,6 +110,11 @@ class OrderMutationController extends CommerceController {
       } else {
         _pending.remove(id);
         _conflicts.add(id);
+        if (value.code == 'ADDRESS_LOCATION_CHANGE_NOT_ALLOWED') {
+          _errors[id] =
+              'Only the recipient name and contact number can be corrected. '
+              'Select a saved address at the same location and map pin.';
+        }
       }
       return null;
     } finally {
