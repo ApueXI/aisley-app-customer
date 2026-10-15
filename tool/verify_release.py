@@ -19,8 +19,6 @@ ROOT = Path(__file__).resolve().parents[1]
 BASELINE = '57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50'
 API = 'http://127.0.0.1:8000/api/v1/platform/policies/terms_of_service'
 BROWSER = 'http://localhost:8766'
-DEFINES = ['--dart-define=API_BASE_URL=https://api.example.invalid',
-           '--dart-define=STOREFRONT_ORIGIN=https://shop.example.invalid']
 DEFAULT_CHECKS = ('dependencies', 'format', 'analyze', 'unit', 'chrome',
                   'tooling', 'bundle', 'web-build', 'apk-build')
 
@@ -128,8 +126,8 @@ def commands():
         'chrome': ['flutter', 'test', '--no-pub', '--platform', 'chrome', 'test/web'],
         'tooling': [sys.executable, '-m', 'unittest', 'discover', '-s', 'tool', '-p', '*_test.py'],
         'bundle': [sys.executable, 'tool/verify_bundle.py'],
-        'web-build': ['flutter', 'build', 'web', '--no-pub', *DEFINES],
-        'apk-build': ['flutter', 'build', 'apk', '--release', '--no-pub', *DEFINES],
+        'web-build': ['flutter', 'build', 'web', '--no-pub'],
+        'apk-build': ['flutter', 'build', 'apk', '--release', '--no-pub'],
         'live': ['flutter', 'test', '--no-pub', 'test/live'],
         'browser': [sys.executable, 'tool/browser_smoke.py'],
     }
@@ -163,10 +161,9 @@ def main(argv=None):
         **metadata(), 'contract_baseline': BASELINE, 'running_backend_revision': None,
         'pubspec_lock_sha256': hashlib.sha256(lockfile.read_bytes()).hexdigest()
         if lockfile.exists() else None,
-        'configuration': {'api': 'https://api.example.invalid/api/v1',
-                          'storefront': 'https://shop.example.invalid',
-                          'maps_enabled': False, 'browser_origin': BROWSER},
-        'scope': 'local readiness; compilation placeholders and debug signing',
+        'configuration': {'source': '.env', 'values_recorded': False,
+                          'browser_origin': BROWSER},
+        'scope': 'local readiness; public .env configuration and debug signing',
         'complete_local_suite': set(DEFAULT_CHECKS).issubset(selected),
         'checks': [],
         'external_gates': ['controlled authenticated acceptance', 'installed Android/TalkBack',

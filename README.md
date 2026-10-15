@@ -47,6 +47,7 @@ git clone <repository-url> aisley_mobile_buyer
 cd aisley_mobile_buyer
 flutter --version
 flutter doctor -v
+cp .env.example .env
 flutter pub get --enforce-lockfile
 ```
 
@@ -54,8 +55,9 @@ Resolve doctor issues for your chosen platform before running the app. Keep the
 committed `pubspec.lock`; the clone already contains the app, platform projects and
 registered PSGC assets. No `flutter create` or asset-copy step is needed.
 
-The app uses public compile-time configuration via `--dart-define`; setup does not
-require copying a backend `.env` file. Coordinate API access and approved test data
+The app loads public configuration from the root `.env` asset before startup. Fill in
+the values from `.env.example`; keep this file limited to Buyer configuration.
+Coordinate API access and approved test data
 with the backend owner. Every shopping screen requires an active, Admin-approved
 Customer verified through `/me` and current required consent. Authentication, approval,
 recovery and Terms/Privacy remain reachable before sign-in. Layouts target Android phones
@@ -70,12 +72,12 @@ available. Keep the Flutter process running while using the app; press `q` to st
 ### Web
 
 ```sh
-flutter run -d web-server --web-port 8766 --dart-define=API_BASE_URL=http://127.0.0.1:8000
+flutter run -d web-server --web-port 8766
 ```
 
 Open **http://localhost:8766** in your browser. `web-server` serves the app; open the
 URL yourself. The app adds `/api/v1` to the configured API origin. The recovery
-storefront defaults to `http://localhost:3000`; override `STOREFRONT_ORIGIN` when needed.
+storefront defaults to `http://localhost:3000`; set `STOREFRONT_ORIGIN` in `.env` when needed.
 
 Keep the browser origin fixed at `http://localhost:8766`, even when the API uses
 `127.0.0.1`. Browser secure storage is origin-bound, so changing the host or port
@@ -109,12 +111,11 @@ HTTPS configuration.
 
 Enable Developer options and USB debugging, connect your phone, accept its debugging
 prompt, then run `flutter devices`. Use API/storefront HTTPS origins reachable from
-the phone. Replace the `.invalid` placeholders and device ID before running:
+the phone. Set `API_BASE_URL` and `STOREFRONT_ORIGIN` in `.env`, then replace the
+device ID before running:
 
 ```sh
-flutter run -d <android-device-id> \
-  --dart-define=API_BASE_URL=https://api.example.invalid \
-  --dart-define=STOREFRONT_ORIGIN=https://shop.example.invalid
+flutter run -d <android-device-id>
 ```
 
 A phone's `localhost` refers to the phone; `10.0.2.2` is the emulator alias. Arbitrary
@@ -124,23 +125,29 @@ still require acceptance on the installed app.
 
 ## Configuration
 
-Pass overrides to `flutter run` or `flutter build` using `--dart-define=NAME=value`.
-Restart the run or rebuild after changing them.
+Set these variables in the root `.env` file. Restart the app or rebuild after changing
+them; Dart defines are no longer used for app configuration.
 
-| Define | Debug default | Purpose |
+| Variable | Debug default | Purpose |
 | --- | --- | --- |
 | `API_BASE_URL` | Web: `http://localhost:8000/api/v1`; Android: `http://10.0.2.2:8000/api/v1` | Trusted API origin or full `/api/v1` base; an optional trailing slash is accepted. |
 | `STOREFRONT_ORIGIN` | Web: `http://localhost:3000`; Android: `http://10.0.2.2:3000` | Trusted storefront origin for recovery and external links. |
 | `MAPS_ENABLED` | `false` | Requests optional address pin/map assistance. |
-| `GEOAPIFY_PUBLIC_API_KEY` | Empty | Suitable public Geoapify key; maps need both this value and `MAPS_ENABLED=true`. |
+| `GEOAPIFY_API_KEY` | Empty | Suitable public Geoapify key; maps need both this value and `MAPS_ENABLED=true`. |
+
+Blank API/storefront values use the debug defaults above. `MAPS_ENABLED=true` enables
+maps only with a nonempty public key; blank or other values leave maps disabled.
+The loader accepts blank lines, `#` comments, surrounding quotes and an optional
+`export` prefix. Values are literal; shell interpolation and multiline values are unsupported.
 
 API configuration rejects unrelated paths, embedded credentials, queries and
 fragments; the storefront must be an origin. HTTP is permitted only in debug for
 `localhost`, `127.0.0.1` and `10.0.2.2`. Release builds require explicit HTTPS API
 and storefront origins.
 
-All build configuration is public. Keep passwords, bearer tokens, backend/storage
-credentials and private map-provider keys out of defines, assets and source control.
+The `.env` file is ignored by Git and bundled into the app as a public asset. Keep
+passwords, bearer tokens, backend/storage credentials and private map-provider keys
+out of this file, assets and source control.
 Maps remain optional. Offline PSGC locality selectors work without maps; locality values
 must be selected from the searchable lists. Recipient, contact, street/building,
 unit/additional line and postal code stay editable text fields. Missing address data
@@ -155,25 +162,21 @@ For an emulator-oriented debug APK using the local defaults:
 flutter build apk --debug
 ```
 
-Output: `build/app/outputs/flutter-apk/app-debug.apk`. For a physical phone, pass the
-reachable HTTPS API/storefront defines shown above to the build command. You can
+Output: `build/app/outputs/flutter-apk/app-debug.apk`. For a physical phone, configure
+reachable HTTPS API/storefront origins in `.env` before building. You can
 install an APK through Android tooling, for example:
 
 ```sh
 adb -s <android-device-id> install -r build/app/outputs/flutter-apk/app-debug.apk
 ```
 
-For release compilation, replace both nonfunctional `.invalid` placeholders with
-authorized HTTPS origins:
+For release compilation, set both API and storefront variables to authorized HTTPS
+origins in `.env`:
 
 ```sh
-flutter build apk --release \
-  --dart-define=API_BASE_URL=https://api.example.invalid \
-  --dart-define=STOREFRONT_ORIGIN=https://shop.example.invalid
+flutter build apk --release
 
-flutter build web \
-  --dart-define=API_BASE_URL=https://api.example.invalid \
-  --dart-define=STOREFRONT_ORIGIN=https://shop.example.invalid
+flutter build web
 ```
 
 Outputs: `build/app/outputs/flutter-apk/app-release.apk` and `build/web/`.
@@ -194,7 +197,7 @@ python3 tool/verify_bundle.py
 ```
 
 The complete local verification runner also runs browser transport/storage tests,
-tooling checks and web/release APK builds with nonfunctional HTTPS placeholders:
+tooling checks and web/release APK builds using your public `.env` asset:
 
 ```sh
 python3 tool/verify_release.py
@@ -202,7 +205,7 @@ python3 tool/verify_release.py
 
 It requires the Android build toolchain and Chrome/Chromium on `PATH`. Reports go to
 ignored `build/verification/`. Exit codes are `0` for all requested checks passing,
-`1` for failure and `2` for blocked prerequisites. Placeholder builds and passing
+`1` for failure and `2` for blocked prerequisites. Builds and passing
 local checks do not close live/device/distribution gates.
 
 With the API and Buyer web server already running, and Chromium/chromedriver on
@@ -225,7 +228,7 @@ for controlled authenticated and installed-device verification.
 | Android device is missing | Start the emulator or enable/authorize USB debugging; inspect `flutter devices` and doctor. |
 | API requests fail | Confirm the external API is running and reachable from the chosen target. Emulator and phone addresses differ from browser addresses. |
 | Browser CORS errors | Use `http://localhost:8766` and have the backend owner review exact-origin methods, headers and preflights. |
-| Service configuration is unavailable | Supply valid API/storefront values; release requires both HTTPS defines. Replace example placeholders and rebuild. |
+| Service configuration is unavailable | Check `.env` exists and contains valid API/storefront values; release requires both HTTPS origins. Rebuild after changes. |
 | Phone cannot reach a local HTTP API | Use reachable approved HTTPS origins; arbitrary LAN HTTP hosts are not accepted. |
 | Sign-in or private actions stay blocked | Confirm Customer approval/status, current consent and storage access; registration alone does not grant access. |
 | Verification exits with code 2 | Read the report for missing Chrome/Chromium, chromedriver, API or Buyer-server prerequisites. |
@@ -246,7 +249,7 @@ same Flutter app. See [design](docs/design-buyer.md) and [marketplace evidence](
 
 Optional address maps use MapLibre for rendering and Geoapify for address lookup
 and light raster tiles. `MAPS_ENABLED` defaults to false; enable it with an approved
-`GEOAPIFY_PUBLIC_API_KEY`. Coordinate entry and manual address saving remain available.
+`GEOAPIFY_API_KEY` in `.env`. Coordinate entry and manual address saving remain available.
 See [map setup](docs/maps-location-api.md) and [verification](docs/references/maplibre-verification.md).
 
 

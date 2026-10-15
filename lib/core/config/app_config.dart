@@ -1,4 +1,7 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+
+import 'env_asset.dart';
 
 class AppConfig {
   AppConfig({
@@ -27,25 +30,31 @@ class AppConfig {
     return uri;
   }
 
-  factory AppConfig.environment() {
+  static Future<AppConfig> load({AssetBundle? bundle}) async =>
+      AppConfig.environment(await loadEnvAsset(bundle ?? rootBundle));
+
+  factory AppConfig.environment(
+    Map<String, String> environment, {
+    bool allowLocalHttp = kDebugMode,
+  }) {
     final emulator = !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+    final apiBaseUrl = environment['API_BASE_URL']?.trim() ?? '';
+    final storefrontOrigin = environment['STOREFRONT_ORIGIN']?.trim() ?? '';
     return AppConfig(
-      apiBaseUrl: const String.fromEnvironment('API_BASE_URL').isEmpty
-          ? (kDebugMode
+      apiBaseUrl: apiBaseUrl.isEmpty
+          ? (allowLocalHttp
                 ? 'http://${emulator ? '10.0.2.2' : 'localhost'}:8000/api/v1'
                 : '')
-          : const String.fromEnvironment('API_BASE_URL'),
-      storefrontOrigin:
-          const String.fromEnvironment('STOREFRONT_ORIGIN').isEmpty
-          ? (kDebugMode
+          : apiBaseUrl,
+      storefrontOrigin: storefrontOrigin.isEmpty
+          ? (allowLocalHttp
                 ? 'http://${emulator ? '10.0.2.2' : 'localhost'}:3000'
                 : '')
-          : const String.fromEnvironment('STOREFRONT_ORIGIN'),
-      allowLocalHttp: kDebugMode,
-      mapsRequested: const bool.fromEnvironment('MAPS_ENABLED'),
-      geoapifyPublicApiKey: const String.fromEnvironment(
-        'GEOAPIFY_PUBLIC_API_KEY',
-      ),
+          : storefrontOrigin,
+      allowLocalHttp: allowLocalHttp,
+      mapsRequested:
+          environment['MAPS_ENABLED']?.trim().toLowerCase() == 'true',
+      geoapifyPublicApiKey: environment['GEOAPIFY_API_KEY']?.trim() ?? '',
     );
   }
 

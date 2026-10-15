@@ -69,6 +69,7 @@ flutter:
   # the material Icons class.
   uses-material-design: true
   assets:
+    - .env
     - assets/psgc/list-of-all-regions.json
     - assets/psgc/0100000000-region-i-ilocos-region/
     - assets/psgc/0200000000-region-ii-cagayan-valley/

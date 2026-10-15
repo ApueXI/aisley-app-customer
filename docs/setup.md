@@ -4,7 +4,7 @@
 
 Run `python3 tool/verify_release.py` for locked dependencies, formatting, analysis,
 unit/widget/Chromium/tooling checks, portable documentation/assets/Android validation
-and placeholder web/release APK builds. Use `--live --browser` only with the authorized
+and web/release APK builds using the public root `.env` asset. Use `--live --browser` only with the authorized
 API and an already running Buyer at localhost:8766. Missing requested prerequisites
 are reported as blocked with a nonzero exit. Focused reruns use `--checks`.
 See [Phase 5 evidence and acceptance runbook](references/phase-5-verification.md)
@@ -36,8 +36,8 @@ Web requires WebGL2 and the default plugin's pinned JS/CSS/worker host `unpkg.co
 no manual scripts are needed in `web/index.html`.
 
 Geoapify still supplies both forward geocoding and light raster tiles. Enable only
-with `--dart-define=MAPS_ENABLED=true` and an approved public
-`--dart-define=GEOAPIFY_PUBLIC_API_KEY=<public-key>`; these are public build inputs.
+with `MAPS_ENABLED=true` and an approved public `GEOAPIFY_API_KEY` in the root `.env`;
+these are public bundled inputs.
 Missing inputs keep maps disabled and manual address saving available. See
 [map guidance](maps-location-api.md) and [verification](references/maplibre-verification.md).
 
@@ -64,7 +64,7 @@ an optional trailing slash. Open Buyer at `http://localhost:8766` for its CORS o
 
 ```sh
 flutter pub get --enforce-lockfile
-flutter run -d web-server --web-port 8766 --dart-define=API_BASE_URL=http://127.0.0.1:8000
+flutter run -d web-server --web-port 8766
 flutter build apk --debug
 flutter test
 BUYER_LIVE_API=1 flutter test test/live/public_api_test.dart
@@ -129,6 +129,7 @@ dependencies:
 flutter:
   uses-material-design: true
   assets:
+    - .env
     - assets/psgc/list-of-all-regions.json
     # Add every region directory from assets/psgc/pubspec-assets.yaml below.
 ```
@@ -140,16 +141,18 @@ flutter pub get
 dart format --output=none --set-exit-if-changed lib test integration_test
 flutter analyze
 flutter test
-flutter build apk --debug --dart-define=API_BASE_URL=https://api.example.invalid/api/v1 --dart-define=STOREFRONT_ORIGIN=https://shop.example.invalid
-flutter build web --dart-define=API_BASE_URL=https://api.example.invalid/api/v1 --dart-define=STOREFRONT_ORIGIN=https://shop.example.invalid
-flutter run -d web-server --web-hostname localhost --web-port 8766 --dart-define=API_BASE_URL=https://api.example.invalid/api/v1 --dart-define=STOREFRONT_ORIGIN=https://shop.example.invalid
+flutter build apk --debug
+flutter build web
+flutter run -d web-server --web-hostname localhost --web-port 8766
 ```
 
-The .invalid hosts are placeholders; replace with authorized origins. Create tests before invoking absent integration_test paths. Use `flutter test integration_test -d <android-device-id>` after writing target tests; browser automation uses the running localhost app with configured API/mock fixtures. Release APK signing/Play distribution are deployment work, not certified by debug compilation.
+Configure authorized API/storefront origins in `.env` before these commands. Create tests before invoking absent integration_test paths. Use `flutter test integration_test -d <android-device-id>` after writing target tests; browser automation uses the running localhost app with configured API/mock fixtures. Release APK signing/Play distribution are deployment work, not certified by debug compilation.
 
 ## Public configuration and Android
 
-AppConfig reads compile-time API_BASE_URL, STOREFRONT_ORIGIN, MAPS_ENABLED (default false), GEOAPIFY_PUBLIC_API_KEY (optional), and approved destination hosts. Validate an absolute HTTPS API base ending /api/v1, HTTPS storefront origin, and exact trusted origins. Never put tokens, server credentials, storage keys or GEOAPIFY_SERVER_API_KEY in dart-define, assets, logs or source. Build configuration is public.
+Copy `.env.example` to the root `.env` when setting up a checkout; preserve an existing local file. The app loads this registered Flutter asset before constructing dependencies. AppConfig reads API_BASE_URL, STOREFRONT_ORIGIN, MAPS_ENABLED (default false) and GEOAPIFY_API_KEY (optional public key). Blank API/storefront values retain debug defaults; release requires explicit HTTPS origins. Dart defines no longer configure these settings. Missing/malformed configuration uses the existing unavailable screen.
+
+Validate an absolute HTTPS API base ending /api/v1, HTTPS storefront origin and exact trusted origins. `.env` is ignored by Git but bundled publicly in Android/web builds. Keep it limited to Buyer settings; never copy a backend environment file or put tokens, server credentials, storage keys or GEOAPIFY_SERVER_API_KEY in it, assets, logs or source. Restart/rebuild after edits. No new dependency is required.
 
 Android emulator development API may use http://10.0.2.2:<port>/api/v1; a physical phone needs a reachable approved host. Use only a debug-scoped cleartext exception for that specific development host. Release defaults stay HTTPS. No application database, seed or API configuration is copied into Flutter.
 
