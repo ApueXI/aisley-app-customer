@@ -156,7 +156,8 @@ class HomeCampaign {
     required this.priority,
     required this.isActive,
   });
-  final String id, title, altText, destinationUrl;
+  final String id;
+  final String? title, altText, destinationUrl;
   final String? placement, description, slot, imageDesktopUrl, imageMobileUrl;
   final int position;
   final int? priority;
@@ -168,14 +169,14 @@ class HomeCampaign {
     return HomeCampaign(
       id: wire.string('id'),
       placement: wire.optionalString('placement'),
-      title: wire.string('title'),
+      title: wire.nullableString('title'),
       description: wire.nullableString('description'),
       slot: wire.nullableString('slot'),
       position: wire.integer('position'),
       imageDesktopUrl: wire.nullableString('imageDesktopUrl'),
       imageMobileUrl: wire.nullableString('imageMobileUrl'),
-      altText: wire.string('altText'),
-      destinationUrl: wire.string('destinationUrl'),
+      altText: wire.nullableString('altText'),
+      destinationUrl: wire.nullableString('destinationUrl'),
       startsAt: _optionalTimestamp(wire, 'startsAt'),
       endsAt: _optionalTimestamp(wire, 'endsAt'),
       priority: wire.data.containsKey('priority')

@@ -1198,14 +1198,14 @@ Use [operation contracts](operations.md) for envelopes and [machine-readable def
 | --- | --- | --- |
 | `id` | `string` | non-null; required |
 | `placement` | `string` | non-null; may be absent |
-| `title` | `string` | non-null; required |
+| `title` | `string` | null allowed; required |
 | `description` | `string` | null allowed; required |
 | `slot` | `string` | null allowed; required |
 | `position` | `int` | non-null; required |
 | `imageDesktopUrl` | `URL` | null allowed; required |
 | `imageMobileUrl` | `URL` | null allowed; required |
-| `altText` | `string` | non-null; required |
-| `destinationUrl` | `URL` | non-null; required |
+| `altText` | `string` | null allowed; required |
+| `destinationUrl` | `URL` | null allowed; required |
 | `startsAt` | `timestamp` | null allowed; may be absent |
 | `endsAt` | `timestamp` | null allowed; may be absent |
 | `priority` | `int` | non-null; may be absent |

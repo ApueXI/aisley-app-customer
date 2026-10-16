@@ -53,6 +53,8 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 - AdvertisementLayer may be null. Missing images show an accessible fallback and preserve valid
   destination text.
 - Fallback campaign IDs are strings such as default-primary; do not require a UUID for every campaign.
+- Campaign title, alt text and destination are nullable: render image-only promotions without a heading or link, use a neutral accessible image label when needed and skip campaigns with no text/image content.
+- This nullability was observed on the deployed public Home API on 2026-10-16 (backend revision unidentified); see the dated integration-gap record. Missing fields and wrong non-null types remain decode failures.
 - Pause carousel rotation offscreen/background; provide accessible previous/next and avoid overriding
   keyboard focus.
 - Home provides Search and voucher discovery; Shops remains in main navigation.
@@ -120,7 +122,7 @@ actions.
 | `Home` | `viewer: Viewer`, `advertisementLayer: Advertisement?`, `campaigns: CampaignGroups`, `quickActions: QuickAction[]`, `categories: HomeCategory[]`, `flashDeals: FlashDeals?`, `topProducts: Product[]`, `recentlyViewed: Product[]`, `recommendations: Recommendations` |
 | `Viewer` | `isAuthenticated: bool`, `displayName: string?`, `email: string?`, `deliveryLocation: DeliveryLocation?`, `cartItemCount: int` |
 | `Recommendations` | `items: Product[]`, `nextCursor: string?`, `pageSize: int` |
-| `Campaign` | `id: string`, `placement: string~`, `title: string`, `description: string?`, `slot: string?`, `position: int`, `imageDesktopUrl: URL?`, `imageMobileUrl: URL?`, `altText: string`, `destinationUrl: URL`, `startsAt: timestamp?~`, `endsAt: timestamp?~`, `priority: int~`, `isActive: bool` |
+| `Campaign` | `id: string`, `placement: string~`, `title: string?`, `description: string?`, `slot: string?`, `position: int`, `imageDesktopUrl: URL?`, `imageMobileUrl: URL?`, `altText: string?`, `destinationUrl: URL?`, `startsAt: timestamp?~`, `endsAt: timestamp?~`, `priority: int~`, `isActive: bool` |
 
 ### Errors, ownership and recovery
 

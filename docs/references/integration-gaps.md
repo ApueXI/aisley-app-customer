@@ -160,3 +160,9 @@ This is a documentation correction. The dated G25 tests above retain their origi
 ## Audit G26 / Buyer G27 local acceptance — 2026-10-15
 
 [Runtime/emulator verification](private-media-runtime-verification.md) completes the isolated local media slice: real private storage, media worker, FFmpeg/ClamAV, seven conversation contexts, denied/ended history, replacement-Courier/organization isolation, connected Chromium and installed API 35 Android playback/Save As/logout. Deployed release pairs/Azure, physical providers/codecs, full-app login/account switching and actual TalkBack remain open. Buyer voucher G26 and mobile video/document upload status are unchanged.
+
+## Home image-only campaign nullability — 2026-10-16
+
+The configured deployed public `GET /api/v1/customer/home?limit=20` returns HTTP 200 with explicit null Campaign `title`, `altText` and `destinationUrl` values for image-only promotions. The prior local wire table required strings, so the Buyer parser rejected the entire Home response at Campaign.title. An in-memory probe confirmed the remaining Home sections parse when optional banners are omitted. The deployed backend revision is unidentified; this observation adopts only these three nullable fields, not a new general backend baseline.
+
+Buyer now accepts explicit nulls while rejecting missing fields and other non-string types. Image-only promotions retain their media, receive a neutral accessible label and have no link action without a destination; empty campaigns are skipped. Product/recommendation data still comes from the API, and configured storefront validation continues to own external link launches. Live response payloads and media bytes were neither logged nor saved; public configuration values were not logged. Synthetic client verification and the public in-memory parse check are recorded in Progress; authenticated Home, installed Android/TalkBack and the deployed revision remain acceptance gates.

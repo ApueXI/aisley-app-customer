@@ -1,5 +1,5 @@
 {
-  "provenance": "Source-derived documentation schema; not a live API capture",
+  "provenance": "Source-derived documentation schema with 2026-10-16 deployed Home Campaign nullability correction (deployed revision unidentified); not a live API capture",
   "checkout": "22b0a48f9575ead182d03c35ab87345711c23b90",
   "notation": "? nullable; ~ may be absent; [] list. Named types reference definitions. Unknown additive keys tolerated.",
   "definitions": {
@@ -868,14 +868,14 @@
     "Campaign": {
       "id": "string",
       "placement": "string~",
-      "title": "string",
+      "title": "string?",
       "description": "string?",
       "slot": "string?",
       "position": "int",
       "imageDesktopUrl": "URL?",
       "imageMobileUrl": "URL?",
-      "altText": "string",
-      "destinationUrl": "URL",
+      "altText": "string?",
+      "destinationUrl": "URL?",
       "startsAt": "timestamp?~",
       "endsAt": "timestamp?~",
       "priority": "int~",
