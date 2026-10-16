@@ -5,6 +5,7 @@ import '../../../app/app_dependencies.dart';
 import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/list_recovery.dart';
 import '../../../core/ui/form_page.dart';
+import '../../../core/ui/marketplace_surfaces.dart';
 import '../../../core/ui/foreground_poll.dart';
 import '../../../core/communication/text_rules.dart';
 import '../../messaging/presentation/message_views.dart';
@@ -116,9 +117,13 @@ class _TicketInboxScreenState extends State<TicketInboxScreen> {
                       controller.error == null &&
                       controller.pageError == null &&
                       controller.items.isEmpty)
-                    const Text('No tickets in these filters.'),
+                    const MarketEmptyState(
+                      icon: Icons.support_agent,
+                      title: 'No tickets in these filters.',
+                    ),
                   for (final item in controller.items)
                     Card(
+                      margin: const EdgeInsets.only(bottom: 12),
                       child: ListTile(
                         leading: const Icon(Icons.support_agent),
                         trailing: const Icon(Icons.chevron_right),

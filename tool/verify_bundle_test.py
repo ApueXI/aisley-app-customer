@@ -12,8 +12,8 @@ class BundleTest(unittest.TestCase):
         temporary = tempfile.TemporaryDirectory(prefix='buyer-bundle-test-')
         self.addCleanup(temporary.cleanup)
         self.root = Path(temporary.name)
-        # Reference assets/docs read-only; copy only the configuration we mutate.
-        for name in ('docs', 'assets'):
+        # Reference shared inputs; copy files before mutating them.
+        for name in ('docs', 'assets', '.agents'):
             (self.root / name).symlink_to(bundle.ROOT / name, target_is_directory=True)
         for name in ('README.md', 'pubspec.yaml'):
             shutil.copyfile(bundle.ROOT / name, self.root / name)
@@ -44,16 +44,33 @@ class BundleTest(unittest.TestCase):
         shutil.copytree(bundle.ROOT / 'docs', self.root / 'docs')
         logs = self.root / 'docs/logs'
         logs.mkdir(exist_ok=True)
+        # A root-only target distinguishes archive resolution from forwarding links.
+        root_target = 'references/t03-archive-root-only.md'
+        (self.root / 'docs' / root_target).write_text('# Synthetic archive evidence\n')
+        self.assertFalse((logs / root_target).exists())
         archive = logs / 'PROGRESS-2099-01-01-2.md'
-        archive.write_text('[Evidence](references/phase-1-verification.md)\n')
+        archive.write_text(f'[Evidence]({root_target})\n')
         self.assertEqual(bundle.verify(self.root)[0], [])
+        self.assertFalse((self.root / 'docs/references/absent-archive-target.md').exists())
         archive.write_text('[Missing](references/absent-archive-target.md)\n')
         errors, _ = bundle.verify(self.root)
-        self.assertTrue(any('absent-archive-target.md' in error for error in errors))
+        self.assertEqual(errors, [
+            f'docs/logs/{archive.name}: missing local link references/absent-archive-target.md',
+        ])
         archive.unlink()
-        (logs / 'ordinary.md').write_text('[Evidence](references/phase-1-verification.md)\n')
+
+        ordinary = logs / 'ordinary.md'
+        ordinary.write_text('[Evidence](references/phase-1-verification.md)\n')
+        self.assertEqual(bundle.verify(self.root)[0], [])
+        ordinary.write_text(f'[Evidence]({root_target})\n')
         errors, _ = bundle.verify(self.root)
-        self.assertTrue(any('ordinary.md: missing local link' in error for error in errors))
+        self.assertEqual(errors, [f'docs/logs/ordinary.md: missing local link {root_target}'])
+        self.assertFalse((logs / 'references/absent-ordinary-target.md').exists())
+        ordinary.write_text('[Missing](references/absent-ordinary-target.md)\n')
+        errors, _ = bundle.verify(self.root)
+        self.assertEqual(errors, [
+            'docs/logs/ordinary.md: missing local link references/absent-ordinary-target.md',
+        ])
 
     def test_debug_subdomains_and_profile_http_override_fail(self):
         network = self.root / 'android/app/src/debug/res/xml/local_network_security.xml'

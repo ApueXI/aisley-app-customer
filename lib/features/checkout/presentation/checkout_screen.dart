@@ -310,14 +310,36 @@ class _CheckoutScreenState extends State<CheckoutScreen>
             if (c.expired)
               const Text('This review expired. Review your order again.'),
           ],
-          OutlinedButton(
-            onPressed: c.canQuote ? c.getQuote : null,
-            child: Text(c.quoting ? 'Reviewing…' : 'Review order'),
-          ),
-          const SizedBox(height: 8),
-          FilledButton(
-            onPressed: c.canPlace && !_confirming ? () => _place() : null,
-            child: const Text('Place COD order'),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final review = OutlinedButton(
+                onPressed: c.canQuote ? c.getQuote : null,
+                child: Text(
+                  c.quoting ? 'Reviewing…' : 'Review order',
+                  textAlign: TextAlign.center,
+                ),
+              );
+              final place = FilledButton(
+                onPressed: c.canPlace && !_confirming ? () => _place() : null,
+                child: const Text(
+                  'Place COD order',
+                  textAlign: TextAlign.center,
+                ),
+              );
+              if (constraints.maxWidth >= 320 * catalogTextScale(context)) {
+                return Row(
+                  children: [
+                    Expanded(child: review),
+                    const SizedBox(width: 8),
+                    Expanded(child: place),
+                  ],
+                );
+              }
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [review, const SizedBox(height: 8), place],
+              );
+            },
           ),
         ],
       ],

@@ -10,6 +10,7 @@ import '../data/batch_models.dart';
 import '../data/checkout_repository.dart';
 import '../data/quote_models.dart';
 import '../domain/checkout_intent.dart';
+import '../domain/voucher_selection.dart';
 import 'checkout_shipping_controller.dart';
 
 class CheckoutController extends CommerceController {
@@ -145,10 +146,15 @@ class CheckoutController extends CommerceController {
         .where((v) => v.id == candidate.id && v.selectable)
         .firstOrNull;
     if (found == null || !currentQuote.groups.contains(group)) return;
-    final next = vouchers.where((v) => v.voucherId != candidate.id).toList();
-    if (selected) next.add(VoucherSelection(candidate.id, group.shop.id));
+    final next = updateVoucherSelection(
+      vouchers,
+      groups: currentQuote.groups,
+      targetShopId: group.shop.id,
+      candidate: found,
+      selected: selected,
+    );
     if (next.length > 20) return;
-    vouchers = List.unmodifiable(next);
+    vouchers = next;
     invalidateQuote();
     error = 'Voucher selection changed. Get a new quote and review the totals.';
     notifyListeners();

@@ -55,7 +55,7 @@ class AddressSnapshotView extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      Text(address.recipient),
+      Text(address.recipient, style: Theme.of(context).textTheme.titleMedium),
       Text(address.contact),
       Text(address.locationText),
       if (address.version != null) Text('Address version ${address.version}'),

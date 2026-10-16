@@ -54,6 +54,11 @@ class CommunicationHarness {
         : channel == 'logistics-messaging'
         ? 64
         : 70;
+    if (p.contains('/conversations/shops/')) {
+      final data = fixture('shop-context', 'shop-context-001');
+      data['data']['shop']['id'] = o.uri.pathSegments.last;
+      return jsonReply(data);
+    }
     if (p.contains('conversations')) {
       final relative = p.split('conversations').last;
       final op = relative.contains('order-context')

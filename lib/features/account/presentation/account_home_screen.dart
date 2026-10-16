@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/marketplace_widgets.dart';
+import '../../../core/ui/marketplace_surfaces.dart';
 import '../../../core/security/session_controller.dart';
 import '../../../core/ui/form_page.dart';
 
@@ -15,42 +16,61 @@ class AccountHomeScreen extends StatelessWidget {
     builder: (context, _) => ListView(
       padding: pagePadding(context),
       children: [
-        Text('Your account', style: Theme.of(context).textTheme.headlineSmall),
-        const SizedBox(height: 8),
-        Text(
-          session.customer?.displayName ?? 'Buyer',
-          style: Theme.of(context).textTheme.headlineSmall,
+        const MarketPageHeading(title: 'Your account'),
+        Card(
+          color: Theme.of(context).colorScheme.primary,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.account_circle_outlined,
+                  size: 44,
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    session.customer?.displayName ?? 'Buyer',
+                    style: Theme.of(context).textTheme.titleLarge
+                        ?.copyWith(color: Colors.white),
+                  ),
+                ),
+                IconButton(
+                  tooltip: 'Edit profile',
+                  onPressed: () => context.push('/account/profile'),
+                  icon: const Icon(Icons.edit_outlined, color: Colors.white),
+                ),
+              ],
+            ),
+          ),
         ),
         const SizedBox(height: 16),
         if (session.notice != null)
           Semantics(liveRegion: true, child: Text(session.notice!)),
         MarketSection(
           title: 'My shopping',
-          child: Column(
-            children: const [
-              _AccountDestination(
+          child: MarketShortcutGrid(
+            children: [
+              MarketShortcut(
                 icon: Icons.receipt_long_outlined,
-                title: 'Orders',
-                subtitle: 'Track your orders and view purchase details',
-                route: '/orders',
+                label: 'Orders',
+                onTap: () => context.push('/orders'),
               ),
-              _AccountDestination(
+              MarketShortcut(
                 icon: Icons.local_offer_outlined,
-                title: 'My Vouchers',
-                subtitle: 'Collected offers and available Aisley vouchers',
-                route: '/account/vouchers',
+                label: 'My Vouchers',
+                onTap: () => context.push('/account/vouchers'),
               ),
-              _AccountDestination(
+              MarketShortcut(
                 icon: Icons.favorite_border,
-                title: 'Wishlist',
-                subtitle: 'Products you saved',
-                route: '/account/wishlist',
+                label: 'Wishlist',
+                onTap: () => context.push('/account/wishlist'),
               ),
-              _AccountDestination(
+              MarketShortcut(
                 icon: Icons.history,
-                title: 'Recently viewed',
-                subtitle: 'Your browsing history',
-                route: '/account/recently-viewed',
+                label: 'Recently viewed',
+                onTap: () => context.push('/account/recently-viewed'),
               ),
             ],
           ),
@@ -178,15 +198,15 @@ class _AccountDestination extends StatelessWidget {
   final String title, subtitle, route;
   @override
   Widget build(BuildContext context) => ConstrainedBox(
-    constraints: const BoxConstraints(minHeight: 72),
+    constraints: const BoxConstraints(minHeight: 56),
     child: ListTile(
       contentPadding: EdgeInsets.zero,
-      minTileHeight: 72,
+      minTileHeight: 56,
       minVerticalPadding: 12,
       visualDensity: VisualDensity.standard,
       leading: Icon(icon),
       title: Text(title),
-      subtitle: Text(subtitle),
+      subtitle: Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => context.push(route),
     ),

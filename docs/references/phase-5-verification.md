@@ -12,6 +12,11 @@ API/DTO, dependency, backend, database or server configuration changed.
 
 ## Repeatable local verification
 
+Configuration update (2026-10-15): current commands use the root public `.env`
+asset for API/storefront/map settings; prepare it from `.env.example` before running.
+The runner records the configuration source without inspecting its values. The
+October 4 results below retain their original placeholder-define execution scope.
+
 Run from the Buyer repository using the existing SDK and Python 3:
 
 ```sh
@@ -23,14 +28,14 @@ python3 tool/verify_release.py --checks format tooling bundle --report-name focu
 The default suite resolves the committed lockfile, checks Dart formatting without
 rewriting, analyzes, runs unit/widget and Chromium tests, verifies the Python tools
 and documentation/assets/Android boundaries, then compiles web and release APK.
-Builds use public `https://api.example.invalid` and `https://shop.example.invalid`
-placeholders with maps disabled. They establish compilation only. APK signing still
+Builds bundle the current public `.env` configuration. They establish compilation
+only. APK signing still
 uses the existing debug configuration; application ID remains
 `com.example.aisley_mobile_buyer`. Neither is approved for distribution.
 
 Reports go to ignored `build/verification/<report-name>.json`. Each records commands,
 passed/failed/blocked results, durations, app revision/dirty flag, filtered SDK
-identifiers, lockfile SHA-256, public configuration, baseline and external gates. Raw child output,
+identifiers, lockfile SHA-256, configuration source, baseline and external gates. Raw child output,
 environment values, credentials, screenshots and private response bodies are not
 recorded. Rerun a failed recorded command locally for diagnostics, respecting privacy.
 Exit 0 means every requested check passed; 1 means failure; 2 means a requested check
@@ -45,7 +50,7 @@ the authorized API on port 8000. The runner never starts or modifies Laravel.
 In another terminal, once the backend owner has started the API:
 
 ```sh
-flutter run -d web-server --web-port 8766 --dart-define=API_BASE_URL=http://127.0.0.1:8000
+flutter run -d web-server --web-port 8766
 ```
 
 The browser smoke uses an isolated temporary profile. It now checks reload,

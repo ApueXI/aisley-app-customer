@@ -58,6 +58,7 @@ void main() {
       await photo.load();
       final chat = communication.shopThread(shop: otherId)
         ..draft = 'Synthetic draft';
+      await chat.load();
       final normal = h.reply!;
       h.reply = (r) => r.method == 'POST'
           ? throw DioException(
@@ -126,6 +127,7 @@ void main() {
     final photoRead = photo.load();
     final chat = communication.shopThread(shop: otherId)
       ..draft = 'Late synthetic draft';
+    await chat.load();
     final response = Completer<ResponseBody>();
     final normal = h.reply!;
     h.reply = (r) => r.method == 'POST' && r.uri.path.contains('conversations')

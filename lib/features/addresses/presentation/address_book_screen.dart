@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/app_dependencies.dart';
 import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/form_page.dart';
+import '../../../core/ui/marketplace_surfaces.dart';
 import '../data/address_models.dart';
 import 'address_controller.dart';
 
@@ -61,8 +62,9 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
           if (!_controller.loading &&
               _controller.error == null &&
               _controller.addresses.isEmpty)
-            const Text(
-              'No addresses saved. Add a shipping or billing address.',
+            const MarketEmptyState(
+              icon: Icons.location_on_outlined,
+              title: 'No addresses saved. Add a shipping or billing address.',
             ),
           for (final address in _controller.addresses) _address(address),
         ],
@@ -73,7 +75,7 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
   Widget _address(BuyerAddress address) => Card(
     margin: const EdgeInsets.only(top: 12),
     child: Padding(
-      padding: pagePadding(context),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -81,7 +83,13 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
             address.label ?? address.recipientName,
             style: Theme.of(context).textTheme.titleMedium,
           ),
-          Text('${address.type}${address.isDefault ? ' · Default' : ''}'),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: MarketStatusLabel(
+              '${address.type}${address.isDefault ? ' · Default' : ''}',
+            ),
+          ),
+          const SizedBox(height: 8),
           Text('${address.recipientName}\n${address.contactNumber}'),
           Text(
             [
@@ -97,7 +105,9 @@ class _AddressBookScreenState extends State<AddressBookScreen> {
           ),
           if (address.latitude != null)
             Text('Pin: ${address.latitude}, ${address.longitude}'),
+          const Divider(),
           Wrap(
+            alignment: WrapAlignment.end,
             children: [
               TextButton.icon(
                 onPressed: () => _open('/account/addresses/${address.id}'),

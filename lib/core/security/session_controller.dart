@@ -9,6 +9,7 @@ import '../../features/policies/data/policy_repository.dart';
 import '../networking/api_client.dart';
 import '../networking/api_failure.dart';
 import 'token_store.dart';
+import 'password_operation_state.dart';
 
 enum SessionPhase {
   checkingStorage,
@@ -29,6 +30,7 @@ class SessionController extends ChangeNotifier {
   final AuthRepository auth;
   final PolicyRepository policies;
   final TokenStore store;
+  final passwordChanges = PasswordOperationState();
   SessionPhase phase = SessionPhase.checkingStorage;
   CustomerIdentity? customer;
   ConsentStatus? consent;
@@ -86,6 +88,7 @@ class SessionController extends ChangeNotifier {
 
   bool _current(int epoch) => !_disposed && epoch == generation;
   void _invalidate() {
+    passwordChanges.reset();
     generation++;
     _consentQuery++;
     _lease?.cancellation.cancel();
@@ -458,6 +461,7 @@ class SessionController extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     _invalidate();
+    passwordChanges.dispose();
     super.dispose();
   }
 }

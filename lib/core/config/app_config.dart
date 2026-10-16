@@ -1,4 +1,7 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+
+import 'env_asset.dart';
 
 class AppConfig {
   AppConfig({
@@ -27,25 +30,38 @@ class AppConfig {
     return uri;
   }
 
-  factory AppConfig.environment() {
-    final emulator = !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+  static Future<AppConfig> load({AssetBundle? bundle}) async =>
+      AppConfig.environment(await loadEnvAsset(bundle ?? rootBundle));
+
+  factory AppConfig.environment(
+    Map<String, String> environment, {
+    bool allowLocalHttp = kDebugMode,
+    bool releaseMode = kReleaseMode,
+  }) {
+    final nativeAndroid =
+        !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+    final useDeployedApi = releaseMode && nativeAndroid;
+    final localHttpAllowed = allowLocalHttp && !releaseMode;
+    final apiBaseUrl =
+        environment[useDeployedApi ? 'DEPLOYED_API_URL' : 'API_BASE_URL']
+            ?.trim() ??
+        '';
+    final storefrontOrigin = environment['STOREFRONT_ORIGIN']?.trim() ?? '';
     return AppConfig(
-      apiBaseUrl: const String.fromEnvironment('API_BASE_URL').isEmpty
-          ? (kDebugMode
-                ? 'http://${emulator ? '10.0.2.2' : 'localhost'}:8000/api/v1'
+      apiBaseUrl: apiBaseUrl.isEmpty
+          ? (localHttpAllowed
+                ? 'http://${nativeAndroid ? '10.0.2.2' : 'localhost'}:8000/api/v1'
                 : '')
-          : const String.fromEnvironment('API_BASE_URL'),
-      storefrontOrigin:
-          const String.fromEnvironment('STOREFRONT_ORIGIN').isEmpty
-          ? (kDebugMode
-                ? 'http://${emulator ? '10.0.2.2' : 'localhost'}:3000'
+          : apiBaseUrl,
+      storefrontOrigin: storefrontOrigin.isEmpty
+          ? (localHttpAllowed
+                ? 'http://${nativeAndroid ? '10.0.2.2' : 'localhost'}:3000'
                 : '')
-          : const String.fromEnvironment('STOREFRONT_ORIGIN'),
-      allowLocalHttp: kDebugMode,
-      mapsRequested: const bool.fromEnvironment('MAPS_ENABLED'),
-      geoapifyPublicApiKey: const String.fromEnvironment(
-        'GEOAPIFY_PUBLIC_API_KEY',
-      ),
+          : storefrontOrigin,
+      allowLocalHttp: localHttpAllowed,
+      mapsRequested:
+          environment['MAPS_ENABLED']?.trim().toLowerCase() == 'true',
+      geoapifyPublicApiKey: environment['GEOAPIFY_API_KEY']?.trim() ?? '',
     );
   }
 

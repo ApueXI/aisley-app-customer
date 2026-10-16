@@ -11,11 +11,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await cleanAbandonedChatMedia();
   try {
-    runApp(
-      BuyerApp(
-        dependencies: AppDependencies.production(AppConfig.environment()),
-      ),
-    );
+    final config = await AppConfig.load();
+    runApp(BuyerApp(dependencies: AppDependencies.production(config)));
   } on FormatException {
     runApp(
       MaterialApp(

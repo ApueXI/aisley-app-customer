@@ -61,6 +61,8 @@ class ReleaseRunnerTest(unittest.TestCase):
             report = json.loads((Path(directory) / 'build/verification/release.json').read_text())
         self.assertEqual(code, 2)
         self.assertFalse(report['complete_local_suite'])
+        self.assertEqual(report['configuration'], {
+            'source': '.env', 'values_recorded': False, 'browser_origin': runner.BROWSER})
         self.assertIsNone(report['running_backend_revision'])
         self.assertTrue(report['external_gates'])
         self.assertNotIn('BUYER_LIVE_API', seen[0][1])

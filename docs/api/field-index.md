@@ -17,7 +17,7 @@ Use [operation contracts](operations.md) for envelopes and [machine-readable def
 - Sex: `male`, `female`, `non_binary`, `prefer_not_to_say`; Address type: `shipping`, `billing`, `both`; payment method supported for placement: `cod`.
 - Order groups: `to_pay`, `to_prepare`, `to_ship`, `out_for_delivery`, `completed`, `cancelled_issue`; server labels/actions own display.
 - Voucher issuer: `shop` or `app`; benefit: `discount` or `shipping`; value: `fixed` or `percent`.
-- Shipping route status: `local`, `planned`, `unplanned`; successful quotation does not prove operational readiness. Provider projection may be null for legacy Orders.
+- Shipping route status: new checkout accepts `local` or `planned`; historical Orders may retain `unplanned`. A complete route at quote time does not reserve future capacity. Provider projection may be null for legacy Orders.
 - Policy route types: `terms_of_service`, `privacy_policy`; never expose `internal_rules`.
 - Tracking `location` is an empty JSON array when both labels are absent (PHP array serialization), otherwise an object with optional `hub`/`city` strings. Normalize only this documented union.
 - Product specifications retain stored JSON; recognize safe key/value or name/value entries if present. Unexpected legacy shapes show unavailable specifications rather than fail the whole Product.
@@ -1198,14 +1198,14 @@ Use [operation contracts](operations.md) for envelopes and [machine-readable def
 | --- | --- | --- |
 | `id` | `string` | non-null; required |
 | `placement` | `string` | non-null; may be absent |
-| `title` | `string` | non-null; required |
+| `title` | `string` | null allowed; required |
 | `description` | `string` | null allowed; required |
 | `slot` | `string` | null allowed; required |
 | `position` | `int` | non-null; required |
 | `imageDesktopUrl` | `URL` | null allowed; required |
 | `imageMobileUrl` | `URL` | null allowed; required |
-| `altText` | `string` | non-null; required |
-| `destinationUrl` | `URL` | non-null; required |
+| `altText` | `string` | null allowed; required |
+| `destinationUrl` | `URL` | null allowed; required |
 | `startsAt` | `timestamp` | null allowed; may be absent |
 | `endsAt` | `timestamp` | null allowed; may be absent |
 | `priority` | `int` | non-null; may be absent |

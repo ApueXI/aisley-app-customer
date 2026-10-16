@@ -5,6 +5,7 @@ import '../../../app/app_dependencies.dart';
 import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/list_recovery.dart';
 import '../../../core/ui/marketplace_widgets.dart';
+import '../../../core/ui/marketplace_surfaces.dart';
 import '../data/order_models.dart';
 import '../../checkout/presentation/shipping_details.dart';
 import 'orders_controller.dart';
@@ -89,19 +90,16 @@ class _OrdersScreenState extends State<OrdersScreen>
               _controller.pageError == null &&
               _controller.error == null &&
               _controller.items.isEmpty)
-            const Text('No Orders in this group.'),
+            const MarketEmptyState(
+              icon: Icons.receipt_long_outlined,
+              title: 'No Orders in this group.',
+            ),
           for (final order in _controller.items)
             Padding(
               padding: const EdgeInsets.only(top: 16),
               child: MarketSection(
                 title: order.shop.name,
-                action: Text(
-                  order.statusLabel,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.secondary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                action: MarketStatusLabel(order.statusLabel),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -130,6 +128,8 @@ class _OrdersScreenState extends State<OrdersScreen>
                     const SizedBox(height: 8),
                     Text(
                       '${order.itemCount} items · ${order.totals.payable.display(order.totals.currency)}',
+                      textAlign: TextAlign.end,
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 12),
                     Align(

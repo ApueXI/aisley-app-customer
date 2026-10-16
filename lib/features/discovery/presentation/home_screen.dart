@@ -9,7 +9,9 @@ import '../../../core/ui/list_recovery.dart';
 import '../data/catalog_models.dart';
 import '../data/home_models.dart';
 import 'catalog_widgets.dart';
+import 'home_campaign_banner.dart';
 import 'home_controller.dart';
+import 'home_shopping_shortcuts.dart';
 import 'product_purchase_flow.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -61,15 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   if (MarketplaceScope.maybeOf(context)?.active != true)
                     _searchBar(context),
-                  if (widget.dependencies.vouchers != null)
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton.icon(
-                        onPressed: () => context.push('/vouchers'),
-                        icon: const Icon(Icons.local_offer_outlined),
-                        label: const Text('Discover vouchers'),
-                      ),
-                    ),
+                  HomeShoppingShortcuts(dependencies: widget.dependencies),
                   if (_controller.loading && home == null)
                     const Padding(
                       padding: EdgeInsets.only(top: 56),
@@ -91,7 +85,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       coolingDown: _controller.coolingDown,
                     ),
                     if (_campaign(home) case final campaign?)
-                      _campaignBanner(context, campaign),
+                      HomeCampaignBanner(
+                        campaign: campaign,
+                        discovery: widget.dependencies.discovery!,
+                        launcher: widget.dependencies.launcher,
+                      ),
                     if (home.categories.isNotEmpty)
                       _categories(context, home.categories),
                     if (_supportedActions(home).isNotEmpty)
@@ -178,7 +176,14 @@ class _HomeScreenState extends State<HomeScreen> {
       ...home.campaigns.hero,
     ];
     for (final campaign in candidates) {
-      if (campaign.isActive) return campaign;
+      if (campaign.isActive &&
+          [
+            campaign.title,
+            campaign.imageDesktopUrl,
+            campaign.imageMobileUrl,
+          ].any((value) => value != null && value.trim().isNotEmpty)) {
+        return campaign;
+      }
     }
     return null;
   }
@@ -186,49 +191,16 @@ class _HomeScreenState extends State<HomeScreen> {
   List<QuickAction> _supportedActions(BuyerHome home) =>
       home.quickActions.where((action) => action.key == 'search').toList();
 
-  Widget _campaignBanner(BuildContext context, HomeCampaign campaign) => Card(
-    clipBehavior: Clip.antiAlias,
-    margin: const EdgeInsets.only(top: 12, bottom: 20),
-    child: InkWell(
-      onTap: () => widget.dependencies.launcher.open(campaign.destinationUrl),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if ((MediaQuery.sizeOf(context).width >= 600
-                  ? campaign.imageDesktopUrl ?? campaign.imageMobileUrl
-                  : campaign.imageMobileUrl ?? campaign.imageDesktopUrl)
-              case final url?)
-            AspectRatio(
-              aspectRatio: 2.4,
-              child: CatalogImage(
-                url: url,
-                discovery: widget.dependencies.discovery!,
-                label: campaign.altText,
-              ),
-            ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              campaign.title,
-              style: Theme.of(context).textTheme.titleLarge,
-              semanticsLabel: campaign.altText,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-
   Widget _categories(
     BuildContext context,
     List<HomeCategory> categories,
   ) => LayoutBuilder(
     builder: (context, constraints) {
-      final tileWidth = (104 * catalogTextScale(context)).clamp(
+      final tileWidth = (80 * catalogTextScale(context)).clamp(
         0.0,
         constraints.maxWidth,
       );
-      final labelStyle = DefaultTextStyle.of(context).style;
+      final labelStyle = Theme.of(context).textTheme.labelMedium;
       var labelHeight = 0.0;
       for (final category in categories) {
         final painter = TextPainter(
@@ -295,7 +267,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: Icon(Icons.category_outlined, size: 32),
                               ),
                             const SizedBox(height: 8),
-                            Text(category.name, textAlign: TextAlign.center),
+                            Text(
+                              category.name,
+                              textAlign: TextAlign.center,
+                              style: labelStyle,
+                            ),
                           ],
                         ),
                       ),
@@ -304,7 +280,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 4),
         ],
       );
     },
@@ -331,7 +307,7 @@ class _HomeScreenState extends State<HomeScreen> {
     String title,
     List<ProductCard> products,
   ) => Padding(
-    padding: const EdgeInsets.only(top: 18),
+    padding: const EdgeInsets.only(top: 12),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -345,28 +321,34 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(height: 8),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (final product in products)
-                Padding(
-                  padding: const EdgeInsets.only(right: 10),
-                  child: ProductCardTile(
-                    width: 184 * catalogTextScale(context),
-                    product: product,
-                    discovery: widget.dependencies.discovery!,
-                    onTap: () => context.push('/products/${product.id}'),
-                    onAddToCart: () => unawaited(
-                      beginProductPurchase(
-                        context: context,
-                        dependencies: widget.dependencies,
-                        productId: product.id,
-                        action: ProductPurchaseAction.addToCart,
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final product in products)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 10),
+                    child: ProductCardTile(
+                      width: (156 * catalogTextScale(context)).clamp(
+                        0,
+                        MediaQuery.sizeOf(context).width -
+                            pageSpacing(context) * 2,
+                      ),
+                      product: product,
+                      discovery: widget.dependencies.discovery!,
+                      onTap: () => context.push('/products/${product.id}'),
+                      onAddToCart: () => unawaited(
+                        beginProductPurchase(
+                          context: context,
+                          dependencies: widget.dependencies,
+                          productId: product.id,
+                          action: ProductPurchaseAction.addToCart,
+                        ),
                       ),
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ],

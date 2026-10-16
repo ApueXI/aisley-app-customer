@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/list_recovery.dart';
+import '../../../core/ui/marketplace_surfaces.dart';
 
 class InboxRow {
   const InboxRow(this.id, this.label, this.preview, this.unread, this.readOnly);
@@ -82,32 +83,48 @@ class MessageInboxView extends StatelessWidget {
         busy: loading,
         coolingDown: coolingDown,
       ),
-      Text('$unread unread in this channel'),
+      Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Text(
+          '$unread unread in this channel',
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+      ),
       if (loaded &&
           !loading &&
           !stale &&
           error == null &&
           pageError == null &&
           rows.isEmpty)
-        const Padding(
-          padding: EdgeInsets.all(24),
-          child: Text(
-            'No conversations yet. Open a Shop or an owned Order to start a message.',
-          ),
+        const MarketEmptyState(
+          icon: Icons.chat_bubble_outline,
+          title: 'No conversations yet.',
+          message: 'Open a Shop or an owned Order to start a message.',
         ),
       for (final row in rows)
-        ListTile(
-          minTileHeight: 72,
-          title: Text(row.label),
-          subtitle: Text(
-            [
-              if (row.unread > 0) '${row.unread} unread',
-              if (row.readOnly) 'Read only',
-              if (row.preview != null) row.preview!,
-            ].join('\n'),
+        Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          child: ListTile(
+            minTileHeight: 72,
+            leading: Icon(
+              row.readOnly ? Icons.lock_outline : Icons.chat_bubble_outline,
+            ),
+            title: Text(
+              row.label,
+              style: TextStyle(
+                fontWeight: row.unread > 0 ? FontWeight.w700 : FontWeight.w500,
+              ),
+            ),
+            subtitle: Text(
+              [
+                if (row.unread > 0) '${row.unread} unread',
+                if (row.readOnly) 'Read only',
+                if (row.preview != null) row.preview!,
+              ].join('\n'),
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => open(row.id),
           ),
-          trailing: const Icon(Icons.chevron_right),
-          onTap: () => open(row.id),
         ),
       ListPageAction(
         load: loadMore,

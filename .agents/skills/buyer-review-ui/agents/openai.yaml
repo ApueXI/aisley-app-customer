@@ -1,0 +1,4 @@
+interface:
+  display_name: "Buyer UI Review"
+  short_description: "Audit Buyer Flutter UI and improve reported issues"
+  default_prompt: "Use $buyer-review-ui audit to review the implemented Buyer Flutter UI and write an actionable report."

@@ -68,12 +68,13 @@ class AppliedVoucher {
     final w = Wire(json);
     id = w.uuid('id');
     code = w.string('code');
+    name = w.optionalString('name') ?? code;
     issuer = w.string('issuerType');
     benefit = w.string('benefitType');
     qualifyingBasis = Money.parse(w.field('qualifyingBasis'));
     discount = Money.parse(w.field('discountAmount'));
   }
-  late final String id, code, issuer, benefit;
+  late final String id, code, name, issuer, benefit;
   late final Money qualifyingBasis, discount;
 }
 
@@ -82,6 +83,7 @@ class SnapshotVoucher {
     final w = Wire(json);
     id = nullableUuid(w, 'id');
     code = w.string('code');
+    name = batch ? w.optionalString('name') ?? code : code;
     issuer = w.string('issuerType');
     benefit = w.string('benefitType');
     terms = w.string('termsSummary');
@@ -90,7 +92,7 @@ class SnapshotVoucher {
     currency = batch ? null : w.string('currency');
   }
   late final String? id, currency;
-  late final String code, issuer, benefit, terms;
+  late final String code, name, issuer, benefit, terms;
   late final Money discount;
   late final Money? qualifyingBasis;
 }

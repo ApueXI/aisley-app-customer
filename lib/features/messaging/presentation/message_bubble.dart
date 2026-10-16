@@ -9,38 +9,59 @@ class MessageBubble extends StatelessWidget {
   final MessageRow row;
   final ChatMediaDraftController? media;
   @override
-  Widget build(BuildContext context) => Align(
-    alignment: row.mine ? Alignment.centerRight : Alignment.centerLeft,
-    child: Container(
-      constraints: const BoxConstraints(maxWidth: 640),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: row.mine ? const Color(0xFFFCE8F2) : Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            row.mine ? 'You' : row.label,
-            style: Theme.of(context).textTheme.titleSmall,
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) => Align(
+      alignment: row.mine ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        constraints: BoxConstraints(
+          maxWidth: (constraints.maxWidth * .9).clamp(0, 640),
+        ),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: row.mine ? const Color(0xFFFCE8F2) : Colors.white,
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(8),
+            topRight: const Radius.circular(8),
+            bottomLeft: Radius.circular(row.mine ? 8 : 2),
+            bottomRight: Radius.circular(row.mine ? 2 : 8),
           ),
-          SelectableText(row.body),
-          if (media != null)
-            for (final attachment in row.attachments)
-              PrivateChatImage(
-                key: ValueKey(attachment.id),
-                attachment: attachment,
-                controller: media!,
-              ),
-          if (row.context != null) Text(row.context!),
-          if (row.at != null)
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Text(
-              row.at!.toLocal().toString(),
-              style: Theme.of(context).textTheme.bodySmall,
+              row.mine ? 'You' : row.label,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: Theme.of(context).colorScheme.secondary,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-        ],
+            const SizedBox(height: 6),
+            SelectableText(row.body),
+            if (media != null)
+              for (final attachment in row.attachments)
+                PrivateChatImage(
+                  key: ValueKey(attachment.id),
+                  attachment: attachment,
+                  controller: media!,
+                ),
+            if (row.context != null) ...[
+              const SizedBox(height: 8),
+              Text(row.context!),
+            ],
+            if (row.at != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  row.at!.toLocal().toString(),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ),
+          ],
+        ),
       ),
     ),
   );

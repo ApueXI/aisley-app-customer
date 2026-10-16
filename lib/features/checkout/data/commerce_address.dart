@@ -23,8 +23,8 @@ class CommerceAddress {
     region = w.string('region');
     postalCode = w.string('postalCode');
     country = w.string('country');
-    latitude = batch ? w.nullableCoordinate('latitude') : null;
-    longitude = batch ? w.nullableCoordinate('longitude') : null;
+    latitude = batch || delivery ? w.nullableCoordinate('latitude') : null;
+    longitude = batch || delivery ? w.nullableCoordinate('longitude') : null;
   }
   late final int? version;
   late final String? id, label, line2;
@@ -49,9 +49,28 @@ class CommerceAddress {
     country,
   ].join(', ');
 
+  // Match the API's seven-decimal storage precision, including signed zero.
+  static String? _coordinate(double? value) =>
+      value == null ? null : (value == 0 ? 0.0 : value).toStringAsFixed(7);
+
+  static bool _validPin(double? latitude, double? longitude) =>
+      latitude == null && longitude == null ||
+      latitude != null &&
+          longitude != null &&
+          latitude.isFinite &&
+          longitude.isFinite &&
+          latitude.abs() <= 90 &&
+          longitude.abs() <= 180;
+
   /// G21: fail closed unless every required location field is verifiable and unchanged.
   bool permitsContactCorrection(BuyerAddress candidate) {
     if (!const ['shipping', 'both'].contains(candidate.type)) return false;
+    if (!_validPin(latitude, longitude) ||
+        !_validPin(candidate.latitude, candidate.longitude) ||
+        _coordinate(latitude) != _coordinate(candidate.latitude) ||
+        _coordinate(longitude) != _coordinate(candidate.longitude)) {
+      return false;
+    }
     final snapshot = [
       line1,
       barangay,

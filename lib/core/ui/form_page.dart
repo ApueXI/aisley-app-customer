@@ -147,18 +147,20 @@ class _FormPageState extends State<FormPage> {
                       : null,
                   child: Padding(
                     padding: widget.maxWidth <= 560
-                        ? const EdgeInsets.all(24)
+                        ? EdgeInsets.all(
+                            MediaQuery.sizeOf(context).width < 600 ? 16 : 24,
+                          )
                         : EdgeInsets.zero,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: widget.children
-                          .map(
-                            (child) => Padding(
-                              padding: const EdgeInsets.only(bottom: 16),
-                              child: child,
-                            ),
-                          )
-                          .toList(),
+                      children: [
+                        ...widget.children.map(
+                          (child) => Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: child,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -299,9 +301,16 @@ class FailureNotice extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Semantics(
     liveRegion: true,
-    child: Text(
-      failure.description,
-      style: TextStyle(color: Theme.of(context).colorScheme.error),
+    child: Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.errorContainer,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        failure.description,
+        style: TextStyle(color: Theme.of(context).colorScheme.onErrorContainer),
+      ),
     ),
   );
 }

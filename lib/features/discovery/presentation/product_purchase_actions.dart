@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
+import '../../../core/ui/responsive_layout.dart';
 import 'product_controller.dart';
 import 'product_purchase_flow.dart';
 
@@ -57,28 +58,49 @@ class _ProductPurchaseActionsState extends State<ProductPurchaseActions> {
                 onPressed: () => context.push('/checkout'),
                 child: const Text('Check unresolved placement'),
               ),
-            FilledButton.icon(
-              onPressed:
-                  available &&
-                      !busy &&
-                      !cart.coolingDown &&
-                      !cart.uncertain &&
-                      checkout.pending == null
-                  ? () => _purchase(ProductPurchaseAction.addToCart)
-                  : null,
-              icon: const Icon(Icons.add_shopping_cart),
-              label: Text(busy && cart.writing ? 'Adding…' : 'Add to Cart'),
-            ),
-            const SizedBox(height: 8),
-            OutlinedButton(
-              onPressed:
-                  available &&
-                      !busy &&
-                      checkout.pending == null &&
-                      !checkout.coolingDown
-                  ? () => _purchase(ProductPurchaseAction.buyNow)
-                  : null,
-              child: Text(busy && _preparing ? 'Checking Product…' : 'Buy Now'),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final add = OutlinedButton(
+                  onPressed:
+                      available &&
+                          !busy &&
+                          !cart.coolingDown &&
+                          !cart.uncertain &&
+                          checkout.pending == null
+                      ? () => _purchase(ProductPurchaseAction.addToCart)
+                      : null,
+                  child: Text(
+                    busy && cart.writing ? 'Adding…' : 'Add to Cart',
+                    textAlign: TextAlign.center,
+                  ),
+                );
+                final buy = FilledButton(
+                  onPressed:
+                      available &&
+                          !busy &&
+                          checkout.pending == null &&
+                          !checkout.coolingDown
+                      ? () => _purchase(ProductPurchaseAction.buyNow)
+                      : null,
+                  child: Text(
+                    busy && _preparing ? 'Checking Product…' : 'Buy Now',
+                    textAlign: TextAlign.center,
+                  ),
+                );
+                if (constraints.maxWidth >= 280 * catalogTextScale(context)) {
+                  return Row(
+                    children: [
+                      Expanded(child: add),
+                      const SizedBox(width: 8),
+                      Expanded(child: buy),
+                    ],
+                  );
+                }
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [add, const SizedBox(height: 8), buy],
+                );
+              },
             ),
           ],
         );

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/ui/responsive_layout.dart';
+import '../../../core/ui/marketplace_widgets.dart';
+import '../../../core/ui/marketplace_surfaces.dart';
 
 import '../../../app/app_dependencies.dart';
 import '../../discovery/presentation/catalog_image.dart';
@@ -76,7 +78,10 @@ class _ReviewsScreenState extends State<ReviewsScreen> {
             'Reviews can be submitted from an eligible delivered Order item.',
           ),
           if (controller.loaded && controller.items.isEmpty)
-            const Text('No reviews yet.'),
+            const MarketEmptyState(
+              icon: Icons.rate_review_outlined,
+              title: 'No reviews yet.',
+            ),
           for (final item in controller.items)
             ReviewView(review: item, dependencies: widget.dependencies),
           if (controller.pageError != null) Text(controller.pageError!),
@@ -119,7 +124,8 @@ class ReviewView extends StatelessWidget {
               '${review.rating} of 5 stars · ${review.author}',
               style: Theme.of(context).textTheme.titleMedium,
             ),
-            if (review.verified) const Text('Verified purchase'),
+            if (review.verified) const MarketStatusLabel('Verified purchase'),
+            const SizedBox(height: 12),
             SelectableText(review.body),
             if (review.at != null) Text(review.at!.toLocal().toString()),
             Wrap(
@@ -137,8 +143,11 @@ class ReviewView extends StatelessWidget {
               ],
             ),
             if (review.response != null) ...[
-              Text('Official response · ${review.response!.shopName}'),
-              SelectableText(review.response!.body),
+              const SizedBox(height: 12),
+              MarketSection(
+                title: 'Official response · ${review.response!.shopName}',
+                child: SelectableText(review.response!.body),
+              ),
             ],
           ],
         ),

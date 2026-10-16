@@ -10,6 +10,7 @@ import '../data/quote_models.dart';
 import 'checkout_controller.dart';
 import 'commerce_widgets.dart';
 import 'shipping_details.dart';
+import 'voucher_savings_summary.dart';
 
 class QuoteReview extends StatelessWidget {
   const QuoteReview({
@@ -76,8 +77,12 @@ class QuoteReview extends StatelessWidget {
                   routeStatus: group.shipping.routeStatus,
                 ),
                 for (final voucher in group.applied)
-                  Text(
-                    'Applied ${voucher.code}: ${voucher.discount.display(group.totals.currency)}',
+                  VoucherSavingsSummary(
+                    name: voucher.name,
+                    code: voucher.code,
+                    benefit: voucher.benefit,
+                    discount: voucher.discount,
+                    currency: group.totals.currency,
                   ),
                 if (group.candidates.isNotEmpty) ...[
                   const SizedBox(height: 12),

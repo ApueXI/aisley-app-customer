@@ -60,6 +60,7 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True, ship
         ('customer/wishlist', 'wishlist', 'op-039'),
         ('customer/recently-viewed', 'recently-viewed-items', 'op-042'),
         ('customer/conversations', 'chat-messaging', 'op-057'),
+        ('customer/conversations/shops/' + ID, 'shop-context', 'shop-context-001'),
         ('customer/conversations/' + ID, 'chat-messaging', 'op-059'),
         ('customer/conversations/' + ID + '/messages', 'chat-messaging', 'op-060'),
         ('customer/conversations/' + ID + '/read', 'chat-messaging', 'op-062'),
@@ -71,6 +72,7 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True, ship
         ('products/' + ID + '/reviews', 'product-review-ratings', 'op-051'),
     ]:
         responses['/api/v1/' + path] = fixture(feature, op)
+    responses['/api/v1/customer/conversations/shops/' + ID]['data']['shop']['id'] = ID
     for feature in ['logistics-messaging', 'courier-messaging', 'notifications']:
         for op in json.loads((ROOT / 'docs/api/examples' / (feature + '.json')).read_text())['operations']:
             if op['method'] == 'GET' or op['path'].endswith('/read'):
@@ -187,15 +189,27 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True, ship
             '/notifications', '/support-tickets/' + ID,
         }
     ]
+    def capture(name):
+        directory = os.environ.get('BUYER_SCREENSHOT_DIR')
+        if directory:
+            destination = Path(directory)
+            destination.mkdir(parents=True, exist_ok=True)
+            time.sleep(.5)
+            (destination / (name + '.png')).write_bytes(base64.b64decode(call(prefix + '/screenshot')))
+
     if matrix:
         for route, expected in matrix_routes:
             print('CHECK: synthetic ' + route, flush=True)
+            resize(1440, 900)
             script('window.location.hash = ' + json.dumps(route) + ';')
             wait_text(expected)
             for width, height in [(320, 640), (390, 844), (600, 960), (800, 1280), (640, 320), (960, 600), (1024, 768), (1440, 900)]:
                 resize(width, height)
-                wait_text(expected)
+                wait_text('Search Products or Shops')
                 assert script('return document.documentElement.scrollWidth <= window.innerWidth;')
+                if width in {390, 1440}:
+                    name = route.strip('/').replace('/', '-').replace('?', '-').replace('&', '-') or 'home'
+                    capture('layout-' + name + '-' + str(width))
 
     def click(label):
         for _ in range(20):
@@ -230,14 +244,6 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True, ship
                  'deltaX':0,'deltaY':300,'duration':100}]}]})
             time.sleep(.1)
         raise AssertionError('Shipping provider radio is unavailable: ' + name)
-
-    def capture(name):
-        directory = os.environ.get('BUYER_SCREENSHOT_DIR')
-        if directory:
-            destination = Path(directory)
-            destination.mkdir(parents=True, exist_ok=True)
-            time.sleep(.5)
-            (destination / (name + '.png')).write_bytes(base64.b64decode(call(prefix + '/screenshot')))
 
     def back_to_account():
         for _ in range(3):

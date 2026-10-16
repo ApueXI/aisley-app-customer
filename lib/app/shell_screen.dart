@@ -30,8 +30,21 @@ class BuyerShell extends StatelessWidget {
               marketplaceDesktop(context)
                   ? null
                   : AppBar(
-                      title: const Text('AISLEY'),
+                      title: Text(
+                        'AISLEY',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1,
+                        ),
+                      ),
                       actions: [
+                        IconButton(
+                          tooltip: 'Notifications',
+                          icon: const Icon(Icons.notifications_outlined),
+                          onPressed: () => context.push('/notifications'),
+                        ),
                         IconButton(
                           tooltip: 'Terms and privacy',
                           icon: const Icon(Icons.policy_outlined),
@@ -46,39 +59,51 @@ class BuyerShell extends StatelessWidget {
                 marketplaceDesktop(context) ||
                     MediaQuery.viewInsetsOf(context).bottom > 0
                 ? null
-                : NavigationBar(
-                    selectedIndex: navigation.currentIndex,
-                    onDestinationSelected: (index) {
-                      if (index == 2) commerce?.cart.load();
-                      navigation.goBranch(
-                        index,
-                        initialLocation: index == navigation.currentIndex,
-                      );
-                    },
-                    destinations: [
-                      const NavigationDestination(
-                        icon: Icon(Icons.home_outlined),
-                        label: 'Home',
-                      ),
-                      const NavigationDestination(
-                        icon: Icon(Icons.storefront_outlined),
-                        label: 'Shops',
-                      ),
-                      NavigationDestination(
-                        icon: Badge(
-                          isLabelVisible:
-                              commerce?.cart.badge != null &&
-                              commerce!.cart.badge! > 0,
-                          label: Text('${commerce?.cart.badge ?? 0}'),
-                          child: const Icon(Icons.shopping_cart_outlined),
+                : DecoratedBox(
+                    decoration: BoxDecoration(
+                      border: Border(
+                        top: BorderSide(
+                          color: Theme.of(context).colorScheme.outlineVariant,
                         ),
-                        label: 'Cart',
                       ),
-                      const NavigationDestination(
-                        icon: Icon(Icons.person_outline),
-                        label: 'Account',
-                      ),
-                    ],
+                    ),
+                    child: NavigationBar(
+                      selectedIndex: navigation.currentIndex,
+                      onDestinationSelected: (index) {
+                        if (index == 2) commerce?.cart.load();
+                        navigation.goBranch(
+                          index,
+                          initialLocation: index == navigation.currentIndex,
+                        );
+                      },
+                      destinations: [
+                        const NavigationDestination(
+                          icon: Icon(Icons.home_outlined),
+                          selectedIcon: Icon(Icons.home),
+                          label: 'Home',
+                        ),
+                        const NavigationDestination(
+                          icon: Icon(Icons.storefront_outlined),
+                          selectedIcon: Icon(Icons.storefront),
+                          label: 'Shops',
+                        ),
+                        NavigationDestination(
+                          icon: Badge(
+                            isLabelVisible:
+                                commerce?.cart.badge != null &&
+                                commerce!.cart.badge! > 0,
+                            label: Text('${commerce?.cart.badge ?? 0}'),
+                            child: const Icon(Icons.shopping_cart_outlined),
+                          ),
+                          label: 'Cart',
+                        ),
+                        const NavigationDestination(
+                          icon: Icon(Icons.person_outline),
+                          selectedIcon: Icon(Icons.person),
+                          label: 'Account',
+                        ),
+                      ],
+                    ),
                   ),
           ),
   );

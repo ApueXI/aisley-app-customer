@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../data/catalog_models.dart';
 import '../data/discovery_repository.dart';
 import 'catalog_image.dart';
+import 'product_card_information.dart';
 export 'catalog_image.dart';
 
 class ProductCardTile extends StatelessWidget {
@@ -35,6 +36,7 @@ class ProductCardTile extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           InkWell(
             onTap: onTap,
@@ -54,11 +56,32 @@ class ProductCardTile extends StatelessWidget {
                     ),
                     if (trailing != null)
                       Positioned(top: 4, right: 4, child: trailing!),
+                    if (product.discountPercent != null &&
+                        product.discountPercent! > 0)
+                      Positioned(
+                        left: 0,
+                        bottom: 0,
+                        child: Container(
+                          color: Theme.of(context).colorScheme.primary,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 4,
+                          ),
+                          child: Text(
+                            '${product.discountPercent}% off',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
-                  child: _ProductCardInformation(product: product),
+                  padding: const EdgeInsets.fromLTRB(10, 10, 10, 4),
+                  child: ProductCardInformation(product: product),
                 ),
               ],
             ),
@@ -66,118 +89,15 @@ class ProductCardTile extends StatelessWidget {
           if (onAddToCart != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
-              child: SizedBox(
-                height: 48,
-                child: FilledButton.tonalIcon(
-                  onPressed: onAddToCart,
-                  icon: const Icon(Icons.add_shopping_cart),
-                  label: const Text('Add to Cart'),
-                ),
+              child: OutlinedButton(
+                onPressed: onAddToCart,
+                child: const Text('Add to Cart'),
               ),
             ),
         ],
       ),
     ),
   );
-}
-
-class _ProductCardInformation extends StatelessWidget {
-  const _ProductCardInformation({required this.product});
-  final ProductCard product;
-
-  @override
-  Widget build(BuildContext context) {
-    final body = Theme.of(context).textTheme.bodySmall;
-    final titleStyle = Theme.of(context).textTheme.bodyMedium
-        ?.copyWith(fontWeight: FontWeight.w600);
-    final titleLine = _lineHeight(context, titleStyle);
-    final metadataLine = _lineHeight(context, body);
-    final shownPrice = product.minPrice ?? product.price;
-    final ranged =
-        product.minPrice != null &&
-        product.maxPrice != null &&
-        product.minPrice != product.maxPrice;
-    final promotion =
-        product.discountPercent != null && product.discountPercent! > 0
-        ? '${product.discountPercent}% off'
-        : product.originalPrice != null && product.originalPrice! > shownPrice
-        ? 'Was ₱${product.originalPrice!.toStringAsFixed(2)}'
-        : '';
-    final metadata = [
-      if (product.averageRating != null)
-        '★ ${product.averageRating!.toStringAsFixed(1)} · ${product.reviewCount}',
-      if (product.soldCount > 0) '${product.soldCount} sold',
-    ].join('  ·  ');
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          height: titleLine * 2,
-          child: Text(
-            product.title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: titleStyle,
-          ),
-        ),
-        const SizedBox(height: 6),
-        SizedBox(
-          height: metadataLine,
-          child: Text(
-            '${ranged ? 'From ' : ''}₱${shownPrice.toStringAsFixed(2)}',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        SizedBox(
-          height: metadataLine,
-          child: Text(
-            promotion,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: body?.copyWith(
-              decoration: promotion.startsWith('Was ')
-                  ? TextDecoration.lineThrough
-                  : null,
-            ),
-          ),
-        ),
-        const SizedBox(height: 4),
-        SizedBox(
-          height: metadataLine,
-          child: Text(
-            product.shop.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: body,
-          ),
-        ),
-        SizedBox(
-          height: metadataLine,
-          child: Text(
-            metadata,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: body,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-double _lineHeight(BuildContext context, TextStyle? style) {
-  final painter = TextPainter(
-    text: TextSpan(text: 'Ag', style: style),
-    textDirection: Directionality.of(context),
-    textScaler: MediaQuery.textScalerOf(context),
-    maxLines: 1,
-  )..layout();
-  return painter.height;
 }
 
 class ShopCardTile extends StatelessWidget {
@@ -259,7 +179,7 @@ class SectionHeading extends StatelessWidget {
         constraints: const BoxConstraints(minHeight: 48),
         child: action!,
       );
-      if (constraints.maxWidth < 360 ||
+      if (constraints.maxWidth < 260 ||
           MediaQuery.textScalerOf(context).scale(16) > 24) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,

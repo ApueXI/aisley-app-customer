@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Intercepted G28 browser journeys; requires the built Buyer at localhost:8766."""
+"""Synthetic G28/B09 browser journeys; requires built Buyer at localhost:8766."""
 import base64
 import copy
 import json
@@ -102,8 +102,12 @@ def main():
                'shop': None, 'distributionMode':'automatic','collectionUrl':'/vouchers/'+APP,'canCollect':False}
         bootstrap = """
           window.voucherCalls=[]; window.voucherClaimed=false; window.voucherFirstClaim=true;
-          window.voucherFailure=null;
+          window.voucherFailure=null; window.voucherCheckoutExtras=false;
           const responses=%s, shopOffer=%s, appOffer=%s;
+          const replacementOffer={...appOffer,id:'44444444-4444-4444-8444-444444444444',
+            name:'Replacement Aisley offer'};
+          const shippingOffer={...appOffer,id:'55555555-5555-4555-8555-555555555555',
+            name:'Shipping Aisley offer',benefitType:'shipping'};
           const originalFetch=window.fetch;
           const personal = (row, history=false) => ({...row, collected:row.id===shopOffer.id && window.voucherClaimed,
             collectedAt:row.id===shopOffer.id && window.voucherClaimed ? '2026-10-11T00:00:00Z' : null,
@@ -137,12 +141,24 @@ def main():
               group.items[0].quantity=input.buy_now.quantity;
               group.availableVouchers=[{...shopOffer,eligible:window.voucherClaimed,
                 reason:window.voucherClaimed?null:'VOUCHER_NOT_CLAIMED',saving:window.voucherClaimed?'10.00':'0.00',
-                stackableWith:['app:shipping','shop:shipping']}];
-              if(input.vouchers?.length){group.appliedVouchers=[{id:shopOffer.id,code:shopOffer.code,issuerType:'shop',
-                benefitType:'discount',qualifyingBasis:'100.00',discountAmount:'10.00'}];
-                group.totals.discount='10.00';body.data.summary.discount='10.00';
-                group.totals.payable=(Number(group.totals.payable)-10).toFixed(2);
-                body.data.summary.payable=(Number(body.data.summary.payable)-10).toFixed(2);}
+                stackableWith:['app:shipping','shop:shipping']},
+                ...(window.voucherCheckoutExtras?[appOffer,replacementOffer,shippingOffer].map(v=>({
+                  ...v,eligible:true,reason:null,saving:'10.00',stackableWith:[]})):[])];
+              group.appliedVouchers=(input.vouchers??[]).map(selection=>{
+                const v=group.availableVouchers.find(v=>v.id===selection.voucher_id);
+                return {id:v.id,name:v.name,code:v.code,issuerType:v.issuerType,benefitType:v.benefitType,
+                  qualifyingBasis:'100.00',discountAmount:'10.00'};
+              });
+              if(new Set(group.appliedVouchers.map(v=>v.benefitType)).size!==group.appliedVouchers.length){
+                status=422;body={code:'VOUCHER_BENEFIT_LIMIT'};
+              }else{
+                const discount=group.appliedVouchers.some(v=>v.benefitType==='discount')?10:0;
+                const shipping=group.appliedVouchers.some(v=>v.benefitType==='shipping')?10:0;
+                for(const totals of [group.totals,body.data.summary]){
+                  totals.discount=discount.toFixed(2);totals.shippingDiscount=shipping.toFixed(2);
+                  totals.payable=(200-discount-shipping).toFixed(2);
+                }
+              }
             }
             if(window.voucherFailure && p.endsWith('/vouchers')) {status=window.voucherFailure;body={};}
             return Promise.resolve(new Response(JSON.stringify(body??{}),{status,headers:{'Content-Type':'application/json',
@@ -183,10 +199,39 @@ def main():
         assert not script("return window.voucherCalls.some(c=>c.path.endsWith('/place'));")
         click('Review order');wait('Saving PHP 10.00')
         script("const e=document.querySelector('[role=checkbox]'); if(e){e.scrollIntoView({block:'center'});e.click();}")
-        wait('Voucher selection changed.');click('Review order');wait('Applied SYNTHETIC: PHP 10.00')
+        wait('Voucher selection changed.');click('Review order');wait('Applied ' + voucher['name']);wait('Code: SYNTHETIC');wait('Merchandise savings: PHP 10.00')
         assert not script("return window.voucherCalls.some(c=>c.path.endsWith('/place'));")
         report['journeys'].append('Checkout collect/Back/explicit requote/selection/review; no placement')
         screenshot('checkout-collected.png')
+        script('window.voucherCheckoutExtras=true;')
+        click('Review order');wait('Automatic Aisley offer')
+        def choose_offer(name, expected):
+            found=script("""const e=Array.from(document.querySelectorAll('[role=checkbox]')).find(e=>
+                (e.textContent+' '+e.getAttribute('aria-label')).includes(%s));
+                if(!e)return false;e.scrollIntoView({block:'center'});e.click();return true;""" % json.dumps(name))
+            assert found, 'Missing voucher choice: ' + name
+            wait('Voucher selection changed.');click('Review order');wait('Review your COD order')
+            latest=script("return JSON.parse(window.voucherCalls.filter(c=>c.path.endsWith('/checkout/quote')).at(-1).body).vouchers;")
+            assert latest==[{'voucher_id':value,'target_shop_id':ID} for value in expected], latest
+        choose_offer('Automatic Aisley offer',[APP])
+        wait('Applied Automatic Aisley offer')
+        choose_offer('Replacement Aisley offer',['44444444-4444-4444-8444-444444444444'])
+        wait('Applied Replacement Aisley offer')
+        report['journeys'].append('B09 Shop/App and App/App same-benefit replacement keeps explicit Shop target')
+        choose_offer('Shipping Aisley offer',['44444444-4444-4444-8444-444444444444','55555555-5555-4555-8555-555555555555'])
+        wait('Shipping savings: PHP 10.00')
+        report['journeys'].append('B09 opposite benefits pair with empty legacy stacking flags and server savings')
+        for width in [320,390,768,1440]:
+            call(prefix+'/goog/cdp/execute',{'cmd':'Emulation.setDeviceMetricsOverride','params':{
+                'width':width,'height':844,'deviceScaleFactor':1,'mobile':False}})
+            time.sleep(.25);wait('Applied Replacement Aisley offer')
+            assert script('return document.documentElement.scrollWidth<=innerWidth;')
+            screenshot('b09-checkout-'+str(width)+'.png')
+            report['layouts'].append({'route':'/checkout','width':width,'height':844,'case':'B09 paired names'})
+        choose_offer('Shipping Aisley offer',['44444444-4444-4444-8444-444444444444'])
+        wait('Applied Replacement Aisley offer')
+        assert not script("return window.voucherCalls.some(c=>c.path.endsWith('/place'));")
+        report['journeys'].append('B09 deselection preserves opposite benefit and never automatically places')
         route('/vouchers','Discover vouchers');script('window.voucherFailure=503;');click('Refresh vouchers');wait('service is unavailable')
         script('window.voucherFailure=null;');click('Retry vouchers');wait('Discover vouchers')
         report['journeys'].append('failed refresh retains rows with explicit recovery')
