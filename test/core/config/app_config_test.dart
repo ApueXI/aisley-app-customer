@@ -8,11 +8,12 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('loads all four settings from the .env asset before use', () async {
+  test('loads public settings from the .env asset before use', () async {
     final bundle = _EnvBundle('''
 MAPS_ENABLED=true
 GEOAPIFY_API_KEY=synthetic-public-key
 API_BASE_URL=https://api.example.invalid/
+DEPLOYED_API_URL=https://deployed.example.invalid/
 STOREFRONT_ORIGIN=https://shop.example.invalid
 ''');
     final config = await AppConfig.load(bundle: bundle);
@@ -86,6 +87,156 @@ STOREFRONT_ORIGIN=
       config.storefront.origin,
       kIsWeb ? 'http://localhost:3000' : 'http://10.0.2.2:3000',
     );
+  });
+
+  group('API selection by build mode', () {
+    const environment = {
+      'API_BASE_URL': 'http://localhost:8000/api/v1',
+      'DEPLOYED_API_URL': 'https://deployed.example.invalid/api/v1',
+      'STOREFRONT_ORIGIN': 'https://shop.example.invalid',
+    };
+
+    setUp(() {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+    });
+    tearDown(() => debugDefaultTargetPlatformOverride = null);
+
+    test('debug Android and local web use API_BASE_URL', () {
+      final config = AppConfig.environment(environment, releaseMode: false);
+
+      expect(config.apiBase.toString(), environment['API_BASE_URL']);
+      expect(config.allowLocalHttp, isTrue);
+    });
+
+    test('deployed URL does not replace blank or missing debug defaults', () {
+      for (final local in [null, '', '   ']) {
+        final values = {...environment}..remove('API_BASE_URL');
+        if (local != null) values['API_BASE_URL'] = local;
+        final config = AppConfig.environment(values);
+
+        expect(
+          config.apiBase.origin,
+          kIsWeb ? 'http://localhost:8000' : 'http://10.0.2.2:8000',
+        );
+      }
+    });
+
+    test(
+      'release Android selects deployed URL; release web keeps API base',
+      () {
+        final config = AppConfig.environment({
+          ...environment,
+          'API_BASE_URL': 'https://web.example.invalid/api/v1',
+        }, releaseMode: true);
+
+        expect(
+          config.apiBase.origin,
+          kIsWeb
+              ? 'https://web.example.invalid'
+              : 'https://deployed.example.invalid',
+        );
+        expect(config.storefront.origin, environment['STOREFRONT_ORIGIN']);
+        expect(config.allowLocalHttp, isFalse);
+      },
+    );
+
+    test('native release ignores local URL and normalizes deployed URL', () {
+      for (final deployed in [
+        '  https://deployed.example.invalid  ',
+        'https://deployed.example.invalid/',
+        'https://deployed.example.invalid/api/v1',
+        'https://deployed.example.invalid/api/v1/',
+      ]) {
+        final config = AppConfig.environment({
+          ...environment,
+          'API_BASE_URL': 'invalid local setting',
+          'DEPLOYED_API_URL': deployed,
+        }, releaseMode: true);
+
+        expect(config.apiBase.toString(), environment['DEPLOYED_API_URL']);
+        expect(
+          config.apiUri('customer/auth/me').toString(),
+          'https://deployed.example.invalid/api/v1/customer/auth/me',
+        );
+        expect(
+          config.trustsApi(
+            Uri.parse('http://localhost:8000/api/v1/customer/me'),
+          ),
+          isFalse,
+        );
+        expect(
+          config.trustsApi(
+            Uri.parse('https://foreign.invalid/api/v1/customer/me'),
+          ),
+          isFalse,
+        );
+      }
+    }, skip: kIsWeb);
+
+    test('native release rejects missing or invalid deployed URL', () {
+      for (final deployed in [
+        null,
+        '',
+        '   ',
+        '/api/v1',
+        'http://localhost:8000/api/v1',
+        'http://10.0.2.2:8000/api/v1',
+        'http://deployed.example.invalid',
+        'https://user:password@deployed.example.invalid',
+        'https://deployed.example.invalid/api/v2',
+        'https://deployed.example.invalid?query=value',
+        'https://deployed.example.invalid/#fragment',
+      ]) {
+        final values = {
+          ...environment,
+          'API_BASE_URL': 'https://local.example.invalid/api/v1',
+        };
+        if (deployed == null) {
+          values.remove('DEPLOYED_API_URL');
+        } else {
+          values['DEPLOYED_API_URL'] = deployed;
+        }
+
+        expect(
+          () => AppConfig.environment(values, releaseMode: true),
+          throwsFormatException,
+        );
+      }
+    }, skip: kIsWeb);
+
+    test('release still requires an explicit HTTPS storefront', () {
+      for (final storefront in ['', 'http://localhost:3000']) {
+        expect(
+          () => AppConfig.environment({
+            ...environment,
+            'API_BASE_URL': 'https://web.example.invalid',
+            'STOREFRONT_ORIGIN': storefront,
+          }, releaseMode: true),
+          throwsFormatException,
+        );
+      }
+    });
+
+    test('profile Android keeps API_BASE_URL with HTTPS validation', () {
+      final config = AppConfig.environment(
+        {...environment, 'API_BASE_URL': 'https://profile.example.invalid'},
+        releaseMode: false,
+        allowLocalHttp: false,
+      );
+
+      expect(config.apiBase.origin, 'https://profile.example.invalid');
+      expect(config.allowLocalHttp, isFalse);
+    });
+
+    test('release desktop keeps API_BASE_URL', () {
+      debugDefaultTargetPlatformOverride = TargetPlatform.linux;
+      final config = AppConfig.environment({
+        ...environment,
+        'API_BASE_URL': 'https://desktop.example.invalid',
+      }, releaseMode: true);
+
+      expect(config.apiBase.origin, 'https://desktop.example.invalid');
+    });
   });
 
   test('maps require an explicit true flag and the new public-key name', () {

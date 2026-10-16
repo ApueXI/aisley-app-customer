@@ -61,6 +61,9 @@ localhost for the development computer; installed-device connectivity remains un
 `API_BASE_URL` accepts either an origin such as `http://127.0.0.1:8000` or the full
 `http://127.0.0.1:8000/api/v1` base. The app normalizes both to `/api/v1`, including
 an optional trailing slash. Open Buyer at `http://localhost:8766` for its CORS origin.
+Release Android builds use `DEPLOYED_API_URL` instead; configure an authorized HTTPS
+origin or full `/api/v1` base and an HTTPS `STOREFRONT_ORIGIN` before building an APK.
+Debug/local runs, profile builds and release web continue to use `API_BASE_URL`.
 
 ```sh
 flutter pub get --enforce-lockfile
@@ -150,7 +153,7 @@ Configure authorized API/storefront origins in `.env` before these commands. Cre
 
 ## Public configuration and Android
 
-Copy `.env.example` to the root `.env` when setting up a checkout; preserve an existing local file. The app loads this registered Flutter asset before constructing dependencies. AppConfig reads API_BASE_URL, STOREFRONT_ORIGIN, MAPS_ENABLED (default false) and GEOAPIFY_API_KEY (optional public key). Blank API/storefront values retain debug defaults; release requires explicit HTTPS origins. Dart defines no longer configure these settings. Missing/malformed configuration uses the existing unavailable screen.
+Copy `.env.example` to the root `.env` when setting up a checkout; preserve an existing local file. The app loads this registered Flutter asset before constructing dependencies. AppConfig reads API_BASE_URL, DEPLOYED_API_URL, STOREFRONT_ORIGIN, MAPS_ENABLED (default false) and GEOAPIFY_API_KEY (optional public key). Release native Android selects DEPLOYED_API_URL; debug/local, profile and release web select API_BASE_URL. Blank API_BASE_URL/storefront values retain debug defaults; release requires explicit HTTPS origins. Missing, blank or invalid DEPLOYED_API_URL in release Android uses the existing unavailable screen without falling back to the local API. STOREFRONT_ORIGIN remains a separate required HTTPS release setting. Dart defines no longer configure these settings. Missing/malformed configuration uses the existing unavailable screen.
 
 Validate an absolute HTTPS API base ending /api/v1, HTTPS storefront origin and exact trusted origins. `.env` is ignored by Git but bundled publicly in Android/web builds. Keep it limited to Buyer settings; never copy a backend environment file or put tokens, server credentials, storage keys or GEOAPIFY_SERVER_API_KEY in it, assets, logs or source. Restart/rebuild after edits. No new dependency is required.
 

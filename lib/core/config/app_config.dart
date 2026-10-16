@@ -36,22 +36,29 @@ class AppConfig {
   factory AppConfig.environment(
     Map<String, String> environment, {
     bool allowLocalHttp = kDebugMode,
+    bool releaseMode = kReleaseMode,
   }) {
-    final emulator = !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
-    final apiBaseUrl = environment['API_BASE_URL']?.trim() ?? '';
+    final nativeAndroid =
+        !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+    final useDeployedApi = releaseMode && nativeAndroid;
+    final localHttpAllowed = allowLocalHttp && !releaseMode;
+    final apiBaseUrl =
+        environment[useDeployedApi ? 'DEPLOYED_API_URL' : 'API_BASE_URL']
+            ?.trim() ??
+        '';
     final storefrontOrigin = environment['STOREFRONT_ORIGIN']?.trim() ?? '';
     return AppConfig(
       apiBaseUrl: apiBaseUrl.isEmpty
-          ? (allowLocalHttp
-                ? 'http://${emulator ? '10.0.2.2' : 'localhost'}:8000/api/v1'
+          ? (localHttpAllowed
+                ? 'http://${nativeAndroid ? '10.0.2.2' : 'localhost'}:8000/api/v1'
                 : '')
           : apiBaseUrl,
       storefrontOrigin: storefrontOrigin.isEmpty
-          ? (allowLocalHttp
-                ? 'http://${emulator ? '10.0.2.2' : 'localhost'}:3000'
+          ? (localHttpAllowed
+                ? 'http://${nativeAndroid ? '10.0.2.2' : 'localhost'}:3000'
                 : '')
           : storefrontOrigin,
-      allowLocalHttp: allowLocalHttp,
+      allowLocalHttp: localHttpAllowed,
       mapsRequested:
           environment['MAPS_ENABLED']?.trim().toLowerCase() == 'true',
       geoapifyPublicApiKey: environment['GEOAPIFY_API_KEY']?.trim() ?? '',

@@ -130,12 +130,17 @@ them; Dart defines are no longer used for app configuration.
 
 | Variable | Debug default | Purpose |
 | --- | --- | --- |
-| `API_BASE_URL` | Web: `http://localhost:8000/api/v1`; Android: `http://10.0.2.2:8000/api/v1` | Trusted API origin or full `/api/v1` base; an optional trailing slash is accepted. |
+| `API_BASE_URL` | Web: `http://localhost:8000/api/v1`; Android: `http://10.0.2.2:8000/api/v1` | API for debug/local runs, profile builds and release web; accepts an origin or full `/api/v1` base, with an optional trailing slash. |
+| `DEPLOYED_API_URL` | None | Required HTTPS API origin or full `/api/v1` base for release Android builds; an optional trailing slash is accepted. |
 | `STOREFRONT_ORIGIN` | Web: `http://localhost:3000`; Android: `http://10.0.2.2:3000` | Trusted storefront origin for recovery and external links. |
 | `MAPS_ENABLED` | `false` | Requests optional address pin/map assistance. |
 | `GEOAPIFY_API_KEY` | Empty | Suitable public Geoapify key; maps need both this value and `MAPS_ENABLED=true`. |
 
-Blank API/storefront values use the debug defaults above. `MAPS_ENABLED=true` enables
+Blank `API_BASE_URL`/storefront values use the debug defaults above. Release Android
+selects `DEPLOYED_API_URL` and never falls back to `API_BASE_URL` or a local default.
+Missing or invalid deployed configuration shows the configuration-unavailable screen.
+`STOREFRONT_ORIGIN` is configured separately for recovery and external links.
+`MAPS_ENABLED=true` enables
 maps only with a nonempty public key; blank or other values leave maps disabled.
 The loader accepts blank lines, `#` comments, surrounding quotes and an optional
 `export` prefix. Values are literal; shell interpolation and multiline values are unsupported.
@@ -170,12 +175,17 @@ install an APK through Android tooling, for example:
 adb -s <android-device-id> install -r build/app/outputs/flutter-apk/app-debug.apk
 ```
 
-For release compilation, set both API and storefront variables to authorized HTTPS
-origins in `.env`:
+For a release APK, set `DEPLOYED_API_URL` and `STOREFRONT_ORIGIN` to authorized HTTPS
+origins in `.env`. Keep `API_BASE_URL` pointed at the local API for debug runs:
 
 ```sh
 flutter build apk --release
+```
 
+For release web, set `API_BASE_URL` and `STOREFRONT_ORIGIN` to authorized HTTPS
+origins before building:
+
+```sh
 flutter build web
 ```
 
