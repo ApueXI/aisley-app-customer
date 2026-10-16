@@ -50,7 +50,7 @@ class MarketSection extends StatelessWidget {
               ?action,
             ],
           ),
-          const SizedBox(height: 12),
+          const Divider(height: 24),
           child,
         ],
       ),
@@ -147,14 +147,15 @@ class MarketTabs<T> extends StatelessWidget {
   final void Function(T) onSelected;
   @override
   Widget build(BuildContext context) => Wrap(
-    spacing: 8,
-    runSpacing: 8,
+    spacing: 4,
+    runSpacing: 4,
     children: [
       for (final entry in values.entries)
         Semantics(
           selected: entry.key == selected,
           child: Container(
             decoration: BoxDecoration(
+              color: Colors.white,
               border: Border(
                 bottom: BorderSide(
                   color: entry.key == selected
@@ -166,6 +167,11 @@ class MarketTabs<T> extends StatelessWidget {
             ),
             child: TextButton(
               onPressed: () => onSelected(entry.key),
+              style: TextButton.styleFrom(
+                foregroundColor: entry.key == selected
+                    ? Theme.of(context).colorScheme.primary
+                    : Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
               child: Text(entry.value),
             ),
           ),

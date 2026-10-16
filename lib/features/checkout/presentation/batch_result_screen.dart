@@ -5,6 +5,7 @@ import '../../../app/app_dependencies.dart';
 import '../../../core/commerce/commerce_controller.dart';
 import '../../../core/networking/api_failure.dart';
 import '../../../core/ui/form_page.dart';
+import '../../../core/ui/marketplace_surfaces.dart';
 import '../data/batch_models.dart';
 import '../../discovery/presentation/product_item_row.dart';
 import 'commerce_widgets.dart';
@@ -99,7 +100,10 @@ class _BatchResultScreenState extends State<BatchResultScreen> {
         if (_controller.loading) const LinearProgressIndicator(),
         if (_controller.error != null) Text(_controller.error!),
         if (_controller.batch != null) ...[
-          const Text('Order placement confirmed'),
+          const MarketEmptyState(
+            icon: Icons.check_circle_outline,
+            title: 'Order placement confirmed',
+          ),
           if (_controller.stale)
             const Text(
               'Saved result is stale. Refresh to check current details.',
@@ -112,8 +116,14 @@ class _BatchResultScreenState extends State<BatchResultScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(order.shop.name),
-                    Text(order.reference),
+                    Text(
+                      order.shop.name,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    Text(
+                      order.reference,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                     Text(
                       '${order.status} · ${order.paymentMethod} · ${order.paymentStatus}',
                     ),

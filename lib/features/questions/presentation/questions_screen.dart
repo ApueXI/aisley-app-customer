@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/app_dependencies.dart';
 import '../../../core/ui/form_page.dart';
 import '../../../core/ui/marketplace_widgets.dart';
+import '../../../core/ui/marketplace_surfaces.dart';
 import '../../../core/communication/text_rules.dart';
 import 'question_controllers.dart';
 
@@ -86,7 +87,10 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
               child: const Text('Refresh questions'),
             ),
             if (list.loaded && list.items.isEmpty)
-              const Text('No questions yet.'),
+              const MarketEmptyState(
+                icon: Icons.question_answer_outlined,
+                title: 'No questions yet.',
+              ),
             for (final item in list.items)
               MarketSection(
                 title: 'Question',
@@ -100,6 +104,7 @@ class _QuestionsScreenState extends State<QuestionsScreen> {
                     if (item.askedAt != null)
                       Text(item.askedAt!.toLocal().toString()),
                     if (item.answer != null) ...[
+                      const Divider(),
                       Text('Official answer · ${item.sellerLabel ?? 'Seller'}'),
                       SelectableText(item.answer!),
                     ] else

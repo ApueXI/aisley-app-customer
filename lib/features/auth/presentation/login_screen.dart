@@ -60,6 +60,14 @@ class _LoginScreenState extends State<LoginScreen> {
       busy: _action.busy,
       children: [
         Text(
+          'AISLEY',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            color: Theme.of(context).colorScheme.primary,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 2,
+          ),
+        ),
+        Text(
           'Welcome to AISLEY',
           style: Theme.of(context).textTheme.headlineSmall,
         ),
@@ -134,7 +142,7 @@ class _LoginScreenState extends State<LoginScreen> {
               : () => context.push('/forgot-password'),
           child: const Text('Forgot password?'),
         ),
-        TextButton(
+        OutlinedButton(
           onPressed: _action.busy ? null : () => context.push('/register'),
           child: const Text('Create a Buyer account'),
         ),

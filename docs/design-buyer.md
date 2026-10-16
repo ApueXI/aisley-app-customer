@@ -30,7 +30,7 @@ Shell pages have one scaffold/safe-area/keyboard owner; hide bottom navigation w
 keyboard occupies the viewport. Forms, filters, pagination, errors, message/support composers
 and dialogs scroll within actual available height. Resizing retains safe input/focus/scroll
 without repeating requests. Cards use natural heights and 1–6 columns from minimum width
-160 multiplied by text scale clamped to 1–2; full prices, ratings and actions wrap. Preview
+140 multiplied by text scale clamped to 1–2; full prices, ratings and actions wrap. Preview
 titles may truncate. Rails size themselves from their content. Product galleries follow
 available width with bounded height; two-column detail requires content width at least 840
 and text scale no greater than 1.5, otherwise stack. Preserve gallery page and variant state.
@@ -56,3 +56,14 @@ cards inside Shop groups; Shop totals and voucher controls stay outside the item
 Mouse dragging is supported alongside existing scroll devices. Preserve text selection and test Firefox with touch simulation both enabled and disabled; those browser checks remain unverified. Temporary background identity/consent revalidation errors retain the mounted route and safe page state with retry feedback. Identity loss clears private state; renewed required consent gates shopping. Profile embeds independently busy photo controls and legacy `/account/photo` links open Profile.
 
 Private chat video uses an authorized poster and an explicit scrollable viewer with Play/Pause, seeking and Close; no autoplay. Document cards show filename/format/size and Download with a visible saved-copy explanation; use system Save As on Android and browser downloads, without inline document viewers. Keep 48px targets, keyboard/Escape/Back, loading/retry/cancel and scope cleanup accessible. Private temporary playback files and revocable blob URLs are cleared on close/access loss; explicitly exported document copies remain user-owned. See the owning media API and dated verification; installed-device accessibility remains unverified.
+
+
+## Marketplace UI overhaul — 2026-10-17
+
+Use the balanced Shopee/Lazada-inspired presentation with AISLEY's own branding: white sections on a neutral canvas, a prominent filled search field, compact category/shortcut rows, stronger price hierarchy and restrained selected navigation. Typical phone grids fit two Products at normal text size; narrow constraints and enlarged text reduce the column count. Prices and supplied metadata wrap fully; only preview titles may truncate. Category labels use measured shared heights at the actual text scale. Section actions sit alongside headings when space allows.
+
+Home shortcuts open existing voucher discovery, Orders, Wishlist and account history. Account shows verified display identity, four shopping shortcuts and grouped account/help/settings rows. No shortcut adds a new API capability, count or promotion. Product detail pairs Add to Cart with the primary Buy Now button when available width permits; enlarged text stacks them. Checkout similarly pairs review and placement controls while preserving explicit quote review, confirmation, expiry and uncertain recovery.
+
+Orders separate current status/reference, purchased items, totals and the saved address into readable sections. Vouchers emphasize the supplied benefit and issuer. Message inboxes use consistent rows; scoped message bubbles and a distinct scrollable composer surface also serve support tickets. Notifications retain textual unread labels. Authentication, consent, profile, password and address forms share the theme and responsive form padding. The existing controllers, routing, validation, authorization, media adapters and mutation contracts retain their responsibilities.
+
+See [overhaul verification](reports/buyer-ui-overhaul-2026-10-17.md) for dated source, test, browser and build coverage. Controlled live/deployed API, installed Android/TalkBack and production signing remain separate acceptance gates.

@@ -11,6 +11,7 @@ import '../data/home_models.dart';
 import 'catalog_widgets.dart';
 import 'home_campaign_banner.dart';
 import 'home_controller.dart';
+import 'home_shopping_shortcuts.dart';
 import 'product_purchase_flow.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -62,15 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   if (MarketplaceScope.maybeOf(context)?.active != true)
                     _searchBar(context),
-                  if (widget.dependencies.vouchers != null)
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton.icon(
-                        onPressed: () => context.push('/vouchers'),
-                        icon: const Icon(Icons.local_offer_outlined),
-                        label: const Text('Discover vouchers'),
-                      ),
-                    ),
+                  HomeShoppingShortcuts(dependencies: widget.dependencies),
                   if (_controller.loading && home == null)
                     const Padding(
                       padding: EdgeInsets.only(top: 56),
@@ -203,11 +196,11 @@ class _HomeScreenState extends State<HomeScreen> {
     List<HomeCategory> categories,
   ) => LayoutBuilder(
     builder: (context, constraints) {
-      final tileWidth = (104 * catalogTextScale(context)).clamp(
+      final tileWidth = (80 * catalogTextScale(context)).clamp(
         0.0,
         constraints.maxWidth,
       );
-      final labelStyle = DefaultTextStyle.of(context).style;
+      final labelStyle = Theme.of(context).textTheme.labelMedium;
       var labelHeight = 0.0;
       for (final category in categories) {
         final painter = TextPainter(
@@ -274,7 +267,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                 child: Icon(Icons.category_outlined, size: 32),
                               ),
                             const SizedBox(height: 8),
-                            Text(category.name, textAlign: TextAlign.center),
+                            Text(
+                              category.name,
+                              textAlign: TextAlign.center,
+                              style: labelStyle,
+                            ),
                           ],
                         ),
                       ),
@@ -283,7 +280,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 4),
         ],
       );
     },
@@ -310,7 +307,7 @@ class _HomeScreenState extends State<HomeScreen> {
     String title,
     List<ProductCard> products,
   ) => Padding(
-    padding: const EdgeInsets.only(top: 18),
+    padding: const EdgeInsets.only(top: 12),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -324,28 +321,34 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(height: 8),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              for (final product in products)
-                Padding(
-                  padding: const EdgeInsets.only(right: 10),
-                  child: ProductCardTile(
-                    width: 184 * catalogTextScale(context),
-                    product: product,
-                    discovery: widget.dependencies.discovery!,
-                    onTap: () => context.push('/products/${product.id}'),
-                    onAddToCart: () => unawaited(
-                      beginProductPurchase(
-                        context: context,
-                        dependencies: widget.dependencies,
-                        productId: product.id,
-                        action: ProductPurchaseAction.addToCart,
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                for (final product in products)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 10),
+                    child: ProductCardTile(
+                      width: (156 * catalogTextScale(context)).clamp(
+                        0,
+                        MediaQuery.sizeOf(context).width -
+                            pageSpacing(context) * 2,
+                      ),
+                      product: product,
+                      discovery: widget.dependencies.discovery!,
+                      onTap: () => context.push('/products/${product.id}'),
+                      onAddToCart: () => unawaited(
+                        beginProductPurchase(
+                          context: context,
+                          dependencies: widget.dependencies,
+                          productId: product.id,
+                          action: ProductPurchaseAction.addToCart,
+                        ),
                       ),
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ],

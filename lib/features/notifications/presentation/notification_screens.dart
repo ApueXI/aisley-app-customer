@@ -5,6 +5,7 @@ import '../../../app/app_dependencies.dart';
 import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/list_recovery.dart';
 import '../../../core/ui/marketplace_widgets.dart';
+import '../../../core/ui/marketplace_surfaces.dart';
 import '../data/notification_models.dart';
 import 'notification_controllers.dart';
 
@@ -77,25 +78,39 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
                     controller.error == null &&
                     controller.pageError == null &&
                     controller.items.isEmpty)
-                  const Text('No notifications in this filter.'),
+                  const MarketEmptyState(
+                    icon: Icons.notifications_none,
+                    title: 'No notifications in this filter.',
+                  ),
                 for (final item in controller.items)
-                  ListTile(
-                    minTileHeight: 72,
-                    leading: Icon(
-                      item.readAt == null
-                          ? Icons.notifications_active_outlined
-                          : Icons.notifications_outlined,
+                  Card(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    color: item.readAt == null
+                        ? const Color(0xFFFFF0F6)
+                        : Colors.white,
+                    child: ListTile(
+                      minTileHeight: 72,
+                      leading: Icon(
+                        item.readAt == null
+                            ? Icons.notifications_active_outlined
+                            : Icons.notifications_outlined,
+                      ),
+                      title: Text(
+                        item.title.isEmpty ? 'Notification' : item.title,
+                        style: TextStyle(
+                          fontWeight: item.readAt == null
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                        ),
+                      ),
+                      subtitle: Text(
+                        '${item.readAt == null ? 'Unread\n' : ''}${item.summary}',
+                      ),
+                      onTap: () async {
+                        await context.push('/notifications/${item.id}');
+                        if (mounted) controller.load();
+                      },
                     ),
-                    title: Text(
-                      item.title.isEmpty ? 'Notification' : item.title,
-                    ),
-                    subtitle: Text(
-                      '${item.readAt == null ? 'Unread\n' : ''}${item.summary}',
-                    ),
-                    onTap: () async {
-                      await context.push('/notifications/${item.id}');
-                      if (mounted) controller.load();
-                    },
                   ),
                 ListPageAction(
                   load: () => controller.load(more: true),

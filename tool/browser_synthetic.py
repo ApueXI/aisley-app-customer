@@ -189,15 +189,27 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True, ship
             '/notifications', '/support-tickets/' + ID,
         }
     ]
+    def capture(name):
+        directory = os.environ.get('BUYER_SCREENSHOT_DIR')
+        if directory:
+            destination = Path(directory)
+            destination.mkdir(parents=True, exist_ok=True)
+            time.sleep(.5)
+            (destination / (name + '.png')).write_bytes(base64.b64decode(call(prefix + '/screenshot')))
+
     if matrix:
         for route, expected in matrix_routes:
             print('CHECK: synthetic ' + route, flush=True)
+            resize(1440, 900)
             script('window.location.hash = ' + json.dumps(route) + ';')
             wait_text(expected)
             for width, height in [(320, 640), (390, 844), (600, 960), (800, 1280), (640, 320), (960, 600), (1024, 768), (1440, 900)]:
                 resize(width, height)
-                wait_text(expected)
+                wait_text('Search Products or Shops')
                 assert script('return document.documentElement.scrollWidth <= window.innerWidth;')
+                if width in {390, 1440}:
+                    name = route.strip('/').replace('/', '-').replace('?', '-').replace('&', '-') or 'home'
+                    capture('layout-' + name + '-' + str(width))
 
     def click(label):
         for _ in range(20):
@@ -232,14 +244,6 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True, ship
                  'deltaX':0,'deltaY':300,'duration':100}]}]})
             time.sleep(.1)
         raise AssertionError('Shipping provider radio is unavailable: ' + name)
-
-    def capture(name):
-        directory = os.environ.get('BUYER_SCREENSHOT_DIR')
-        if directory:
-            destination = Path(directory)
-            destination.mkdir(parents=True, exist_ok=True)
-            time.sleep(.5)
-            (destination / (name + '.png')).write_bytes(base64.b64decode(call(prefix + '/screenshot')))
 
     def back_to_account():
         for _ in range(3):

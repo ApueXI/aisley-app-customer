@@ -6,6 +6,7 @@ import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/list_recovery.dart';
 import '../../../core/ui/form_page.dart';
 import '../../../core/ui/marketplace_widgets.dart';
+import '../../../core/ui/marketplace_surfaces.dart';
 import '../../discovery/presentation/catalog_widgets.dart';
 import 'saved_products_controller.dart';
 
@@ -82,8 +83,9 @@ class _SavedProductsScreenState extends State<SavedProductsScreen> {
               _controller.pageError == null &&
               _controller.items.isEmpty &&
               _controller.error == null)
-            Text(
-              _history
+            MarketEmptyState(
+              icon: _history ? Icons.history : Icons.favorite_border,
+              title: _history
                   ? 'No Products in your account history.'
                   : 'Your Wishlist is empty. Save Products from their details.',
             ),

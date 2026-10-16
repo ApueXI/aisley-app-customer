@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/app_dependencies.dart';
 import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/marketplace_widgets.dart';
+import '../../../core/ui/marketplace_surfaces.dart';
 import '../../checkout/domain/checkout_intent.dart';
 import '../data/cart_models.dart';
 import 'cart_item_row.dart';
@@ -57,13 +58,15 @@ class _CartScreenState extends State<CartScreen> {
           (groups[_metadata.shops[line.productId]?.id] ??= []).add(line);
         }
         final cartContents = <Widget>[
-          Text('Your Cart', style: Theme.of(context).textTheme.headlineSmall),
-          TextButton.icon(
-            onPressed: cart.loading || cart.writing || cart.coolingDown
-                ? null
-                : cart.load,
-            icon: const Icon(Icons.refresh),
-            label: const Text('Refresh Cart'),
+          MarketPageHeading(
+            title: 'Your Cart',
+            action: TextButton.icon(
+              onPressed: cart.loading || cart.writing || cart.coolingDown
+                  ? null
+                  : cart.load,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Refresh Cart'),
+            ),
           ),
           if (cart.loading || cart.writing)
             const LinearProgressIndicator(semanticsLabel: 'Updating Cart'),
@@ -95,11 +98,14 @@ class _CartScreenState extends State<CartScreen> {
               ),
             ),
           if (cart.cart?.items.isEmpty == true && !cart.loading) ...[
-            const SizedBox(height: 24),
-            const Text('Your Cart is empty.'),
-            TextButton(
-              onPressed: () => context.go('/'),
-              child: const Text('Browse Products'),
+            MarketEmptyState(
+              icon: Icons.shopping_cart_outlined,
+              title: 'Your Cart is empty.',
+              message: 'Browse Products to add items.',
+              action: TextButton(
+                onPressed: () => context.go('/'),
+                child: const Text('Browse Products'),
+              ),
             ),
           ],
           for (final group in groups.entries)

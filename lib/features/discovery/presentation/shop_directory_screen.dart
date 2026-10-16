@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/app_dependencies.dart';
 import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/list_recovery.dart';
+import '../../../core/ui/marketplace_surfaces.dart';
 import 'catalog_widgets.dart';
 import 'shop_controllers.dart';
 
@@ -59,11 +60,13 @@ class _ShopDirectoryScreenState extends State<ShopDirectoryScreen> {
       return ListView(
         padding: pagePadding(context),
         children: [
-          Text('Shops', style: Theme.of(context).textTheme.headlineSmall),
-          OutlinedButton.icon(
-            onPressed: () => context.push('/search?mode=shops'),
-            icon: const Icon(Icons.search),
-            label: const Text('Search Shops'),
+          MarketPageHeading(
+            title: 'Shops',
+            action: OutlinedButton.icon(
+              onPressed: () => context.push('/search?mode=shops'),
+              icon: const Icon(Icons.search),
+              label: const Text('Search Shops'),
+            ),
           ),
           const SizedBox(height: 16),
           if (result != null && result.categories.isNotEmpty)

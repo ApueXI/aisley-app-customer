@@ -73,7 +73,7 @@ class CatalogGrid extends StatelessWidget {
   Widget build(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) {
       const gap = 8.0;
-      final minimum = 160 * catalogTextScale(context);
+      final minimum = 140 * catalogTextScale(context);
       final columns = ((constraints.maxWidth + gap) / (minimum + gap))
           .floor()
           .clamp(1, 6);

@@ -326,7 +326,16 @@ class _MessageThreadViewState extends State<MessageThreadView> {
                     Text(
                       'Read only. ${widget.reason ?? 'Sending is currently unavailable.'}',
                     ),
-                  ..._composer(),
+                  const SizedBox(height: 16),
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: _composer(),
+                      ),
+                    ),
+                  ),
                   TextButton(
                     onPressed:
                         widget.loading || widget.sending || widget.coolingDown

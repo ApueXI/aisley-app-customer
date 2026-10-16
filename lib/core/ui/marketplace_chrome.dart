@@ -94,11 +94,21 @@ class _MarketplaceHeaderState extends State<MarketplaceHeader> {
       counterText: '',
       hintText: 'Search Products and Shops',
       labelText: 'Search Products or Shops',
+      floatingLabelBehavior: FloatingLabelBehavior.auto,
+      filled: true,
+      fillColor: const Color(0xFFF5F5F5),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(
+          color: Theme.of(context).colorScheme.outlineVariant,
+        ),
+      ),
       prefixIcon: const Icon(Icons.search),
-      suffixIcon: IconButton(
+      suffixIcon: IconButton.filled(
         tooltip: 'Search',
         onPressed: () => _submit(_search.text),
-        icon: const Icon(Icons.arrow_forward),
+        icon: const Icon(Icons.search, color: Colors.white),
       ),
     ),
   );
@@ -120,76 +130,93 @@ class _MarketplaceHeaderState extends State<MarketplaceHeader> {
   @override
   Widget build(BuildContext context) => Material(
     color: Colors.white,
-    child: SafeArea(
-      bottom: false,
-      child: Column(
-        children: [
-          if (!widget.desktop && widget.toolbar != null) widget.toolbar!,
-          if (widget.desktop)
-            _bounds(
-              SizedBox(
-                height: 48,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    for (final entry in const {
-                      '/notifications': 'Notifications',
-                      '/messages/shops': 'Shop messages',
-                      '/messages/logistics': 'Logistics messages',
-                      '/messages/courier': 'Courier messages',
-                    }.entries)
-                      TextButton(
-                        onPressed: () => context.push(entry.key),
-                        child: Text(entry.value),
-                      ),
-                  ],
+    child: DecoratedBox(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            if (!widget.desktop && widget.toolbar != null) widget.toolbar!,
+            if (widget.desktop)
+              _bounds(
+                SizedBox(
+                  height: 48,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      for (final entry in const {
+                        '/notifications': 'Notifications',
+                        '/messages/shops': 'Shop messages',
+                        '/messages/logistics': 'Logistics messages',
+                        '/messages/courier': 'Courier messages',
+                      }.entries)
+                        TextButton(
+                          onPressed: () => context.push(entry.key),
+                          style: TextButton.styleFrom(
+                            foregroundColor: Theme.of(context)
+                                .colorScheme
+                                .onSurfaceVariant,
+                          ),
+                          child: Text(entry.value),
+                        ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          _bounds(
-            SizedBox(
-              height: widget.searchHeight,
-              child: widget.desktop
-                  ? Row(
-                      children: [
-                        TextButton(
-                          onPressed: () => context.go('/'),
-                          child: Text(
-                            'AISLEY',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w800,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 24),
-                        Expanded(child: _field()),
-                        const SizedBox(width: 16),
-                        for (final entry in const {
-                          '/shops': 'Shops',
-                          '/orders': 'Orders',
-                          '/cart': 'Cart',
-                          '/account': 'Account',
-                        }.entries)
+            _bounds(
+              SizedBox(
+                height: widget.searchHeight,
+                child: widget.desktop
+                    ? Row(
+                        children: [
                           TextButton(
-                            onPressed: () => entry.key == '/orders'
-                                ? context.push(entry.key)
-                                : context.go(entry.key),
+                            onPressed: () => context.go('/'),
                             child: Text(
-                              entry.key == '/cart' &&
-                                      (widget.cartCount ?? 0) > 0
-                                  ? 'Cart (${widget.cartCount})'
-                                  : entry.value,
+                              'AISLEY',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
                             ),
                           ),
-                      ],
-                    )
-                  : _field(),
+                          const SizedBox(width: 24),
+                          Expanded(child: _field()),
+                          const SizedBox(width: 16),
+                          for (final entry in const {
+                            '/shops': 'Shops',
+                            '/orders': 'Orders',
+                            '/cart': 'Cart',
+                            '/account': 'Account',
+                          }.entries)
+                            TextButton(
+                              onPressed: () => entry.key == '/orders'
+                                  ? context.push(entry.key)
+                                  : context.go(entry.key),
+                              child: Text(
+                                entry.key == '/cart' &&
+                                        (widget.cartCount ?? 0) > 0
+                                    ? 'Cart (${widget.cartCount})'
+                                    : entry.value,
+                              ),
+                            ),
+                        ],
+                      )
+                    : Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _field(),
+                      ),
+              ),
             ),
-          ),
-          if (widget.desktop && widget.toolbar != null) widget.toolbar!,
-        ],
+            if (widget.desktop && widget.toolbar != null) widget.toolbar!,
+          ],
+        ),
       ),
     ),
   );

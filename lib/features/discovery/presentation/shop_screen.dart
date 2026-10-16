@@ -193,31 +193,36 @@ class _ShopScreenState extends State<ShopScreen> {
 
   Widget _shopHeader(BuildContext context, ShopSummary shop) => Padding(
     padding: const EdgeInsets.only(bottom: 16),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (shop.bannerUrl != null)
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: CatalogImage(
-              url: shop.bannerUrl,
-              discovery: widget.dependencies.discovery!,
-              height: 130,
-              width: double.infinity,
-              label: '${shop.name} banner',
-            ),
-          ),
-        const SizedBox(height: 8),
-        Text(shop.name, style: Theme.of(context).textTheme.headlineSmall),
-        if (shop.category != null) Text(shop.category!.name),
-        if (shop.description != null) Text(shop.description!),
-        if (widget.dependencies.communication != null)
-          TextButton.icon(
-            onPressed: () => context.push('/messages/shops/new/${shop.id}'),
-            icon: const Icon(Icons.chat_bubble_outline),
-            label: const Text('Message Shop'),
-          ),
-      ],
+    child: Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (shop.bannerUrl != null)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: CatalogImage(
+                  url: shop.bannerUrl,
+                  discovery: widget.dependencies.discovery!,
+                  height: 130,
+                  width: double.infinity,
+                  label: '${shop.name} banner',
+                ),
+              ),
+            const SizedBox(height: 8),
+            Text(shop.name, style: Theme.of(context).textTheme.headlineSmall),
+            if (shop.category != null) Text(shop.category!.name),
+            if (shop.description != null) Text(shop.description!),
+            if (widget.dependencies.communication != null)
+              TextButton.icon(
+                onPressed: () => context.push('/messages/shops/new/${shop.id}'),
+                icon: const Icon(Icons.chat_bubble_outline),
+                label: const Text('Message Shop'),
+              ),
+          ],
+        ),
+      ),
     ),
   );
 

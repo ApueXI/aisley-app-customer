@@ -7,6 +7,7 @@ import '../../../app/app_dependencies.dart';
 import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/list_recovery.dart';
 import '../../../core/ui/marketplace_widgets.dart';
+import '../../../core/ui/marketplace_surfaces.dart';
 import '../data/catalog_models.dart';
 import 'catalog_widgets.dart';
 import 'product_purchase_flow.dart';
@@ -115,12 +116,15 @@ class _SearchScreenState extends State<SearchScreen> {
           },
         ),
         const SizedBox(height: 8),
-        FilledButton.icon(
-          onPressed: _controller.loading || _controller.coolingDown
-              ? null
-              : () => _submit(context),
-          icon: const Icon(Icons.search),
-          label: const Text('Search'),
+        Align(
+          alignment: Alignment.centerRight,
+          child: FilledButton.icon(
+            onPressed: _controller.loading || _controller.coolingDown
+                ? null
+                : () => _submit(context),
+            icon: const Icon(Icons.search),
+            label: const Text('Search'),
+          ),
         ),
         const SizedBox(height: 16),
         ListenableBuilder(
@@ -180,7 +184,10 @@ class _SearchScreenState extends State<SearchScreen> {
         !_autoSearched &&
             _controller.products == null &&
             _controller.shops == null) {
-      return const Center(child: Text('Enter a name to search.'));
+      return const MarketEmptyState(
+        icon: Icons.search,
+        title: 'Enter a name to search.',
+      );
     }
     if (!_controller.stale && _controller.pageOutOfRange) {
       return Center(
@@ -230,6 +237,7 @@ class _SearchScreenState extends State<SearchScreen> {
         '${pagination.total} Products for “${widget.query}”',
         style: Theme.of(context).textTheme.titleMedium,
       ),
+      const SizedBox(height: 12),
       CatalogGrid(
         children: [
           for (final product in items)
