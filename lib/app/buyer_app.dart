@@ -9,6 +9,7 @@ import '../features/saved/data/legacy_recent_cleanup.dart';
 import '../core/ui/marketplace_chrome.dart';
 import 'app_dependencies.dart';
 import 'router.dart';
+import 'message_updates.dart';
 import 'theme.dart';
 
 class BuyerScrollBehavior extends MaterialScrollBehavior {
@@ -71,10 +72,16 @@ class _BuyerAppState extends State<BuyerApp> with WidgetsBindingObserver {
         widget.dependencies.session,
         if (widget.dependencies.commerce != null)
           widget.dependencies.commerce!.cart,
+        if (widget.dependencies.communication != null)
+          widget.dependencies.communication!.messages,
       ]),
       builder: (context, _) => MarketplaceScope(
         active: widget.dependencies.session.active,
         cartCount: widget.dependencies.commerce?.cart.badge,
+        chatUnread: widget.dependencies.communication?.messages.unread,
+        chatStale:
+            widget.dependencies.communication?.messages.hasSnapshot ?? false,
+        chatUpdatesManaged: widget.dependencies.communication != null,
         child: Column(
           children: [
             if (widget.dependencies.session.revalidationFailure != null)
@@ -83,7 +90,15 @@ class _BuyerAppState extends State<BuyerApp> with WidgetsBindingObserver {
                 onDismiss:
                     widget.dependencies.session.dismissRevalidationFailure,
               ),
-            Expanded(child: child!),
+            Expanded(
+              child: widget.dependencies.communication == null
+                  ? child!
+                  : MessageUpdates(
+                      messages: widget.dependencies.communication!.messages,
+                      router: _router,
+                      child: child!,
+                    ),
+            ),
           ],
         ),
       ),

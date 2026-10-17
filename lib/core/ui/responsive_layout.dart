@@ -46,14 +46,16 @@ class ShoppingPage extends StatelessWidget {
     this.appBar,
     required this.body,
     this.bottomBar,
+    this.showSearch = false,
   });
   final PreferredSizeWidget? appBar;
   final Widget body;
   final Widget? bottomBar;
+  final bool showSearch;
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: marketplaceAppBar(context, appBar),
+    appBar: marketplaceAppBar(context, appBar, showSearch: showSearch),
     body: SafeArea(child: ContentViewport(child: body)),
     bottomNavigationBar: bottomBar == null
         ? null

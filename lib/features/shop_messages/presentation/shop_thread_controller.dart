@@ -22,11 +22,13 @@ class ShopThreadController extends CommerceController {
     this.repository, {
     this.id,
     this.media,
+    this.onInboxChanged,
     Map<String, dynamic> entry = const {},
     String Function()? uuid,
   }) : entry = Map.unmodifiable(entry),
        uuid = uuid ?? secureUuid;
   final ShopChatRepository repository;
+  final void Function(String? deniedId)? onInboxChanged;
   final String Function() uuid;
   final ChatMediaDraftController? media;
   Map<String, Object?> get mediaContext =>
@@ -171,6 +173,7 @@ class ShopThreadController extends CommerceController {
       if (e.status == 403 || e.status == 404) {
         reset(preserveUnresolved: false);
         unavailable = true;
+        onInboxChanged?.call(id);
       }
     } finally {
       if (current(stamp, credential)) {
@@ -260,6 +263,7 @@ class ShopThreadController extends CommerceController {
       media?.clear(preserveHistory: true);
       draft = '';
       conflict = false;
+      onInboxChanged?.call(null);
     } on ApiFailure catch (e) {
       if (!current(stamp, credential)) return;
       failure(e);
@@ -274,6 +278,7 @@ class ShopThreadController extends CommerceController {
       if (e.status == 403 || e.status == 404) {
         reset(preserveUnresolved: false);
         unavailable = true;
+        onInboxChanged?.call(id);
       }
     } finally {
       if (current(stamp, credential)) {
@@ -324,6 +329,7 @@ class ShopThreadController extends CommerceController {
         _checkSummary(value, id);
         _readSent = target;
         readError = null;
+        onInboxChanged?.call(null);
         if (conversation == null ||
             value.lastSequence >= conversation!.lastSequence) {
           conversation = value;
@@ -335,6 +341,7 @@ class ShopThreadController extends CommerceController {
         if (e.status == 403 || e.status == 404) {
           reset(preserveUnresolved: false);
           unavailable = true;
+          onInboxChanged?.call(id);
         }
       }
     } finally {

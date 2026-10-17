@@ -39,20 +39,9 @@ class BuyerShell extends StatelessWidget {
                           letterSpacing: 1,
                         ),
                       ),
-                      actions: [
-                        IconButton(
-                          tooltip: 'Notifications',
-                          icon: const Icon(Icons.notifications_outlined),
-                          onPressed: () => context.push('/notifications'),
-                        ),
-                        IconButton(
-                          tooltip: 'Terms and privacy',
-                          icon: const Icon(Icons.policy_outlined),
-                          onPressed: () =>
-                              context.push('/policies/terms_of_service'),
-                        ),
-                      ],
+                      actions: [...marketplaceActions(context)],
                     ),
+              showSearch: navigation.currentIndex == 0,
             ),
             body: SafeArea(child: ContentViewport(child: navigation)),
             bottomNavigationBar:

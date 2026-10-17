@@ -205,7 +205,10 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True, ship
             wait_text(expected)
             for width, height in [(320, 640), (390, 844), (600, 960), (800, 1280), (640, 320), (960, 600), (1024, 768), (1440, 900)]:
                 resize(width, height)
-                wait_text('Search Products or Shops')
+                if route == '/' or route.startswith('/search'):
+                    wait_text('Search Products or Shops')
+                else:
+                    assert not script("return [...document.querySelectorAll('input')].some(e => e.getAttribute('aria-label') === 'Search Products or Shops');"), 'Header search belongs only to Home.'
                 assert script('return document.documentElement.scrollWidth <= window.innerWidth;')
                 if width in {390, 1440}:
                     name = route.strip('/').replace('/', '-').replace('?', '-').replace('&', '-') or 'home'

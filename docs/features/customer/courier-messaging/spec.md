@@ -39,6 +39,9 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 
 ### Feature behavior and boundaries
 
+- The shared Messages entry opens a combined authorized inbox with channel filters; channel-qualified IDs, independent cursors/permissions/read markers and existing thread routes remain separate.
+- Foreground header/inbox refresh shares a 15s scheduler and server channel totals; partial/stale totals are unknown, never a visible-page sum. See [combined inbox evidence](../../../references/message-center-verification.md).
+
 - Order entry first reads private order-context; read creates no empty thread.
 - Context gives order_id/order_reference/send_allowed/nullable conversation_id only; no Courier recipient
   selector.

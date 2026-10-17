@@ -112,6 +112,7 @@ bool safeCommunicationReturn(Uri uri) {
   final p = uri.path.split('/').where((e) => e.isNotEmpty).toList();
   if (!uri.hasQuery &&
       const [
+        '/messages',
         '/messages/shops',
         '/messages/logistics',
         '/messages/courier',
