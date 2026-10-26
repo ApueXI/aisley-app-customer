@@ -11,7 +11,9 @@ class MediaFake implements ChatMediaRepository {
   int picks = 0, uploads = 0, checks = 0, removals = 0;
   final keys = <String>[], contexts = <Map<String, Object?>>[];
   SelectedChatImage selected = SelectedChatImage(
-    Uint8List.fromList([1, 2, 3]),
+    base64Decode(
+      'iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAEklEQVR4nGMQKl/wHx9mGBkKAM8iigGRRz6+AAAAAElFTkSuQmCC',
+    ),
     'image.png',
     'image/png',
   );

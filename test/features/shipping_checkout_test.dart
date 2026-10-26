@@ -193,7 +193,7 @@ void main() {
     },
   );
 
-  test('unplanned quote is commercially serviceable; unknown route blocks placement', () async {
+  test('historical unplanned quotes remain readable; incomplete routes block new placement', () async {
     await begin();
     final c = h.commerce.checkout;
     var route = 'unplanned';
@@ -204,7 +204,8 @@ void main() {
       return jsonReply(body);
     };
     await c.getQuote();
-    expect(c.canPlace, true);
+    expect(c.quote, isNotNull);
+    expect(c.canPlace, false);
     route = 'future';
     await c.getQuote();
     expect(c.quote, isNotNull);

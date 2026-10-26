@@ -58,7 +58,7 @@ class _ChatImageComposerState extends State<ChatImageComposer>
             label: Text(c.selecting ? 'Selecting image…' : 'Add image'),
           ),
           const Text(
-            'JPEG, PNG or WebP at most 8 MB (8,000,000 bytes) each · Up to 5 images',
+            'JPEG or PNG · At most 8 MB each · 4,096 pixels per edge / 8 megapixels · Up to 5 images',
           ),
           if (c.error != null)
             Semantics(liveRegion: true, child: Text(c.error!)),

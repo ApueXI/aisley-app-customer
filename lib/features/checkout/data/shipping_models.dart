@@ -45,7 +45,7 @@ class LogisticsOption {
   }
   late final String organizationId, businessName, routeStatus;
   late final Money fee;
-  bool get supported => supportedShippingRoute(routeStatus);
+  bool get supported => const ['local', 'planned'].contains(routeStatus);
 }
 
 class ShippingProvider {

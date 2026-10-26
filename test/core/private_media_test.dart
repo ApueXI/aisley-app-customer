@@ -19,7 +19,11 @@ void main() {
     test('new image selection boundary $size', () async {
       final repo = MediaFake()
         ..selected = SelectedChatImage(
-          Uint8List(size),
+          (Uint8List(size)..setRange(
+            0,
+            MediaFake().selected.bytes.length,
+            MediaFake().selected.bytes,
+          )),
           'image.png',
           'image/png',
         );

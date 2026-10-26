@@ -3,7 +3,6 @@ import '../../../core/networking/api_failure.dart';
 import '../../../core/networking/wire.dart';
 import 'commerce_address.dart';
 import 'voucher_models.dart';
-import 'shipping_models.dart';
 
 class CheckoutQuote {
   CheckoutQuote.parse(Object? json) {
@@ -84,5 +83,6 @@ class ShippingQuote {
   late final bool serviceable;
   late final String organizationId, businessName, routeStatus;
   late final Money fee;
-  bool get supported => supportedShippingRoute(routeStatus);
+  bool get supported =>
+      serviceable && const ['local', 'planned'].contains(routeStatus);
 }
