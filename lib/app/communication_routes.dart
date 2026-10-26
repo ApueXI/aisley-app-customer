@@ -10,6 +10,7 @@ import '../features/questions/presentation/questions_screen.dart';
 import '../features/reviews/presentation/reviews_screen.dart';
 import '../features/reviews/presentation/review_composer_screen.dart';
 import '../features/support/presentation/support_screens.dart';
+import '../features/messaging/presentation/message_center_screen.dart';
 import 'app_dependencies.dart';
 
 List<RouteBase> communicationRoutes(AppDependencies d) {
@@ -19,6 +20,11 @@ List<RouteBase> communicationRoutes(AppDependencies d) {
   bool plain(GoRouterState s) => d.communication != null && !s.uri.hasQuery;
   bool id(GoRouterState s) => plain(s) && validUuid(s.pathParameters['id']!);
   return [
+    GoRoute(
+      path: '/messages',
+      builder: (_, s) =>
+          plain(s) ? MessageCenterScreen(dependencies: d) : unavailable(),
+    ),
     GoRoute(
       path: '/messages/shops',
       builder: (_, s) =>

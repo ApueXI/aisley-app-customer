@@ -57,6 +57,7 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 - This nullability was observed on the deployed public Home API on 2026-10-16 (backend revision unidentified); see the dated integration-gap record. Missing fields and wrong non-null types remain decode failures.
 - Pause carousel rotation offscreen/background; provide accessible previous/next and avoid overriding
   keyboard focus.
+- Only Home opts into shared-header Search; Shops, Cart, Account and secondary routes omit it. Dedicated Search and Shop search actions remain available.
 - Home provides Search and voucher discovery; Shops remains in main navigation.
   Only supported destinations are enabled.
 - Category cards use keyword search by Category name; they are not exact global Product-category

@@ -47,6 +47,7 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 - Product context must currently belong to public Shop; owned Order context must belong to that Shop.
 - Later messages can include valid contexts; no arbitrary user recipient search exists.
 - Shop summary has no kind/read_only_reason; customer_name is null for Customer viewer.
+- The header Messages icon opens `/messages`: combined authorized Shop/Seller, Logistics and Courier previews with channel filters; separate repositories, cursors, thread routes and reads remain authoritative.
 - Shop inbox/history use items/next_cursor, unlike operational data/meta; dedicated unread_count route
   exists.
 - Message context may be null or an unavailable placeholder with null id/url; never infer raw Product

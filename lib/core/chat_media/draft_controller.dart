@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 
 import 'attachment.dart';
+import 'image_validation.dart';
 
 class ChatImageDraft {
   ChatImageDraft(this.image, this.context, this.key);
@@ -56,27 +57,8 @@ class ChatMediaDraftController extends ChangeNotifier {
       if (!_current(stamp) || locked) return;
       final image = await repository.pick();
       if (!_current(stamp) || locked || image == null) return;
-      final extension = image.filename.split('.');
-      if (image.bytes.isEmpty ||
-          image.bytes.length > 8000000 ||
-          extension.length != 2 ||
-          !const [
-            'jpg',
-            'jpeg',
-            'png',
-            'webp',
-          ].contains(extension.last.toLowerCase()) ||
-          !const [
-            'image/jpeg',
-            'image/png',
-            'image/webp',
-          ].contains(image.mimeType) ||
-          items.fold<int>(
-                image.bytes.length,
-                (n, e) => n + e.image.bytes.length,
-              ) >
-              52428800) {
-        error = 'Choose JPEG, PNG or WebP at most 8 MB (8,000,000 bytes), with one filename extension.';
+      if (!validChatImage(image.bytes, image.filename, image.mimeType)) {
+        error = 'Choose JPEG or PNG at most 8 MB (8,000,000 bytes), up to 4,096 pixels per edge and 8 megapixels, with one filename extension.';
         return;
       }
       final item = ChatImageDraft(image, Map.unmodifiable(context), _uuid());

@@ -266,3 +266,5 @@ See [map setup](docs/maps-location-api.md) and [verification](docs/references/ma
 ## Current contract audit — 2026-10-12
 
 See [synchronization evidence](docs/references/synchronization-2026-10-12.md) and [current gaps](docs/references/integration-gaps.md). Shipping, collection/wallet, thumbnails and private media have local implementation evidence. Applied/Batch voucher names, same-benefit replacement, Order coordinate parsing and Shop-context adoption retain explicit gaps. Deployed commerce/media, installed Android/TalkBack and production configuration/signing remain open. Historical verification results were not rerun for this documentation update.
+
+Platform contract adoption on 2026-10-26 is recorded in [the sync verification record](docs/references/platform-sync-2026-10-26.md).

@@ -4,7 +4,7 @@ Phases 1–4 Flutter flows are implemented with partial acceptance; controlled a
 
 ## Navigation
 
-Use native bottom destinations **Home**, **Shops**, **Cart**, **Account**, with search reachable from discovery screens. These bottom destinations are implemented. Account links to Profile, Addresses, Orders, Wishlist, Recently Viewed, Notifications, Shop messages, Logistics messages, Courier messages, Support tickets, Settings/promotional preference, Policies/consent, and Logout. Distinct channels can share compatible rendering widgets while retaining separate repositories, routes, eligibility and read state.
+Use native bottom destinations **Home**, **Shops**, **Cart**, **Account**, with search reachable from discovery screens. These bottom destinations are implemented. Header search appears only on Home; the Messages icon alongside Notifications and Terms/Privacy opens the combined authorized inbox with channel filters. Account links to Profile, Addresses, Orders, Wishlist, Recently Viewed, Notifications, Shop messages, Logistics messages, Courier messages, Support tickets, Settings/promotional preference, Policies/consent, and Logout. Distinct channels can share compatible rendering widgets while retaining separate repositories, routes, eligibility and read state.
 
 Product/Shop/Order detail and forms open on the current navigation stack; Android Back and browser Back return predictably. Validate destination IDs and allow-listed return routes, including notification web-path mapping. A signed-out user opening any shopping destination sees sign-in and a validated read return; the app requires an intentional retry of a protected mutation after sign-in.
 

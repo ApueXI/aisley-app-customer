@@ -94,7 +94,7 @@ void main() {
     );
     await c.add({});
     expect(repo.uploads, 0);
-    repo.selected = SelectedChatImage(Uint8List(3), 'image.png', 'image/png');
+    repo.selected = MediaFake().selected;
     for (var i = 0; i < 6; i++) {
       await c.add({});
     }

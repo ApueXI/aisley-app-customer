@@ -76,6 +76,10 @@ class QuoteReview extends StatelessWidget {
                   fee: group.shipping.fee.display(group.totals.currency),
                   routeStatus: group.shipping.routeStatus,
                 ),
+                if (!group.shipping.supported)
+                  const Text(
+                    'Refresh shipping coverage and review a complete route before placing a new Order.',
+                  ),
                 for (final voucher in group.applied)
                   VoucherSavingsSummary(
                     name: voucher.name,

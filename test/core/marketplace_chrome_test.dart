@@ -20,7 +20,10 @@ void main() {
           routes: [
             GoRoute(
               path: '/',
-              builder: (_, _) => const ShoppingPage(body: Text('Home content')),
+              builder: (_, _) => const ShoppingPage(
+                showSearch: true,
+                body: Text('Home content'),
+              ),
             ),
             GoRoute(
               path: '/search',
@@ -57,10 +60,6 @@ void main() {
           'Orders',
           'Cart (3)',
           'Account',
-          'Notifications',
-          'Shop messages',
-          'Logistics messages',
-          'Courier messages',
         ]) {
           expect(find.text(label), findsOneWidget);
           expect(
@@ -68,6 +67,9 @@ void main() {
             greaterThanOrEqualTo(48),
           );
         }
+        expect(find.byKey(const ValueKey('messages-action')), findsOneWidget);
+        expect(find.byTooltip('Notifications'), findsOneWidget);
+        expect(find.byTooltip('Terms and privacy'), findsOneWidget);
         await tester.tap(find.byType(TextField));
         await tester.enterText(find.byType(TextField), 'linen shirt');
         final field = tester.widget<TextField>(find.byType(TextField));
@@ -129,7 +131,7 @@ void main() {
           ),
           child: MarketplaceScope(active: true, cartCount: null, child: child!),
         ),
-        home: const ShoppingPage(body: Text('Content')),
+        home: const ShoppingPage(showSearch: true, body: Text('Content')),
       ),
     );
     await tester.pumpAndSettle();
@@ -160,7 +162,7 @@ void main() {
                 child: child!,
               ),
             ),
-            home: const ShoppingPage(body: Text('Content')),
+            home: const ShoppingPage(showSearch: true, body: Text('Content')),
           ),
         );
         await tester.pumpAndSettle();

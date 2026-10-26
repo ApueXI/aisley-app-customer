@@ -38,6 +38,9 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 
 ### Feature behavior and boundaries
 
+- The shared Messages entry opens a combined authorized inbox with channel filters; channel-qualified IDs, independent cursors/permissions/read markers and existing thread routes remain separate.
+- Foreground header/inbox refresh shares a 15s scheduler and server channel totals; partial/stale totals are unknown, never a visible-page sum. See [combined inbox evidence](../../../references/message-center-verification.md).
+
 - This channel is Customer–Logistics delivery chat, separate from Shop and Courier task chat.
 - Start accepts owned Order context only; handling organization/hub/recipient is resolved by server.
 - An active Order alone is insufficient when no valid current handling organization exists.

@@ -24,15 +24,18 @@ class _ShopInboxScreenState extends State<ShopInboxScreen> {
   @override
   void initState() {
     super.initState();
-    controller.load();
+    if (!controller.loaded) controller.load();
   }
 
   @override
   Widget build(BuildContext context) => ForegroundPoll(
-    refresh: controller.load,
+    refresh: () => controller.load(retain: true),
     busy: () => controller.loading || controller.paging,
-    visible: () => !widget.embedded || marketplaceDesktop(context),
+    visible: () =>
+        MarketplaceScope.maybeOf(context)?.chatUpdatesManaged != true &&
+        (!widget.embedded || marketplaceDesktop(context)),
     paused: () =>
+        MarketplaceScope.maybeOf(context)?.chatUpdatesManaged == true ||
         controller.offline ||
         !widget.dependencies.session.active ||
         widget.embedded && !marketplaceDesktop(context),

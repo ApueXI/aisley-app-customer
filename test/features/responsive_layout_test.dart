@@ -555,6 +555,14 @@ void main() {
                 reason: '$feature $actual text $scale',
               );
               if (actual == const Size(640, 320) && textScale == 2.0) {
+                // Settle the focused field in the resized scroll viewport before
+                // measuring semantics; partially clipped controls above it are
+                // not their full interactive bounds.
+                if (inputFocus?.hasFocus == true &&
+                    find.byType(TextFormField).evaluate().isNotEmpty) {
+                  await tester.ensureVisible(find.byType(TextFormField).first);
+                  await tester.pumpAndSettle();
+                }
                 await checkAccessibilityGuidelines(
                   tester,
                   reason: '$feature landscape/split-screen',

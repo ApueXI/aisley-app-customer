@@ -10,21 +10,36 @@ import '../support/fakes.dart';
 import '../support/shipping_scenarios.dart';
 
 void main() {
+  test('new provider choices exclude unplanned routes while historical quote DTOs remain readable', () {
+    for (final status in ['local', 'planned', 'unplanned', 'future']) {
+      final option = LogisticsOption.parse({
+        'organizationId': otherId,
+        'businessName': 'Synthetic Logistics',
+        'shippingFee': '5.00',
+        'routeStatus': status,
+      });
+      expect(option.supported, ['local', 'planned'].contains(status));
+    }
+    final quote =
+        fixture('checkout-order', 'op-029')['data'] as Map<String, dynamic>;
+    quote['groups'][0]['shippingQuote']['routeStatus'] = 'unplanned';
+    expect(
+      CheckoutQuote.parse(quote).groups.single.shipping.routeStatus,
+      'unplanned',
+    );
+  });
+
   test(
     'documented successful shipping projections parse without old fields',
     () {
       for (final name in [
         'single-option-fallback',
         'explicit-provider-quote',
-        'route-participant-tariff-fallback',
       ]) {
         final quote = CheckoutQuote.parse(
           shippingScenario(name)['expected']['body']['data'],
         );
-        expect(
-          quote.groups.single.shipping.fee.minorUnits,
-          name == 'route-participant-tariff-fallback' ? 500 : 10000,
-        );
+        expect(quote.groups.single.shipping.fee.minorUnits, 10000);
         expect(quote.groups.single.shipping.organizationId, otherId);
         expect(quote.groups.single.shipping.supported, true);
       }

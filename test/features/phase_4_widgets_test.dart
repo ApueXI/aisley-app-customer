@@ -348,6 +348,7 @@ void main() {
         findsOneWidget,
       );
       for (final path in [
+        '/messages',
         '/notifications/$customerId',
         '/support-tickets/new',
         '/messages/logistics/$customerId',

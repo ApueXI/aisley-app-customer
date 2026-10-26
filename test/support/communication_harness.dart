@@ -9,6 +9,8 @@ import 'package:aisley_mobile_buyer/core/security/session_controller.dart';
 import 'package:aisley_mobile_buyer/features/discovery/data/discovery_repository.dart';
 import 'package:aisley_mobile_buyer/features/account/data/photo_picker_adapter.dart';
 
+import 'package:aisley_mobile_buyer/features/saved/data/saved_repository.dart';
+
 import 'fakes.dart';
 
 class CommunicationHarness {
@@ -135,6 +137,7 @@ class CommunicationHarness {
     communication: state,
     photoPicker: picker ?? PhotoPickerAdapter(),
     discovery: DiscoveryRepository(api: api, session: session),
+    recentlyViewed: RecentlyViewedRepository(api),
   );
   void dispose() {
     state.dispose();

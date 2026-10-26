@@ -1,3 +1,5 @@
+import 'message_center.dart';
+import '../features/messaging/data/conversation_preview.dart';
 import '../core/networking/api_client.dart';
 import '../core/chat_media/api_repository.dart';
 import '../core/chat_media/draft_controller.dart';
@@ -35,8 +37,10 @@ class CommunicationState {
     logisticsInbox = LogisticsInboxController(session, logistics);
     courierInbox = CourierInboxController(session, courier);
     ticketInbox = TicketInboxController(session, support);
+    messages = MessageCenter(session, shopInbox, logisticsInbox, courierInbox);
     session.registerPrivateCleanup(_clearMaps);
   }
+  late final MessageCenter messages;
   final SessionController session;
   final ApiClient api;
   ChatMediaDraftController _media() => ChatMediaDraftController(
@@ -84,6 +88,8 @@ class CommunicationState {
         session,
         shops,
         id: id,
+        onInboxChanged: (deniedId) =>
+            messages.invalidate(MessageChannel.shop, deniedId: deniedId),
         uuid: uuid,
         media: _media(),
         entry: {
@@ -107,6 +113,8 @@ class CommunicationState {
         session,
         logistics,
         id: id,
+        onInboxChanged: (deniedId) =>
+            messages.invalidate(MessageChannel.logistics, deniedId: deniedId),
         uuid: uuid,
         media: _media(),
         entry: {
@@ -126,6 +134,8 @@ class CommunicationState {
         session,
         courier,
         id: id,
+        onInboxChanged: (deniedId) =>
+            messages.invalidate(MessageChannel.courier, deniedId: deniedId),
         uuid: uuid,
         media: _media(),
         entry: {
@@ -192,6 +202,7 @@ class CommunicationState {
 
   void dispose() {
     session.unregisterPrivateCleanup(_clearMaps);
+    messages.dispose();
     for (final c in [
       shopInbox,
       logisticsInbox,

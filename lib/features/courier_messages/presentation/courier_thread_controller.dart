@@ -22,10 +22,12 @@ class CourierThreadController extends CommerceController {
     this.repository, {
     this.id,
     this.media,
+    this.onInboxChanged,
     this.entry = const {},
     String Function()? uuid,
   }) : uuid = uuid ?? secureUuid;
   final CourierChatRepository repository;
+  final void Function(String? deniedId)? onInboxChanged;
   final String Function() uuid;
   final ChatMediaDraftController? media;
   Map<String, Object?> get mediaContext =>
@@ -148,6 +150,7 @@ class CourierThreadController extends CommerceController {
       if (e.status == 403 || e.status == 404) {
         reset(preserveUnresolved: false);
         unavailable = true;
+        onInboxChanged?.call(id);
       }
     } finally {
       if (current(stamp, credential)) {
@@ -236,6 +239,7 @@ class CourierThreadController extends CommerceController {
       media?.clear(preserveHistory: true);
       draft = '';
       conflict = false;
+      onInboxChanged?.call(null);
     } on ApiFailure catch (e) {
       if (!current(stamp, credential)) return;
       failure(e);
@@ -250,6 +254,7 @@ class CourierThreadController extends CommerceController {
       if (e.status == 403 || e.status == 404) {
         reset(preserveUnresolved: false);
         unavailable = true;
+        onInboxChanged?.call(id);
       }
     } finally {
       if (current(stamp, credential)) {
@@ -299,6 +304,7 @@ class CourierThreadController extends CommerceController {
         if (!current(stamp, credential)) return;
         _readSent = target;
         readError = null;
+        onInboxChanged?.call(null);
         if (conversation == null ||
             value.lastSequence >= conversation!.lastSequence) {
           conversation = value;
@@ -310,6 +316,7 @@ class CourierThreadController extends CommerceController {
         if (e.status == 403 || e.status == 404) {
           reset(preserveUnresolved: false);
           unavailable = true;
+          onInboxChanged?.call(id);
         }
       }
     } finally {
