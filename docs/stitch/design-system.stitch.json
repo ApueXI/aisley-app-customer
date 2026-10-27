@@ -1,0 +1,174 @@
+{
+  "designSystem": {
+    "displayName": "Sober Marketplace Commerce",
+    "styleGuidelines": "## Brand & Style\n\nThis design system serves a high-trust, mobile-first Philippine e-commerce marketplace. The visual tone is grounded, pragmatic, and orderly, directly addressing the sensory overload common in Southeast Asian retail apps. Rather than relying on overwhelming promotional banners, persistent gamification widgets, or high-intensity flash-sale countdowns, this aesthetic embraces structured functional clarity, transparent pricing hierarchies, and an intentional editorial economy.\n\nThe interface pairs clean structural discipline with human warmth. It projects absolute merchant reliability, transparent shipping costs, and friction-free payment settlement. The aesthetic is clean modern utilitarianism: pure light canvases, structured card tiers, crisp hairline separators, and concentrated high-contrast actions. Brand pink is treated as a strategic punctuation mark rather than an ambient flood, focusing customer attention directly on authentic product photography, merchant ratings, and decisive checkout flows.\n\n## Layout & Spacing\n\nThe layout is built on a 4px/8px incremental spatial rhythm tailored for thumb-driven mobile commerce.\n\n- **Canvas Margins:** Standard mobile canvas uses an immutable outer page margin of `16px` (`1rem`). On tablet screens (600px+), outer margins expand to `24px` (`1.5rem`).\n- **Product Grid Model:** The primary feed uses a 2-column fluid grid on mobile devices. The gutter between product card columns is pinned at `8px` (`0.5rem`) to maximize card image area while preserving distinct boundary separation over the `#F5F5F5` canvas.\n- **Section Dividers:** Stacked screen sections (such as merchant store modules, delivery detail groups, and product specification accordions) are separated by `8px` empty space blocks on mobile, revealing the neutral `#F5F5F5` backing canvas as a structural gutter.\n- **Touch Ergonomics:** Interactive trigger points (such as filter chips, stepper increments, and icon buttons) maintain a minimum internal interactive perimeter of 48×48px, even when the visible glyph or chip is visually compact.\n\n## Elevation & Depth\n\nThis system avoids blurred colored glows, heavy drop shadows, and glassmorphic translucent washes. Depth is achieved through tonal stacking and minimal, diffused structural elevation.\n\n- **Base Layer (Elevation 0):** The global viewport canvas at `#F5F5F5`.\n- **Card Surface (Elevation 1):** `#FFFFFF` surfaces layered directly against `#F5F5F5` outlined with an explicit hairline border (`1px solid #E4DFE3`). In high-density card feeds, the border alone provides sufficient boundary containment without requiring box shadows.\n- **Raised Tonal Module (Elevation 2):** Applied to floating bottom checkout actions, sticky category tabs, and active cart summaries. Rendered with `#FFFFFF` background, a top hairline border (`1px solid #E4DFE3`), and a subtle, warm ambient shadow:\n  `box-shadow: 0px 2px 8px rgba(33, 28, 35, 0.06);`\n- **Modal Sheets & Overlays (Elevation 3):** Bottom sliding variant selectors and modal transaction dialogs use a direct backdrop veil (`rgba(33, 28, 35, 0.45)`) combined with an elevated card surface shadow:\n  `box-shadow: 0px 8px 24px rgba(33, 28, 35, 0.12);`\n\n## Components\n\n### Buttons\n- **Primary Action (Call-to-Action):** Rendered with a solid `#B60060` fill, pure white `#FFFFFF` text, `title-md` font weight, `8px` corner radius, and a fixed height of `48px` to guarantee accessible mobile thumb strikes. Active pressed state shifts fill to `#94004E`.\n- **Secondary Action:** Outlined style with a `1.5px` border in `#B60060`, transparent background, and `#B60060` text. Used for \"Add to Cart\" alongside \"Buy Now\".\n- **Ghost/Tertiary Action:** Unbordered with `#211C23` or `#625A61` text, used for secondary actions like \"View Store\" or \"Clear Filters\".\n- **Touch Perimeter:** All icon-only triggers (like favorite heart, cart icon, back arrow) feature a 48×48px transparent hit zone bounding a 24×24px vector glyph.\n\n### Cards (Product Listing)\n- **Geometry:** `#FFFFFF` background, `8px` border radius, `1px solid #E4DFE3` perimeter border. Overflow is hidden to crop the top product image flush to the left, top, and right edges.\n- **Image Aspect:** 1:1 square ratio. Product photography renders against neutral backdrops without drop shadows or skewed promotional stickers.\n- **Content Hierarchy:**\n  1. Title: 2 lines maximum, `body-md` in `#211C23`.\n  2. Badge Row: Pill badges with 4px vertical, 8px horizontal padding; e.g., deep purple `#4C1268` for \"Official Store\" or pale pink `#FFF0F6` with `#B60060` text for \"Free Shipping\".\n  3. Price Display: Tabular `price-card` in `#B60060` (`₱XXX.XX`). Original crossed-out price rendered in `body-sm` `#625A61`.\n  4. Footer: Sold volume and star rating in `label-md` `#625A61`.\n\n### Input Fields & Search Bars\n- **Search Bar (Global App Header):** Pinned height of `44px`, `#FFFFFF` fill, `1px solid #E4DFE3` border, `8px` radius. Left-aligned search icon in `#625A61` paired with `body-md` placeholder text in `#625A61`.\n- **Form Inputs:** `48px` total height, inset `12px 16px` padding. Active focus state replaces `#E4DFE3` border with a crisp `1.5px solid #B60060` ring; no heavy outer glow rings are permitted.\n\n### Chips & Filter Pills\n- **Filter Chips:** Height `36px` inside a 48px touch bounding box. Unselected state has a `#FFFFFF` surface with a `1px solid #E4DFE3` border and `#211C23` text. Selected state switches to a solid `#4C1268` or `#B60060` fill with `#FFFFFF` label text.\n- **Micro Badges:** Height `20px`, `100px` pill radius, font size `10px` (`label-sm`).\n\n### Checkboxes & Radio Controls\n- **Hit Area:** Centered within an unpadded 48×48px touch zone.\n- **Checkbox:** `20×20px` square with `4px` radius. Unchecked has a `1.5px solid #625A61` border on a `#FFFFFF` fill. Checked is filled with `#B60060` showing a crisp white tick mark.\n- **Radio Button:** `20×20px` circle. Active state uses `#B60060` outer stroke with a concentrated 10px centered solid core.\n\n### Lists & Checkout Line Items\n- **Structure:** Clean vertical stacks on `#FFFFFF` surfaces separated by a `1px solid #E4DFE3` divider inset by `16px` on the leading edge.\n- **Layout:** Leading thumbnail (48×48px or 64×64px with `4px` radius), followed by an expandable title/variant stack, terminating in right-aligned tabular price notation.",
+    "theme": {
+      "bodyFont": "ROBOTO_FLEX",
+      "bodyFontFamily": "Roboto Flex",
+      "colorMode": "LIGHT",
+      "colorVariant": "FIDELITY",
+      "customColor": "#b60060",
+      "designMd": "---\nname: Sober Marketplace Commerce\ncolors:\n  surface: '#fff7fc'\n  surface-dim: '#e1d7e1'\n  surface-bright: '#fff7fc'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#fbf0fb'\n  surface-container: '#f5ebf5'\n  surface-container-high: '#f0e5ef'\n  surface-container-highest: '#eadfe9'\n  on-surface: '#1f1a21'\n  on-surface-variant: '#594047'\n  inverse-surface: '#342e36'\n  inverse-on-surface: '#f8eef8'\n  outline: '#8c7077'\n  outline-variant: '#e0bec6'\n  surface-tint: '#b90562'\n  primary: '#8b0048'\n  on-primary: '#ffffff'\n  primary-container: '#b60060'\n  on-primary-container: '#ffc7d6'\n  inverse-primary: '#ffb1c7'\n  secondary: '#7f469b'\n  on-secondary: '#ffffff'\n  secondary-container: '#e3a3ff'\n  on-secondary-container: '#6a3285'\n  tertiary: '#8b0047'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#b6005f'\n  on-tertiary-container: '#ffc7d5'\n  error: '#ba1a1a'\n  on-error: '#ffffff'\n  error-container: '#ffdad6'\n  on-error-container: '#93000a'\n  primary-fixed: '#ffd9e2'\n  primary-fixed-dim: '#ffb1c7'\n  on-primary-fixed: '#3e001d'\n  on-primary-fixed-variant: '#8e004a'\n  secondary-fixed: '#f7d9ff'\n  secondary-fixed-dim: '#e9b3ff'\n  on-secondary-fixed: '#310048'\n  on-secondary-fixed-variant: '#652d81'\n  tertiary-fixed: '#ffd9e2'\n  tertiary-fixed-dim: '#ffb1c7'\n  on-tertiary-fixed: '#3e001d'\n  on-tertiary-fixed-variant: '#8e0049'\n  background: '#fff7fc'\n  on-background: '#1f1a21'\n  surface-variant: '#eadfe9'\ntypography:\n  headline-lg:\n    fontFamily: Roboto Flex\n    fontSize: 24px\n    fontWeight: '700'\n    lineHeight: 32px\n    letterSpacing: -0.015em\n  headline-md:\n    fontFamily: Roboto Flex\n    fontSize: 20px\n    fontWeight: '700'\n    lineHeight: 26px\n    letterSpacing: -0.01em\n  headline-sm:\n    fontFamily: Roboto Flex\n    fontSize: 18px\n    fontWeight: '600'\n    lineHeight: 24px\n  title-lg:\n    fontFamily: Roboto Flex\n    fontSize: 16px\n    fontWeight: '600'\n    lineHeight: 22px\n  title-md:\n    fontFamily: Roboto Flex\n    fontSize: 14px\n    fontWeight: '600'\n    lineHeight: 20px\n  body-lg:\n    fontFamily: Roboto Flex\n    fontSize: 16px\n    fontWeight: '400'\n    lineHeight: 24px\n  body-md:\n    fontFamily: Roboto Flex\n    fontSize: 14px\n    fontWeight: '400'\n    lineHeight: 20px\n  body-sm:\n    fontFamily: Roboto Flex\n    fontSize: 12px\n    fontWeight: '400'\n    lineHeight: 16px\n  label-lg:\n    fontFamily: Roboto Flex\n    fontSize: 14px\n    fontWeight: '500'\n    lineHeight: 20px\n    letterSpacing: 0.01em\n  label-md:\n    fontFamily: Roboto Flex\n    fontSize: 12px\n    fontWeight: '500'\n    lineHeight: 16px\n    letterSpacing: 0.015em\n  label-sm:\n    fontFamily: Roboto Flex\n    fontSize: 10px\n    fontWeight: '600'\n    lineHeight: 14px\n    letterSpacing: 0.02em\n  price-hero:\n    fontFamily: Roboto Flex\n    fontSize: 22px\n    fontWeight: '700'\n    lineHeight: 26px\n    letterSpacing: -0.02em\n  price-card:\n    fontFamily: Roboto Flex\n    fontSize: 16px\n    fontWeight: '700'\n    lineHeight: 20px\n    letterSpacing: -0.01em\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  gutter: 0.5rem\n  gutter-md: 0.75rem\n  margin: 1rem\n  margin-tablet: 1.5rem\n  space-xs: 0.25rem\n  space-sm: 0.5rem\n  space-md: 0.75rem\n  space-lg: 1rem\n  space-xl: 1.5rem\n---\n\n## Brand & Style\n\nThis design system serves a high-trust, mobile-first Philippine e-commerce marketplace. The visual tone is grounded, pragmatic, and orderly, directly addressing the sensory overload common in Southeast Asian retail apps. Rather than relying on overwhelming promotional banners, persistent gamification widgets, or high-intensity flash-sale countdowns, this aesthetic embraces structured functional clarity, transparent pricing hierarchies, and an intentional editorial economy.\n\nThe interface pairs clean structural discipline with human warmth. It projects absolute merchant reliability, transparent shipping costs, and friction-free payment settlement. The aesthetic is clean modern utilitarianism: pure light canvases, structured card tiers, crisp hairline separators, and concentrated high-contrast actions. Brand pink is treated as a strategic punctuation mark rather than an ambient flood, focusing customer attention directly on authentic product photography, merchant ratings, and decisive checkout flows.\n\n## Colors\n\nThe palette operates strictly in a calibrated light mode to maintain product photography integrity and high-noon outdoor screen legibility across mobile devices in the Philippines.\n\n- **Canvas Background (`#F5F5F5`):** A cool, soft stone background that establishes clear spatial separation from layered content cards without visual fatigue.\n- **Surface Cards & Sheets (`#FFFFFF`):** High-purity white surfaces dedicated to product modules, transaction sheets, and persistent navigation bars.\n- **Primary Ink (`#211C23`):** Deep charcoal ink delivering a balanced contrast ratio for body copy, category titles, and merchant names.\n- **Secondary Ink / Muted (`#625A61`):** Mid-tone neutral reserved for auxiliary metadata, sold counts, delivery windows, and trailing specs.\n- **Borders & Hairstyle Dividers (`#E4DFE3`):** Soft, low-contrast structural strokes that compartmentalize content modules without creating visual clutter.\n- **Accessible Primary Action / Deal Ink (`#B60060`):** A concentrated, deep-magenta pink that exceeds WCAG AAA contrast requirements on `#FFFFFF` surfaces. Reserved for primary CTA buttons, final discounted prices, and active interaction states.\n- **Brand Accent / Badges (`#E6007A`):** The signature vibrant pink, deployed sparingly for small percentage-off chips, live broadcast dots, and verified seller indicators.\n- **Secondary Deep Purple (`#4C1268`):** Authoritative royal plum used for premium merchant tiers, cross-border express logistics tags, and secure payment assurances.\n- **System States:**\n  - Success: `#0E7A4A` (order delivered, voucher redeemed)\n  - Warning: `#A25800` (low stock, expiring coupon)\n  - Critical/Destructive: `#C51E28` (out of stock, cancel order)\n\n## Typography\n\nThe type system uses `Roboto Flex` for its density, universal cross-platform rendering, and tabular numeric legibility in multi-column pricing layouts.\n\n- **Currency & Price Treatment:** All prices must render with tabular figures (`tnum`). The Philippine Peso symbol (`₱`) uses `Roboto Flex` matching the adjacent numeric font size and weight. Avoid superscripting centavos unless space is constrained below 100px column widths.\n- **Product Titles:** Limited to a maximum of 2 lines in product cards (`title-md` or `body-md`) with CSS text truncation (`-webkit-line-clamp: 2`). Never center product titles; always align them to the leading edge.\n- **Badges and Micro-copy:** Labels at `10px` (`label-sm`) must use uppercase transformations with `+0.02em` tracking to preserve crisp edge definition on lower-density Android displays.\n\n## Layout & Spacing\n\nThe layout is built on a 4px/8px incremental spatial rhythm tailored for thumb-driven mobile commerce.\n\n- **Canvas Margins:** Standard mobile canvas uses an immutable outer page margin of `16px` (`1rem`). On tablet screens (600px+), outer margins expand to `24px` (`1.5rem`).\n- **Product Grid Model:** The primary feed uses a 2-column fluid grid on mobile devices. The gutter between product card columns is pinned at `8px` (`0.5rem`) to maximize card image area while preserving distinct boundary separation over the `#F5F5F5` canvas.\n- **Section Dividers:** Stacked screen sections (such as merchant store modules, delivery detail groups, and product specification accordions) are separated by `8px` empty space blocks on mobile, revealing the neutral `#F5F5F5` backing canvas as a structural gutter.\n- **Touch Ergonomics:** Interactive trigger points (such as filter chips, stepper increments, and icon buttons) maintain a minimum internal interactive perimeter of 48×48px, even when the visible glyph or chip is visually compact.\n\n## Elevation & Depth\n\nThis system avoids blurred colored glows, heavy drop shadows, and glassmorphic translucent washes. Depth is achieved through tonal stacking and minimal, diffused structural elevation.\n\n- **Base Layer (Elevation 0):** The global viewport canvas at `#F5F5F5`.\n- **Card Surface (Elevation 1):** `#FFFFFF` surfaces layered directly against `#F5F5F5` outlined with an explicit hairline border (`1px solid #E4DFE3`). In high-density card feeds, the border alone provides sufficient boundary containment without requiring box shadows.\n- **Raised Tonal Module (Elevation 2):** Applied to floating bottom checkout actions, sticky category tabs, and active cart summaries. Rendered with `#FFFFFF` background, a top hairline border (`1px solid #E4DFE3`), and a subtle, warm ambient shadow:\n  `box-shadow: 0px 2px 8px rgba(33, 28, 35, 0.06);`\n- **Modal Sheets & Overlays (Elevation 3):** Bottom sliding variant selectors and modal transaction dialogs use a direct backdrop veil (`rgba(33, 28, 35, 0.45)`) combined with an elevated card surface shadow:\n  `box-shadow: 0px 8px 24px rgba(33, 28, 35, 0.12);`\n\n## Shapes\n\nThe design system maintains a consistent structural geometry based on an `8px` (`0.5rem`) corner radius. This softens technical density without feeling overly playful or toy-like.\n\n- **Cards, Carousels, and Media Containers:** All image cards, listing surfaces, and dialog panels use an exact `8px` corner radius. Image thumbnails within cards preserve a nested inner radius matching the parent or retain square internal bounds when flush-mounted to card edges.\n- **Buttons and Input Controls:** Primary action buttons, text input fields, and search bars inherit the `8px` radius, providing consistent tactile cues across forms.\n- **Chips, Pills, and Meta Badges:** Contextual status tags (such as \"Free Shipping\" or \"Preferred Seller\") and quick filters use a fully rounded `100px` pill geometry (`rounded-full`) to clearly distinguish dynamic filter pills from selectable product cards.\n\n## Components\n\n### Buttons\n- **Primary Action (Call-to-Action):** Rendered with a solid `#B60060` fill, pure white `#FFFFFF` text, `title-md` font weight, `8px` corner radius, and a fixed height of `48px` to guarantee accessible mobile thumb strikes. Active pressed state shifts fill to `#94004E`.\n- **Secondary Action:** Outlined style with a `1.5px` border in `#B60060`, transparent background, and `#B60060` text. Used for \"Add to Cart\" alongside \"Buy Now\".\n- **Ghost/Tertiary Action:** Unbordered with `#211C23` or `#625A61` text, used for secondary actions like \"View Store\" or \"Clear Filters\".\n- **Touch Perimeter:** All icon-only triggers (like favorite heart, cart icon, back arrow) feature a 48×48px transparent hit zone bounding a 24×24px vector glyph.\n\n### Cards (Product Listing)\n- **Geometry:** `#FFFFFF` background, `8px` border radius, `1px solid #E4DFE3` perimeter border. Overflow is hidden to crop the top product image flush to the left, top, and right edges.\n- **Image Aspect:** 1:1 square ratio. Product photography renders against neutral backdrops without drop shadows or skewed promotional stickers.\n- **Content Hierarchy:**\n  1. Title: 2 lines maximum, `body-md` in `#211C23`.\n  2. Badge Row: Pill badges with 4px vertical, 8px horizontal padding; e.g., deep purple `#4C1268` for \"Official Store\" or pale pink `#FFF0F6` with `#B60060` text for \"Free Shipping\".\n  3. Price Display: Tabular `price-card` in `#B60060` (`₱XXX.XX`). Original crossed-out price rendered in `body-sm` `#625A61`.\n  4. Footer: Sold volume and star rating in `label-md` `#625A61`.\n\n### Input Fields & Search Bars\n- **Search Bar (Global App Header):** Pinned height of `44px`, `#FFFFFF` fill, `1px solid #E4DFE3` border, `8px` radius. Left-aligned search icon in `#625A61` paired with `body-md` placeholder text in `#625A61`.\n- **Form Inputs:** `48px` total height, inset `12px 16px` padding. Active focus state replaces `#E4DFE3` border with a crisp `1.5px solid #B60060` ring; no heavy outer glow rings are permitted.\n\n### Chips & Filter Pills\n- **Filter Chips:** Height `36px` inside a 48px touch bounding box. Unselected state has a `#FFFFFF` surface with a `1px solid #E4DFE3` border and `#211C23` text. Selected state switches to a solid `#4C1268` or `#B60060` fill with `#FFFFFF` label text.\n- **Micro Badges:** Height `20px`, `100px` pill radius, font size `10px` (`label-sm`).\n\n### Checkboxes & Radio Controls\n- **Hit Area:** Centered within an unpadded 48×48px touch zone.\n- **Checkbox:** `20×20px` square with `4px` radius. Unchecked has a `1.5px solid #625A61` border on a `#FFFFFF` fill. Checked is filled with `#B60060` showing a crisp white tick mark.\n- **Radio Button:** `20×20px` circle. Active state uses `#B60060` outer stroke with a concentrated 10px centered solid core.\n\n### Lists & Checkout Line Items\n- **Structure:** Clean vertical stacks on `#FFFFFF` surfaces separated by a `1px solid #E4DFE3` divider inset by `16px` on the leading edge.\n- **Layout:** Leading thumbnail (48×48px or 64×64px with `4px` radius), followed by an expandable title/variant stack, terminating in right-aligned tabular price notation.",
+      "font": "ROBOTO_FLEX",
+      "headlineFont": "ROBOTO_FLEX",
+      "headlineFontFamily": "Roboto Flex",
+      "labelFont": "ROBOTO_FLEX",
+      "labelFontFamily": "Roboto Flex",
+      "namedColors": {
+        "background": "#fff7fc",
+        "error": "#ba1a1a",
+        "error_container": "#ffdad6",
+        "inverse_on_surface": "#f8eef8",
+        "inverse_primary": "#ffb1c7",
+        "inverse_surface": "#342e36",
+        "on_background": "#1f1a21",
+        "on_error": "#ffffff",
+        "on_error_container": "#93000a",
+        "on_primary": "#ffffff",
+        "on_primary_container": "#ffc7d6",
+        "on_primary_fixed": "#3e001d",
+        "on_primary_fixed_variant": "#8e004a",
+        "on_secondary": "#ffffff",
+        "on_secondary_container": "#6a3285",
+        "on_secondary_fixed": "#310048",
+        "on_secondary_fixed_variant": "#652d81",
+        "on_surface": "#1f1a21",
+        "on_surface_variant": "#594047",
+        "on_tertiary": "#ffffff",
+        "on_tertiary_container": "#ffc7d5",
+        "on_tertiary_fixed": "#3e001d",
+        "on_tertiary_fixed_variant": "#8e0049",
+        "outline": "#8c7077",
+        "outline_variant": "#e0bec6",
+        "primary": "#8b0048",
+        "primary_container": "#b60060",
+        "primary_fixed": "#ffd9e2",
+        "primary_fixed_dim": "#ffb1c7",
+        "secondary": "#7f469b",
+        "secondary_container": "#e3a3ff",
+        "secondary_fixed": "#f7d9ff",
+        "secondary_fixed_dim": "#e9b3ff",
+        "surface": "#fff7fc",
+        "surface_bright": "#fff7fc",
+        "surface_container": "#f5ebf5",
+        "surface_container_high": "#f0e5ef",
+        "surface_container_highest": "#eadfe9",
+        "surface_container_low": "#fbf0fb",
+        "surface_container_lowest": "#ffffff",
+        "surface_dim": "#e1d7e1",
+        "surface_tint": "#b90562",
+        "surface_variant": "#eadfe9",
+        "tertiary": "#8b0047",
+        "tertiary_container": "#b6005f",
+        "tertiary_fixed": "#ffd9e2",
+        "tertiary_fixed_dim": "#ffb1c7"
+      },
+      "overrideNeutralColor": "#211c23",
+      "overridePrimaryColor": "#b60060",
+      "overrideSecondaryColor": "#4c1268",
+      "overrideTertiaryColor": "#e6007a",
+      "roundness": "ROUND_EIGHT",
+      "spacing": {
+        "gutter": "0.5rem",
+        "gutter-md": "0.75rem",
+        "margin": "1rem",
+        "margin-tablet": "1.5rem",
+        "space-lg": "1rem",
+        "space-md": "0.75rem",
+        "space-sm": "0.5rem",
+        "space-xl": "1.5rem",
+        "space-xs": "0.25rem"
+      },
+      "spacingScale": 2,
+      "typography": {
+        "body-lg": {
+          "fontFamily": "Roboto Flex",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "lineHeight": "24px"
+        },
+        "body-md": {
+          "fontFamily": "Roboto Flex",
+          "fontSize": "14px",
+          "fontWeight": "400",
+          "lineHeight": "20px"
+        },
+        "body-sm": {
+          "fontFamily": "Roboto Flex",
+          "fontSize": "12px",
+          "fontWeight": "400",
+          "lineHeight": "16px"
+        },
+        "headline-lg": {
+          "fontFamily": "Roboto Flex",
+          "fontSize": "24px",
+          "fontWeight": "700",
+          "letterSpacing": "-0.015em",
+          "lineHeight": "32px"
+        },
+        "headline-md": {
+          "fontFamily": "Roboto Flex",
+          "fontSize": "20px",
+          "fontWeight": "700",
+          "letterSpacing": "-0.01em",
+          "lineHeight": "26px"
+        },
+        "headline-sm": {
+          "fontFamily": "Roboto Flex",
+          "fontSize": "18px",
+          "fontWeight": "600",
+          "lineHeight": "24px"
+        },
+        "label-lg": {
+          "fontFamily": "Roboto Flex",
+          "fontSize": "14px",
+          "fontWeight": "500",
+          "letterSpacing": "0.01em",
+          "lineHeight": "20px"
+        },
+        "label-md": {
+          "fontFamily": "Roboto Flex",
+          "fontSize": "12px",
+          "fontWeight": "500",
+          "letterSpacing": "0.015em",
+          "lineHeight": "16px"
+        },
+        "label-sm": {
+          "fontFamily": "Roboto Flex",
+          "fontSize": "10px",
+          "fontWeight": "600",
+          "letterSpacing": "0.02em",
+          "lineHeight": "14px"
+        },
+        "price-card": {
+          "fontFamily": "Roboto Flex",
+          "fontSize": "16px",
+          "fontWeight": "700",
+          "letterSpacing": "-0.01em",
+          "lineHeight": "20px"
+        },
+        "price-hero": {
+          "fontFamily": "Roboto Flex",
+          "fontSize": "22px",
+          "fontWeight": "700",
+          "letterSpacing": "-0.02em",
+          "lineHeight": "26px"
+        },
+        "title-lg": {
+          "fontFamily": "Roboto Flex",
+          "fontSize": "16px",
+          "fontWeight": "600",
+          "lineHeight": "22px"
+        },
+        "title-md": {
+          "fontFamily": "Roboto Flex",
+          "fontSize": "14px",
+          "fontWeight": "600",
+          "lineHeight": "20px"
+        }
+      }
+    }
+  },
+  "name": "assets/209b92e003bd4111b4e38fd6ede0e1ce",
+  "version": "1"
+}
