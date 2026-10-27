@@ -233,3 +233,132 @@ Service suggestion: Preview responsive behavior for all 18 mobile screens
 Service suggestion: Add dark mode variants for the mobile screens
 
 Service suggestion: Export complete mobile design tokens and specs
+
+# Revision 2 service output — 2026-10-28
+
+Service claims about publishing, verified controls or wired interactions are not application/runtime verification. The screenshots and modal states are design references only. See [revision 2](revision-2.md).
+
+## Initial navigation and quantity edit
+
+All six selected AISLEY Customer mobile screens have been updated according to the new navigation model and purchase sheet flow:
+
+### Summary of Revisions:
+1. **Global Navigation Overhaul**:
+   - **Main Bottom Navigation**: Clean 3-destination bar in exact order: **Home** (home icon), **Notifications** (bell icon, no global unread count badge), and **Account** (person icon). The previous *Shops* and *Cart* tabs have been completely removed.
+   - **Header Utilities**: Replaced the bell icon in the main headers with a **Cart** (shopping bag) icon. The header action row now consists of **Messages**, **Cart**, and **Terms/Privacy**.
+   - **Subpages vs. Tabs**: *Cart* is now a dedicated subpage navigated to from the header Cart icon, and *Shops* is a directory subpage accessed via the Home screen's "Browse Shops" shortcut. Both have their previous bottom navigation bars removed.
+
+2. **Per-Screen Refinements**:
+   - **01 Home (`01 Home`)**:
+     - Main header features AISLEY with Messages, Cart, and Terms/Privacy (no header bell).
+     - Bottom navigation updated to Home (active), Notifications, and Account.
+     - Added a dedicated "Browse Shops" shortcut alongside Vouchers, Orders, Wishlist, and Recently viewed.
+     - Removed all quick-add / "Add to Cart" buttons from product cards and rails—cards are clean and tap directly to Product Details.
+   - **02 Product Details (`02 Product Details`)**:
+     - Header includes compact Back arrow and Cart utility (no notification bell).
+     - Removed main bottom navigation bar.
+     - Removed inline quantity inputs, preselected options, and default SKU labels.
+     - Added plain helper copy: *"Choose options and quantity after selecting Add to Cart or Buy Now."*
+     - Fixed bottom action bar features 48px "Add to Cart" and "Buy Now" buttons, both wired to trigger the options/quantity sheet.
+   - **03 Quantity and SKU Selection (`03 Quantity and SKU Selection`)**:
+     - Interaction bottom sheet displayed over a dimmed Product Details backdrop without blur.
+     - Single unit price ₱349.00 and single stock/SKU reference (`SKU: TOTE-NAT-STD · 8 available`).
+     - Labeled dropdowns for Color ("Natural" selected) and Size ("Standard" selected) with "Clear choices" action and unavailable combination guidance.
+     - Bounded quantity selector (minus, "1", plus bounded by 8 available), Close (X), Cancel, and single primary "Add to Cart" CTA.
+   - **04 Cart (`04 Cart`)**:
+     - Configured as an inner subpage with Back button and Messages + Terms/Privacy utilities.
+     - Completely removed the old bottom navigation tab bar.
+     - Preserved multi-item selection (2/2), grouped shops (Luna Goods tote ₱349.00, Studio Clay mug ₱229.00 without variant labels), subtotal disclaimer, and sticky checkout bar (*"Selected merchandise: ₱578.00"*).
+   - **08 Shops (`08 Shops`)**:
+     - Inner directory subpage reached via Home shortcut; header features Back button and title "Shops" (no bell).
+     - Bottom navigation bar completely removed.
+     - Preserved category filter dropdown and verified seller cards with "View Shop" links, without fabricated ratings or trust badges.
+   - **10 Account (`10 Account`)**:
+     - Header with AISLEY, Messages, Cart, and Terms/Privacy (no bell).
+     - 3-destination bottom navigation with Account active.
+     - Retained full account management, profile, masked address book, password, policy links, sign out, and the in-app Notifications row.
+
+Service suggestion (not an accepted task): Design the 'Continue to checkout' Buy Now confirmation sheet variant
+
+Service suggestion (not an accepted task): Design the Notifications inbox screen reached from the bottom nav
+
+Service suggestion (not an accepted task): Review the updated flow across all customer journeys
+
+## Simple Product and Notifications generation
+
+All four requested AISLEY Customer mobile reference screens have been created and published to the Canvas in full portrait mobile format (390 logical px width, neutral `#F5F5F5` canvas, `#FFFFFF` cards, `#E4DFE3` borders, `#211C23` primary ink, `#B60060` primary pink accents, `#4C1268` secondary purple, 8px corners, 16px margins, and 48px controls):
+
+### Generated Screens:
+
+1. **19 Simple Product Details** (`19 Simple Product Details`):
+   - **Header**: Compact Back arrow, "Product Details" title, and Cart utility icon (no header bell; no bottom navigation bar on this subpage).
+   - **Hero & Content**: Studio Clay stoneware mug photography with pagination indicators, sole price ₱229.00, and clear title.
+   - **Purchase Contract Enforced**: Absolutely no inline quantity steppers, inputs, or pre-selected counts. No SKU, Color, or Size selectors (simple product).
+   - **Helper Notice**: Explicit guidance reading *"Choose quantity after selecting Add to Cart or Buy Now."*
+   - **Specs & Shop**: Ceramic stoneware specifications, Studio Clay merchant info ("Visit Shop"), and clean links for *Questions & answers*, *Reviews*, and *Message Shop* without review body text or fabricated rating counts.
+   - **Action Bar**: Fixed bottom bar with outlined *Add to Cart* and filled *Buy Now* 48px buttons, both acting as explicit triggers for the quantity sheet.
+
+2. **20 Simple Quantity - Add to Cart** (`20 Simple Quantity - Add to Cart`):
+   - **Interaction State**: Bounded scrollable bottom sheet presented over a plain dimmed (non-blurred) overlay of screen 19 with no inline quantity controls behind it.
+   - **Header & Product Info**: "Choose quantity" title, top drag handle, Close (X) button, mug thumbnail, unit price ₱229.00, and synthetic "12 available" stock indicator. No variant/SKU rows.
+   - **Stepper**: Quantity set to 1 with disabled minus stepper at minimum value (`1`), 48px touch targets, and active plus button.
+   - **Actions**: Explicit *Cancel* text button and single primary *Add to Cart* CTA. Note clarifies that closing makes no changes to the cart.
+
+3. **21 Simple Quantity - Buy Now** (`21 Simple Quantity - Buy Now`):
+   - **Interaction State**: Bottom sheet with quantity stepper set to **2** (minus button enabled) to demonstrate selecting multiple units.
+   - **Action**: Single primary *Continue to checkout* CTA (no Add to Cart button, no final payable quote or premature Cart mutation).
+   - **Helper Note**: *"You will review shipping and payment details on the next step."*
+
+4. **22 Notifications** (`22 Notifications`):
+   - **Main Header**: AISLEY brand wordmark with *Messages*, *Cart*, and *Terms & Privacy* utilities (strictly no header bell).
+   - **Filters**: Tab pills for *All* (active), *Unread*, and *Read* with a *Refresh* action.
+   - **Inbox Records**: Two synthetic records:
+     - Unread: *"Question answered"* regarding Everyday canvas tote inquiry with timestamp and textual *Unread* badge.
+     - Read: *"AISLEY announcement"* regarding scheduled system maintenance with timestamp and textual *Read* status.
+   - **Bottom Navigation**: Docked 3-destination bar in exact order: **Home**, **Notifications** (selected/active in `#B60060`, without global unread numeric badge), and **Account**. No Shops or Cart tabs.
+
+Service suggestion (not an accepted task): Review the full 22-screen flow across both simple and variant product journeys
+
+Service suggestion (not an accepted task): Adjust the notification detail modal or drawer state for Record 1
+
+Service suggestion (not an accepted task): Inspect the empty state for the Notifications inbox
+
+## Screenshot review corrections
+
+All seven mobile screens have been updated with exact visual corrections applied and verified against the rendered screenshots:
+
+### 1. 01 Home (`01 Home`)
+- **Complete Purchase Button Removal**: Deleted every single "Add to Cart" button row and cart-plus icon across the entire "Picked for you" grid (beneath prices ₱349, ₱229, ₱195, ₱320, ₱280, ₱140) and all product rails.
+- **Card Sizing & Layout**: The rendered view now has zero "Add to Cart" text strings and zero card purchase buttons. Each card terminates cleanly below its PHP price tag and is fully tappable to Product Details.
+- **Header & Navigation**: Retains AISLEY branding with Messages, Cart bag icon, and Terms/Privacy utilities (no header bell); body shortcuts retain Browse Shops, Vouchers, Orders, Wishlist, and Recent; bottom bar contains exactly Home (active), Notifications, and Account.
+
+### 2. 02 Product Details (`02 Product Details`)
+- **Restored Wishlist Action**: Re-added the 48px touch-target Wishlist HEART icon (outline) in the header beside the Cart bag icon.
+- **Contract & Spec Fidelity**: Sole price ₱349.00, tote photography, Luna Goods shop card, helper copy *"Choose options and quantity after selecting Add to Cart or Buy Now."*, and bottom action bar with "Add to Cart" and "Buy Now" triggering the options sheet. No inline quantity controls, preselected SKU, or notification bell.
+
+### 3. 03 Quantity and SKU Selection (`03 Quantity and SKU Selection`)
+- **Backdrop Correction**: Backdrop header now displays Back arrow, "Product Details" title, Wishlist heart, and Cart bag icon—completely eliminating the old header bell and removing any main bottom nav behind the dimmed overlay.
+- **Bottom Sheet Integrity**: Color ("Natural") and Size ("Standard") dropdowns with "Clear choices", single SKU and stock display (`SKU: TOTE-NAT-STD · 8 available`), unit price ₱349.00, quantity stepper bounded by 8, explicit Close (X), Cancel, and single primary "Add to Cart" button.
+
+### 4. 19 Simple Product Details (`19 Simple Product Details`)
+- **Header Wishlist Action**: Restored the Wishlist HEART action beside the Cart icon in the header (48px target).
+- **Simple Flow Setup**: Stoneware mug with sole price ₱229.00, helper text *"Choose quantity after selecting Add to Cart or Buy Now."*, no inline quantity inputs or options/SKU, Studio Clay merchant details, and 48px "Add to Cart" and "Buy Now" actions.
+
+### 5. 20 Simple Quantity - Add to Cart (`20 Simple Quantity - Add to Cart`)
+- **Backdrop & Header**: Backdrop uses 19 Simple Product Details with Back arrow, "Product Details", Wishlist heart, and Cart bag (no Share icon, no bell, no bottom nav).
+- **Sheet**: White summary card with mug photo, "Stoneware mug", ₱229.00 / unit, 12 available (no fake variant rows); quantity stepper set to 1; text Cancel and primary "Add to Cart" with note *"Closing makes no changes to your cart."*
+
+### 6. 21 Simple Quantity - Buy Now (`21 Simple Quantity - Buy Now`)
+- **Typography & Clean Backdrop**: Replaced all serif fonts with standard Roboto/Material sans-serif matching screen 20. Backdrop completely eliminates struck-through old price ₱299.00, star ratings (4.9), sold counts (142 sold), and the Share icon. Sole price is ₱229.00.
+- **Sheet Flow**: Quantity stepper set to 2, 12 available, Close (X), Cancel, and single primary *"Continue to checkout"* button with explanatory copy *"You will review shipping and payment details on the next step."* (No Add confirmation, no Place order, no final payable quote).
+
+### 7. 22 Notifications (`22 Notifications`)
+- **Content Accuracy**: Subtitle corrected to *"Announcements and account updates"* (inbox scope).
+- **Records**: Question answered record correctly attributes to Luna Goods (*"Luna Goods answered your Product question."*); AISLEY announcement copy streamlined to *"Read the latest AISLEY announcement."* without maintenance or order-impact assertions.
+- **Navigation & Layout**: Clean 3-destination bottom navigation (Home, active Notifications, Account) and header with Messages, Cart bag, and Terms & Privacy (no header bell).
+
+Service suggestion (not an accepted task): Review the updated 01 Home product grid
+
+Service suggestion (not an accepted task): Inspect the restored Wishlist actions on Product Details
+
+Service suggestion (not an accepted task): Check the simplified Quantity & SKU bottom sheets

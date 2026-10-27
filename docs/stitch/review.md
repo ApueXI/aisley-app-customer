@@ -1,5 +1,7 @@
 # Stitch reference review — 2026-10-28
 
+Historical first-pass review. [Revision 2](revision-2.md) is the current user-requested navigation/purchase direction. The latest manifest/gallery can replace first-pass screenshots while retaining their original IDs as superseded history.
+
 These are reviewed design drafts, not approved implementation specifications. Review used returned PNGs, current Flutter presentation source and the linked feature contracts. Static images cannot establish implemented behavior or measured accessibility.
 
 ## Work completed

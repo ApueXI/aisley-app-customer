@@ -3,6 +3,8 @@
 Recorded 2026-10-28 (Asia/Manila). This is a mobile design-reference exercise.
 It does not implement, approve or replace the Flutter UI or feature contracts.
 
+Current design direction: [revision 2](revision-2.md) supersedes the initial navigation and purchase-control placement below. Stitch now targets Home/Notifications/Account bottom navigation, header Cart instead of the header bell, no Home quick-add buttons, and purchase-sheet quantity selection for every Product. The sections below preserve the initial source-inspection context; the Flutter application remains unchanged.
+
 ## Authority
 
 - [Project rules](../../AGENTS.md), [progress](../PROGRESS.md), [Buyer design](../design-buyer.md) and [Customer specification rules](../features/customer/rule.md) govern this work.

@@ -2,6 +2,8 @@
 
 Stitch screen IDs, file resource names and local screenshots are recorded in [manifest.json](manifest.json). Numbered names are reference labels, not new Flutter routes. Each generated design is a draft for review; it grants no new API capability.
 
+[Revision 2](revision-2.md) governs the current design direction. Home/Notifications/Account are main navigation in these references; Cart and Shops are utility subpages. The unchanged Flutter router still uses its existing navigation until implementation is separately requested.
+
 | Reference | Existing route / flow | Feature authority |
 | --- | --- | --- |
 | 01 Home | `/` | [Homepage](../features/customer/customer-homepage/spec.md) |
@@ -22,10 +24,14 @@ Stitch screen IDs, file resource names and local screenshots are recorded in [ma
 | 16 Sign In | `/login` | [Authentication](../features/customer/customer-auth/spec.md), [navigation gate](../features/customer/customer_verify_auth/spec.md) |
 | 17 Required Consent | `/consent` | [Shared policies](../features/shared/policy-viewing-consent/spec.md) |
 | 18 Address Book | `/account/addresses` | [Address Book](../features/customer/address-book/spec.md) |
+| 19 Simple Product Details | `/products/:id` for a Product without options | [Product](../features/customer/view-product/spec.md), [revision 2](revision-2.md) |
+| 20 Simple Quantity - Add to Cart | Purchase sheet from a simple Product; no independent route | [Product](../features/customer/view-product/spec.md), [Cart](../features/customer/view-cart/spec.md), [revision 2](revision-2.md) |
+| 21 Simple Quantity - Buy Now | Purchase sheet before Buy Now checkout intent; no independent route | [Product](../features/customer/view-product/spec.md), [Checkout](../features/customer/checkout-order/spec.md), [revision 2](revision-2.md) |
+| 22 Notifications | `/notifications` in the requested main-navigation position | [Notifications](../features/customer/notifications/spec.md), [revision 2](revision-2.md) |
 
 ## Related screens not separately illustrated in this pass
 
-Existing routes also include registration/email OTP, approval, session retry, recovery, policy current/history, profile/photo, password/email-code confirmation, promotional preferences, address create/edit/pin, Wishlist/history, voucher detail/wallet, committed checkout result, separate channel inboxes/Logistics/Courier threads, notifications/detail, Q&A, reviews/composer and support tickets/create/thread. They retain their contracts and existing Flutter implementation. A representative Account or Messages screenshot does not constitute a design for each of these routes or each error state.
+Existing routes also include registration/email OTP, approval, session retry, recovery, policy current/history, profile/photo, password/email-code confirmation, promotional preferences, address create/edit/pin, Wishlist/history, voucher detail/wallet, committed checkout result, separate channel inboxes/Logistics/Courier threads, notification detail, Q&A, reviews/composer and support tickets/create/thread. They retain their contracts and existing Flutter implementation. A representative Account or Messages screenshot does not constitute a design for each of these routes or each error state.
 
 No new screen, navigation destination, endpoint, dependency or capability is adopted by this inventory. For eventual work, read each owning specification and actual controller before refining an unillustrated route. In particular, Order modification/cancellation must retain server capabilities; a generic action in a generated image cannot authorize either.
 
