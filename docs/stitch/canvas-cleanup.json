@@ -1,0 +1,285 @@
+{
+  "schemaVersion": 1,
+  "recordedOn": "2026-10-28",
+  "project": {
+    "id": "3960147693568073492",
+    "resourceName": "projects/3960147693568073492",
+    "title": "AISLEY Customer",
+    "visibility": "PRIVATE",
+    "url": "https://stitch.withgoogle.com/projects/3960147693568073492",
+    "urlSource": "Convenience URL constructed from returned project ID"
+  },
+  "status": "pending_browser_access",
+  "remoteDeletionsPerformed": 0,
+  "reason": "Connected Stitch MCP exposes project deletion but no individual screen deletion, removal or canvas hiding. No authenticated browser is available.",
+  "keepCount": 22,
+  "removeCount": 29,
+  "preserveDesignSystem": "assets/209b92e003bd4111b4e38fd6ede0e1ce",
+  "keep": [
+    {
+      "title": "01 Home",
+      "resourceName": "projects/3960147693568073492/screens/146d3cfafee646faa02ce82f31f05565",
+      "screenId": "146d3cfafee646faa02ce82f31f05565"
+    },
+    {
+      "title": "02 Product Details",
+      "resourceName": "projects/3960147693568073492/screens/3de32680e48a428d8121176312f3e834",
+      "screenId": "3de32680e48a428d8121176312f3e834"
+    },
+    {
+      "title": "03 Quantity and SKU Selection",
+      "resourceName": "projects/3960147693568073492/screens/95ce65c217504cceb937442fb7ef986c",
+      "screenId": "95ce65c217504cceb937442fb7ef986c"
+    },
+    {
+      "title": "04 Cart",
+      "resourceName": "projects/3960147693568073492/screens/0e7b92c42be544ea8bdd8efb24983cf8",
+      "screenId": "0e7b92c42be544ea8bdd8efb24983cf8"
+    },
+    {
+      "title": "05 Checkout",
+      "resourceName": "projects/3960147693568073492/screens/f83961bc1f834506859a2b322c4eddb9",
+      "screenId": "f83961bc1f834506859a2b322c4eddb9"
+    },
+    {
+      "title": "06 Checkout Recovery",
+      "resourceName": "projects/3960147693568073492/screens/63121b93171643f29205bdb38abd1239",
+      "screenId": "63121b93171643f29205bdb38abd1239"
+    },
+    {
+      "title": "07 Search",
+      "resourceName": "projects/3960147693568073492/screens/24c2ad0947474511b2906663c19b3d48",
+      "screenId": "24c2ad0947474511b2906663c19b3d48"
+    },
+    {
+      "title": "08 Shops",
+      "resourceName": "projects/3960147693568073492/screens/d11949191d9d44c2a4fc2b883a6122dc",
+      "screenId": "d11949191d9d44c2a4fc2b883a6122dc"
+    },
+    {
+      "title": "09 Shop Storefront",
+      "resourceName": "projects/3960147693568073492/screens/1463794dc9064f65bc406e338874f442",
+      "screenId": "1463794dc9064f65bc406e338874f442"
+    },
+    {
+      "title": "10 Account",
+      "resourceName": "projects/3960147693568073492/screens/60dbc31d98774e3d8d25e330ae71eef7",
+      "screenId": "60dbc31d98774e3d8d25e330ae71eef7"
+    },
+    {
+      "title": "11 Orders",
+      "resourceName": "projects/3960147693568073492/screens/6f7f56cfd0e84812a13a2ff48c1362cd",
+      "screenId": "6f7f56cfd0e84812a13a2ff48c1362cd"
+    },
+    {
+      "title": "12 Order Details and Tracking",
+      "resourceName": "projects/3960147693568073492/screens/cd160c3efe4c4485a2c17b0763b087f3",
+      "screenId": "cd160c3efe4c4485a2c17b0763b087f3"
+    },
+    {
+      "title": "13 Vouchers",
+      "resourceName": "projects/3960147693568073492/screens/896b978baee2431abef1d5656b5efc20",
+      "screenId": "896b978baee2431abef1d5656b5efc20"
+    },
+    {
+      "title": "14 Messages",
+      "resourceName": "projects/3960147693568073492/screens/80ffda80b4bb4cbb804a81cfd4ce5341",
+      "screenId": "80ffda80b4bb4cbb804a81cfd4ce5341"
+    },
+    {
+      "title": "15 Shop Conversation",
+      "resourceName": "projects/3960147693568073492/screens/df35b726ad624541809f4f39c6a6e6ac",
+      "screenId": "df35b726ad624541809f4f39c6a6e6ac"
+    },
+    {
+      "title": "16 Sign In",
+      "resourceName": "projects/3960147693568073492/screens/300655e5b8334b6da7c5ac090f27b139",
+      "screenId": "300655e5b8334b6da7c5ac090f27b139"
+    },
+    {
+      "title": "17 Required Consent",
+      "resourceName": "projects/3960147693568073492/screens/ab77df59915b4ddda6e6b4915a975de2",
+      "screenId": "ab77df59915b4ddda6e6b4915a975de2"
+    },
+    {
+      "title": "18 Address Book",
+      "resourceName": "projects/3960147693568073492/screens/7e074497047645d1afbc793f1a879c9c",
+      "screenId": "7e074497047645d1afbc793f1a879c9c"
+    },
+    {
+      "title": "19 Simple Product Details",
+      "resourceName": "projects/3960147693568073492/screens/75a9fa14124e46ee91c5daf7609950e5",
+      "screenId": "75a9fa14124e46ee91c5daf7609950e5"
+    },
+    {
+      "title": "20 Simple Quantity - Add to Cart",
+      "resourceName": "projects/3960147693568073492/screens/1659b32d3f304cb5aa7bf2c0e3d8c433",
+      "screenId": "1659b32d3f304cb5aa7bf2c0e3d8c433"
+    },
+    {
+      "title": "21 Simple Quantity - Buy Now",
+      "resourceName": "projects/3960147693568073492/screens/412d3e0b4ec54d2abb61026adfa418cd",
+      "screenId": "412d3e0b4ec54d2abb61026adfa418cd"
+    },
+    {
+      "title": "22 Notifications",
+      "resourceName": "projects/3960147693568073492/screens/f41d9a02ec57464d8900345ac66cca3d",
+      "screenId": "f41d9a02ec57464d8900345ac66cca3d"
+    }
+  ],
+  "remove": [
+    {
+      "title": "11 Orders",
+      "instanceId": "007ee14f530a4d52a7ee24b8628a2b3a",
+      "resourceName": "projects/3960147693568073492/screens/007ee14f530a4d52a7ee24b8628a2b3a"
+    },
+    {
+      "title": "14 Messages",
+      "instanceId": "0dac4419452d4b40a4e0b9f401ce114c",
+      "resourceName": "projects/3960147693568073492/screens/0dac4419452d4b40a4e0b9f401ce114c"
+    },
+    {
+      "title": "17 Required Consent",
+      "instanceId": "1875f3f96ab447f4a4e3cb0fe3eb7567",
+      "resourceName": "projects/3960147693568073492/screens/1875f3f96ab447f4a4e3cb0fe3eb7567"
+    },
+    {
+      "title": "02 Product Details",
+      "instanceId": "1b09e7f670a242afb5cfa8c63b9260c9",
+      "resourceName": "projects/3960147693568073492/screens/1b09e7f670a242afb5cfa8c63b9260c9"
+    },
+    {
+      "title": "21 Simple Quantity - Buy Now",
+      "instanceId": "1e1074dbd8ca49a1a2b0474616c10c62",
+      "resourceName": "projects/3960147693568073492/screens/1e1074dbd8ca49a1a2b0474616c10c62"
+    },
+    {
+      "title": "20 Simple Quantity - Add to Cart",
+      "instanceId": "2c95e9a9ec584a29a53a8381ae672972",
+      "resourceName": "projects/3960147693568073492/screens/2c95e9a9ec584a29a53a8381ae672972"
+    },
+    {
+      "title": "05 Checkout",
+      "instanceId": "352b0ffdbfc244149455c33a8e9ad128",
+      "resourceName": "projects/3960147693568073492/screens/352b0ffdbfc244149455c33a8e9ad128"
+    },
+    {
+      "title": "01 Home",
+      "instanceId": "3f1f878dbae04fafaf9e03865a0bfcfd",
+      "resourceName": "projects/3960147693568073492/screens/3f1f878dbae04fafaf9e03865a0bfcfd"
+    },
+    {
+      "title": "04 Cart",
+      "instanceId": "407e472b09df40648bfb5fe02fab06d6",
+      "resourceName": "projects/3960147693568073492/screens/407e472b09df40648bfb5fe02fab06d6"
+    },
+    {
+      "title": "02 Product Details",
+      "instanceId": "40c785b993b548d4878654b1178a8b77",
+      "resourceName": "projects/3960147693568073492/screens/40c785b993b548d4878654b1178a8b77"
+    },
+    {
+      "title": "08 Shops",
+      "instanceId": "484abba3fcf8463495aa9b0b2b26031a",
+      "resourceName": "projects/3960147693568073492/screens/484abba3fcf8463495aa9b0b2b26031a"
+    },
+    {
+      "title": "03 Quantity and SKU Selection",
+      "instanceId": "4889189d79d74815a197813134d73052",
+      "resourceName": "projects/3960147693568073492/screens/4889189d79d74815a197813134d73052"
+    },
+    {
+      "title": "16 Sign In",
+      "instanceId": "506d3212b1de4af0a7e5f06f988d55d9",
+      "resourceName": "projects/3960147693568073492/screens/506d3212b1de4af0a7e5f06f988d55d9"
+    },
+    {
+      "title": "13 Vouchers",
+      "instanceId": "54b0864026ee4f789077076a9f469bcf",
+      "resourceName": "projects/3960147693568073492/screens/54b0864026ee4f789077076a9f469bcf"
+    },
+    {
+      "title": "03 Quantity and SKU Selection",
+      "instanceId": "562833335ddf4098b3afb036134feb69",
+      "resourceName": "projects/3960147693568073492/screens/562833335ddf4098b3afb036134feb69"
+    },
+    {
+      "title": "01 Home",
+      "instanceId": "5f4992cd856746368cd242d54aeb0e24",
+      "resourceName": "projects/3960147693568073492/screens/5f4992cd856746368cd242d54aeb0e24"
+    },
+    {
+      "title": "06 Checkout Recovery",
+      "instanceId": "68ce09994d0f43ccaf272c85bef3751d",
+      "resourceName": "projects/3960147693568073492/screens/68ce09994d0f43ccaf272c85bef3751d"
+    },
+    {
+      "title": "10 Account",
+      "instanceId": "6b5efc71f28343d8bca9744e55ae3f66",
+      "resourceName": "projects/3960147693568073492/screens/6b5efc71f28343d8bca9744e55ae3f66"
+    },
+    {
+      "title": "09 Shop Storefront",
+      "instanceId": "7085d4721de347adb4b4cd48c25cffe7",
+      "resourceName": "projects/3960147693568073492/screens/7085d4721de347adb4b4cd48c25cffe7"
+    },
+    {
+      "title": "04 Cart",
+      "instanceId": "735ac03b78db4307bc3264d537bd6789",
+      "resourceName": "projects/3960147693568073492/screens/735ac03b78db4307bc3264d537bd6789"
+    },
+    {
+      "title": "03 Quantity and SKU Selection",
+      "instanceId": "9bc3a8c145b7444385e1bb7b6a42312f",
+      "resourceName": "projects/3960147693568073492/screens/9bc3a8c145b7444385e1bb7b6a42312f"
+    },
+    {
+      "title": "18 Address Book",
+      "instanceId": "aa2425b6da02414c9be75a63f19271d0",
+      "resourceName": "projects/3960147693568073492/screens/aa2425b6da02414c9be75a63f19271d0"
+    },
+    {
+      "title": "02 Product Details",
+      "instanceId": "b952c5357fa643f3ab62c80899a1dee3",
+      "resourceName": "projects/3960147693568073492/screens/b952c5357fa643f3ab62c80899a1dee3"
+    },
+    {
+      "title": "12 Order Details and Tracking",
+      "instanceId": "c0497bb0245c4e0fa863e772c6f791c3",
+      "resourceName": "projects/3960147693568073492/screens/c0497bb0245c4e0fa863e772c6f791c3"
+    },
+    {
+      "title": "19 Simple Product Details",
+      "instanceId": "c2273736ff1e422abca2cf60e6bfd5f4",
+      "resourceName": "projects/3960147693568073492/screens/c2273736ff1e422abca2cf60e6bfd5f4"
+    },
+    {
+      "title": "10 Account",
+      "instanceId": "c2850bbfe6a145f4a3cea117d3b46854",
+      "resourceName": "projects/3960147693568073492/screens/c2850bbfe6a145f4a3cea117d3b46854"
+    },
+    {
+      "title": "22 Notifications",
+      "instanceId": "dd64d7c517054d1aa77a0f4025a2f972",
+      "resourceName": "projects/3960147693568073492/screens/dd64d7c517054d1aa77a0f4025a2f972"
+    },
+    {
+      "title": "15 Shop Conversation",
+      "instanceId": "df1cf12d78d54b79ba12bd8d3b7ad393",
+      "resourceName": "projects/3960147693568073492/screens/df1cf12d78d54b79ba12bd8d3b7ad393"
+    },
+    {
+      "title": "08 Shops",
+      "instanceId": "f692ce7c15104968a4537915ec9860c0",
+      "resourceName": "projects/3960147693568073492/screens/f692ce7c15104968a4537915ec9860c0"
+    }
+  ],
+  "unclassifiedScreens": [],
+  "executionConstraints": [
+    "Operate only within this project.",
+    "Delete/remove only the exact superseded screen instance IDs listed under remove.",
+    "Preserve every resource listed under keep and the design-system asset.",
+    "Do not regenerate designs or delete the project.",
+    "After cleanup, reread the canvas and verify every current screen remains and no superseded screen remains visible."
+  ]
+}

@@ -4,6 +4,8 @@ Recorded 2026-10-28. Design exploration only: no Flutter source, frontend implem
 
 Current direction: [revision 2 — navigation and purchase quantity](revision-2.md). It supersedes the original bottom navigation and makes purchase-sheet quantity selection apply to simple and variant Products. The screenshot gallery/manifest identify the latest selected references; prior IDs remain in the superseded manifest entries.
 
+Canvas cleanup is pending browser access. The remote project currently contains 51 versions: keep the 22 current references and remove the 29 superseded instances listed in [canvas-cleanup.json](canvas-cleanup.json). No remote deletion has been performed. The connected Stitch MCP has no individual screen-delete/hide operation; its project-delete operation would also delete the current designs.
+
 - Stitch project: [AISLEY Customer](https://stitch.withgoogle.com/projects/3960147693568073492)
 - Project resource: `projects/3960147693568073492` (private).
 - Initial reusable design-system resource: `assets/209b92e003bd4111b4e38fd6ede0e1ce`.
@@ -15,6 +17,7 @@ Current direction: [revision 2 — navigation and purchase quantity](revision-2.
 | --- | --- |
 | [DESIGN.md](DESIGN.md) | Buyer brand, source inspection, synthetic data, boundaries and state requirements |
 | [revision-2.md](revision-2.md) | Latest user-requested navigation and global quantity-sheet direction |
+| [canvas-cleanup.json](canvas-cleanup.json) | Verified keep/remove inventory and pending remote cleanup status |
 | [screen-map.md](screen-map.md) | References mapped to existing routes/specs; unillustrated routes explicitly identified |
 | [manifest.json](manifest.json) | Project/screen/file IDs, tool-returned references, screenshot dimensions and checksums |
 | [requests.json](requests.json) | Exact generation/refinement requests for reproducibility |

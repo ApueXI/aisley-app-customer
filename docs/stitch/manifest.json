@@ -22,9 +22,9 @@
   },
   "retrieval": {
     "method": "Google Stitch MCP get_screen and download_file",
-    "listScreensReturnedCount": 6,
-    "projectCanvasScreenCount": 6,
-    "indexLimitation": "List/canvas exposes original six screens; direct reads succeeded for all selected IDs",
+    "listScreensReturnedCount": 51,
+    "projectCanvasScreenCount": 51,
+    "indexLimitation": "Resolved on 2026-10-28 cleanup inspection: list_screens and project canvas both expose all 51 versions. Cleanup pending; 22 selected references and 29 superseded versions remain.",
     "downloadUrls": "Protected remote references; use download_file, not raw fetch",
     "currentRevisionDirectGetScreenCount": 22,
     "currentRevisionDirectGetScreenVerifiedOn": "2026-10-28"
@@ -725,5 +725,13 @@
       "21"
     ],
     "implemented": false
+  },
+  "canvasCleanup": {
+    "inventory": "canvas-cleanup.json",
+    "status": "pending_browser_access",
+    "keepCount": 22,
+    "removeCount": 29,
+    "remoteDeletionsPerformed": 0,
+    "observedOn": "2026-10-28"
   }
 }
