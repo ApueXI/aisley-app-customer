@@ -7,6 +7,8 @@ class NotificationInboxController extends CommerceController {
   NotificationInboxController(super.session, this.repository);
   final NotificationRepository repository;
   String status = 'all';
+  String category = 'all';
+  List<NotificationCategory> categories = buyerNotificationCategories;
   List<BuyerNotification> items = const [];
   bool loading = false, paging = false, loaded = false, hasMore = false;
   int page = 0;
@@ -18,6 +20,23 @@ class NotificationInboxController extends CommerceController {
     }
     epoch++;
     status = value;
+    items = const [];
+    error = coolingDown ? 'Please wait before retrying this list.' : null;
+    pageError = null;
+    stale = true;
+    page = 0;
+    hasMore = loaded = loading = paging = false;
+    notifyListeners();
+    await load();
+  }
+
+  Future<void> setCategory(String value) async {
+    if ((value != 'all' && !categories.any((item) => item.key == value)) ||
+        value == category) {
+      return;
+    }
+    epoch++;
+    category = value;
     items = const [];
     error = coolingDown ? 'Please wait before retrying this list.' : null;
     pageError = null;
@@ -53,6 +72,7 @@ class NotificationInboxController extends CommerceController {
       final value = await repository.list(
         credential,
         status,
+        category,
         more ? page + 1 : 1,
       );
       if (!current(stamp, credential)) return;
@@ -68,6 +88,7 @@ class NotificationInboxController extends CommerceController {
       );
       page = value.page;
       hasMore = value.hasMore;
+      categories = value.categories;
       loaded = true;
       stale = false;
     } on ApiFailure catch (e) {
@@ -94,6 +115,8 @@ class NotificationInboxController extends CommerceController {
   void reset({required bool preserveUnresolved}) {
     items = const [];
     status = 'all';
+    category = 'all';
+    categories = buyerNotificationCategories;
     page = 0;
     loading = paging = loaded = hasMore = false;
     pageError = null;

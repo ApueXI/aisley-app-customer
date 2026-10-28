@@ -226,6 +226,48 @@ void main() {
         entry.value,
       );
     }
+    final ticket = BuyerNotification.parse({
+      ...raw,
+      'type': 'support-ticket.admin-replied',
+      'resource_type': 'support_ticket',
+      'resource_id': customerId,
+      'destination': '/account/support-tickets?ticket=$customerId',
+      'category': 'support',
+      'category_label': 'Support',
+    });
+    expect(notificationDestination(ticket), '/support-tickets/$customerId');
+    expect(
+      notificationDestination(
+        BuyerNotification.parse({
+          ...raw,
+          'type': 'support-ticket.admin-replied',
+          'resource_type': 'support_ticket',
+          'resource_id': customerId,
+          'destination': 'https://example.invalid/support-tickets/$customerId',
+        }),
+      ),
+      '/notifications/$customerId',
+    );
+    final redactedTicket = BuyerNotification.parse({
+      ...raw,
+      'type': 'support-ticket.admin-replied',
+      'resource_type': null,
+      'resource_id': null,
+      'destination': null,
+    });
+    expect(redactedTicket.title, raw['title']);
+    expect(redactedTicket.summary, raw['summary']);
+    expect(redactedTicket.resourceType, isNull);
+    expect(redactedTicket.resourceId, isNull);
+    expect(redactedTicket.destination, isNull);
+    expect(
+      notificationDestination(redactedTicket),
+      '/notifications/$customerId',
+    );
+    expect(
+      () => BuyerNotification.parse({...raw, 'title': null}),
+      throwsA(isA<ApiFailure>()),
+    );
     expect(
       safeReturn('/messages/courier/order/$customerId'),
       '/messages/courier/order/$customerId',

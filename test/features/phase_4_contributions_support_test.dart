@@ -554,6 +554,37 @@ void main() {
       expect(h.state.ticketInbox.items, isEmpty);
     },
   );
+  test(
+    'notification category requests reset pages and reject stale results',
+    () async {
+      final inbox = NotificationInboxController(
+        h.session,
+        h.state.notifications,
+      );
+      addTearDown(inbox.dispose);
+      final obsolete = Completer<ResponseBody>();
+      h.reply = (request) => request.uri.queryParameters['category'] == null
+          ? obsolete.future
+          : h.defaultReply(request);
+      final oldLoad = inbox.load();
+      await Future<void>.delayed(Duration.zero);
+      await inbox.setCategory('support');
+      obsolete.complete(jsonReply({}, status: 500));
+      await oldLoad;
+
+      final request = h.adapter.requests.firstWhere(
+        (request) =>
+            request.uri.path.endsWith('/customer/notifications') &&
+            request.uri.queryParameters['category'] == 'support',
+      );
+      expect(inbox.status, 'all');
+      expect(inbox.category, 'support');
+      expect(request.uri.queryParameters['status'], 'all');
+      expect(request.uri.queryParameters['category'], 'support');
+      expect(inbox.page, 1);
+      expect(inbox.error, isNull);
+    },
+  );
   for (final status in [401, 403, 404, 409, 422, 429, 500]) {
     test('Ticket handles HTTP $status without invented success', () async {
       final c = h.state.ticket();
