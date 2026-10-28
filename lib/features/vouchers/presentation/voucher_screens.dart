@@ -43,19 +43,41 @@ class _VoucherListScreenState extends State<VoucherListScreen> {
   Widget build(BuildContext context) => ShoppingPage(
     appBar: AppBar(
       title: Text(widget.wallet ? 'My Vouchers' : 'Discover vouchers'),
+      actions: widget.wallet
+          ? null
+          : [
+              if (MediaQuery.sizeOf(context).width >=
+                  360 * catalogTextScale(context))
+                TextButton(
+                  onPressed: () => context.push('/account/vouchers'),
+                  child: const Text('My Vouchers'),
+                )
+              else
+                IconButton(
+                  tooltip: 'My Vouchers',
+                  onPressed: () => context.push('/account/vouchers'),
+                  icon: const Icon(Icons.card_giftcard_outlined),
+                ),
+            ],
     ),
     body: SingleChildScrollView(
       padding: pagePadding(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (!widget.wallet)
-            TextButton(
-              onPressed: () => context.push('/account/vouchers'),
-              child: const Text('My Vouchers'),
+          Card(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+              side: BorderSide(
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
             ),
-          const Text(
-            'Collect offers, then select them at Checkout. Collection does not apply savings automatically.',
+            child: const Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(
+                'Collect offers, then select them at Checkout. Collection does not apply savings automatically.',
+              ),
+            ),
           ),
           const SizedBox(height: 16),
           VoucherListView(controller: _controller),

@@ -188,16 +188,8 @@ void main() {
                 isEmpty,
               );
             } else if (feature == 'communication') {
-              await tester.scrollUntilVisible(
-                find.byType(TextFormField),
-                160,
-                scrollable: find
-                    .descendant(
-                      of: find.byKey(const ValueKey('message-detail')),
-                      matching: find.byType(Scrollable),
-                    )
-                    .first,
-              );
+              await tester.ensureVisible(find.byType(TextFormField));
+              await tester.pumpAndSettle();
               final composerInput = find.descendant(
                 of: find.byType(TextFormField),
                 matching: find.byType(EditableText),

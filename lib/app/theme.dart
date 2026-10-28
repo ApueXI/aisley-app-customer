@@ -127,13 +127,21 @@ ThemeData buyerTheme() {
       selectedColor: const Color(0xFFFCE8F2),
       labelStyle: const TextStyle(color: buyerPurple),
     ),
-    navigationBarTheme: const NavigationBarThemeData(
+    navigationBarTheme: NavigationBarThemeData(
       backgroundColor: Colors.white,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       indicatorColor: Colors.transparent,
-      labelTextStyle: WidgetStatePropertyAll(
-        TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+      labelTextStyle: WidgetStateProperty.resolveWith(
+        (states) => TextStyle(
+          color: states.contains(WidgetState.selected)
+              ? buyerPink
+              : const Color(0xFF625A61),
+          fontSize: 12,
+          fontWeight: states.contains(WidgetState.selected)
+              ? FontWeight.w700
+              : FontWeight.w600,
+        ),
       ),
       iconTheme: WidgetStateProperty.fromMap({
         WidgetState.selected: IconThemeData(color: buyerPink),

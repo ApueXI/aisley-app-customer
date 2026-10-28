@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/app_dependencies.dart';
 import '../../../core/ui/form_page.dart';
+import '../../../core/ui/responsive_layout.dart';
 import '../../discovery/presentation/catalog_image.dart';
 import '../data/cart_models.dart';
 import 'cart_line_editor.dart';
@@ -24,19 +25,40 @@ class CartItemRow extends StatelessWidget {
     final details = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(line.productName, style: Theme.of(context).textTheme.titleMedium),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final title = Text(
+              line.productName,
+              style: Theme.of(context).textTheme.titleMedium,
+            );
+            final price = Text(
+              '₱${line.unitPrice.toStringAsFixed(2)}',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: Theme.of(context).colorScheme.primary,
+                fontWeight: FontWeight.w700,
+              ),
+            );
+            if (constraints.maxWidth >= 360 * catalogTextScale(context)) {
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: title),
+                  const SizedBox(width: 12),
+                  price,
+                ],
+              );
+            }
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [title, price],
+            );
+          },
+        ),
         if (line.options.isNotEmpty)
           Text(line.options.map((o) => '${o.group}: ${o.value}').join(', ')),
-        const SizedBox(height: 8),
+        const SizedBox(height: 4),
         Text(
-          '₱${line.unitPrice.toStringAsFixed(2)}',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            color: Theme.of(context).colorScheme.primary,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        Text(
-          'Quantity ${line.quantity} · ₱${line.subtotal.toStringAsFixed(2)}',
+          'Quantity ${line.quantity} · Line subtotal ₱${line.subtotal.toStringAsFixed(2)}',
         ),
         if (!line.selectable) Text(line.availabilityLabel),
       ],

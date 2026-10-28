@@ -86,6 +86,8 @@ class _MessageThreadViewState extends State<MessageThreadView> {
   late final _text = TextEditingController(text: widget.draft);
   final _focus = FocusNode();
   final _scroll = ScrollController();
+  final _composerScroll = ScrollController();
+  final _messageViewport = GlobalKey();
   final _rows = <String, GlobalKey>{};
   final _form = GlobalKey<FormState>();
   bool _allowPop = false, _confirming = false;
@@ -145,15 +147,16 @@ class _MessageThreadViewState extends State<MessageThreadView> {
       return;
     }
     int? highest;
-    final height =
-        MediaQuery.sizeOf(context).height -
-        MediaQuery.viewInsetsOf(context).bottom;
+    final viewport = _messageViewport.currentContext?.findRenderObject();
+    if (viewport is! RenderBox || !viewport.hasSize) return;
+    final viewportTop = viewport.localToGlobal(Offset.zero).dy;
+    final viewportBottom = viewportTop + viewport.size.height;
     for (final row in widget.rows) {
       final box = _rows[row.id]?.currentContext?.findRenderObject();
       if (box is RenderBox && box.hasSize) {
         final y = box.localToGlobal(Offset.zero).dy;
-        if (y >= 80 &&
-            y + box.size.height <= height &&
+        if (y >= viewportTop &&
+            y + box.size.height <= viewportBottom &&
             (highest == null || row.sequence > highest)) {
           highest = row.sequence;
         }
@@ -213,6 +216,7 @@ class _MessageThreadViewState extends State<MessageThreadView> {
     _text.dispose();
     _focus.dispose();
     _scroll.dispose();
+    _composerScroll.dispose();
     super.dispose();
   }
 
@@ -270,80 +274,126 @@ class _MessageThreadViewState extends State<MessageThreadView> {
             ),
             Expanded(
               key: const ValueKey('message-detail'),
-              child: ListView(
-                controller: _scroll,
-                padding: pagePadding(context),
-                children: [
-                  if (widget.subtitle != null) Text(widget.subtitle!),
-                  if (widget.contextAction != null) widget.contextAction!,
-                  if (widget.loading || widget.sending)
-                    const LinearProgressIndicator(
-                      semanticsLabel: 'Updating conversation',
-                    ),
-                  if (widget.error != null)
-                    Semantics(liveRegion: true, child: Text(widget.error!)),
-                  if (widget.arrivals > 0)
-                    TextButton(
-                      onPressed: _viewArrivals,
-                      child: Text('${widget.arrivals} new messages · View'),
-                    ),
-                  if (widget.more)
-                    TextButton(
-                      onPressed:
-                          widget.loading ||
-                              widget.paging ||
-                              widget.sending ||
-                              widget.coolingDown
-                          ? null
-                          : widget.loadMore,
-                      child: Text(
-                        widget.paging ? 'Loading…' : 'Load older messages',
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final composerHeight = (constraints.maxHeight * .42).clamp(
+                    0.0,
+                    320.0,
+                  );
+                  return Column(
+                    children: [
+                      Expanded(
+                        child: ListView(
+                          key: _messageViewport,
+                          controller: _scroll,
+                          padding: pagePadding(context),
+                          children: [
+                            if (widget.subtitle != null)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Text(widget.subtitle!),
+                              ),
+                            if (widget.contextAction != null)
+                              widget.contextAction!,
+                            if (widget.loading || widget.sending)
+                              const LinearProgressIndicator(
+                                semanticsLabel: 'Updating conversation',
+                              ),
+                            if (widget.error != null)
+                              Semantics(
+                                liveRegion: true,
+                                child: Text(widget.error!),
+                              ),
+                            if (widget.arrivals > 0)
+                              TextButton(
+                                onPressed: _viewArrivals,
+                                child: Text(
+                                  '${widget.arrivals} new messages · View',
+                                ),
+                              ),
+                            if (widget.more)
+                              TextButton(
+                                onPressed:
+                                    widget.loading ||
+                                        widget.paging ||
+                                        widget.sending ||
+                                        widget.coolingDown
+                                    ? null
+                                    : widget.loadMore,
+                                child: Text(
+                                  widget.paging
+                                      ? 'Loading…'
+                                      : 'Load older messages',
+                                ),
+                              ),
+                            if (widget.pageError != null)
+                              Text(widget.pageError!),
+                            if (widget.rows.isEmpty &&
+                                !widget.loading &&
+                                widget.error == null)
+                              const Text(
+                                'Your first sent message starts the conversation.',
+                              ),
+                            for (final row in widget.rows)
+                              Padding(
+                                key: _rows.putIfAbsent(
+                                  row.id,
+                                  () => GlobalKey(),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
+                                child: MessageBubble(
+                                  row: row,
+                                  media: widget.media,
+                                ),
+                              ),
+                            if (widget.readError != null) ...[
+                              Text(widget.readError!),
+                              TextButton(
+                                onPressed:
+                                    widget.coolingDown || widget.rows.isEmpty
+                                    ? null
+                                    : () => _displayed(retry: true),
+                                child: const Text('Retry read marker'),
+                              ),
+                            ],
+                            if (!widget.allowed)
+                              Text(
+                                'Read only. ${widget.reason ?? 'Sending is currently unavailable.'}',
+                              ),
+                            TextButton(
+                              onPressed:
+                                  widget.loading ||
+                                      widget.sending ||
+                                      widget.coolingDown
+                                  ? null
+                                  : widget.refresh,
+                              child: const Text('Retry / refresh'),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  if (widget.pageError != null) Text(widget.pageError!),
-                  if (widget.rows.isEmpty &&
-                      !widget.loading &&
-                      widget.error == null)
-                    const Text(
-                      'Your first sent message starts the conversation.',
-                    ),
-                  for (final row in widget.rows)
-                    Padding(
-                      key: _rows.putIfAbsent(row.id, () => GlobalKey()),
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      child: MessageBubble(row: row, media: widget.media),
-                    ),
-                  if (widget.readError != null) ...[
-                    Text(widget.readError!),
-                    TextButton(
-                      onPressed: widget.coolingDown || widget.rows.isEmpty
-                          ? null
-                          : () => _displayed(retry: true),
-                      child: const Text('Retry read marker'),
-                    ),
-                  ],
-                  if (!widget.allowed)
-                    Text(
-                      'Read only. ${widget.reason ?? 'Sending is currently unavailable.'}',
-                    ),
-                  const SizedBox(height: 16),
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: _composer(),
+                      ConstrainedBox(
+                        constraints: BoxConstraints(maxHeight: composerHeight),
+                        child: SingleChildScrollView(
+                          controller: _composerScroll,
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                          child: Card(
+                            margin: EdgeInsets.zero,
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: _composer(),
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                  TextButton(
-                    onPressed:
-                        widget.loading || widget.sending || widget.coolingDown
-                        ? null
-                        : widget.refresh,
-                    child: const Text('Retry / refresh'),
-                  ),
-                ],
+                    ],
+                  );
+                },
               ),
             ),
           ],

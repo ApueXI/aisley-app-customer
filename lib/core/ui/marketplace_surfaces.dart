@@ -101,12 +101,18 @@ class MarketShortcut extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(
-              height: 40,
+            Container(
+              width: 48,
+              height: 48,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.secondaryContainer,
+                borderRadius: BorderRadius.circular(8),
+              ),
               child: Icon(
                 icon,
-                size: 26,
-                color: Theme.of(context).colorScheme.primary,
+                size: 24,
+                color: Theme.of(context).colorScheme.secondary,
               ),
             ),
             const SizedBox(height: 4),

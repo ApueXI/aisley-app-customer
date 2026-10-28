@@ -16,6 +16,11 @@ class HomeShoppingShortcuts extends StatelessWidget {
         padding: const EdgeInsets.all(8),
         child: MarketShortcutGrid(
           children: [
+            MarketShortcut(
+              icon: Icons.storefront_outlined,
+              label: 'Shops',
+              onTap: () => context.push('/shops'),
+            ),
             if (dependencies.vouchers != null)
               MarketShortcut(
                 icon: Icons.local_offer_outlined,

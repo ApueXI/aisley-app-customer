@@ -220,7 +220,7 @@ def main(argv=None):
         accessibility_report = None
         if args.synthetic_shopping or args.synthetic_only:
             from browser_synthetic import check_shopping
-            accessibility_report = check_shopping(
+            journey_report = check_shopping(
                 call,
                 prefix,
                 script,
@@ -233,6 +233,16 @@ def main(argv=None):
                 accessibility=args.synthetic_accessibility,
                 accessibility_route=args.accessibility_route,
             )
+            if not args.synthetic_list_recovery and not args.synthetic_upload_recovery:
+                stitch_journeys = (
+                    journey_report.get('stitchJourneys', {})
+                    if args.synthetic_accessibility
+                    else journey_report or {}
+                )
+                assert stitch_journeys.get('mobileNavigationAndUtilityBack'), 'Synthetic mobile navigation/utility route checks did not pass.'
+                assert stitch_journeys.get('desktopMainDestinations'), 'Synthetic desktop destination checks did not pass.'
+                assert stitch_journeys.get('purchaseSheetsAndBuyNowCartIsolation'), 'Synthetic purchase-sheet/Buy Now isolation checks did not pass.'
+            accessibility_report = journey_report
         if args.synthetic_accessibility:
             browser = call(prefix + '/goog/cdp/execute', {
                 'cmd': 'Browser.getVersion', 'params': {}})

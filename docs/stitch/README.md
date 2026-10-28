@@ -1,6 +1,6 @@
 # AISLEY Customer — Google Stitch references
 
-Recorded 2026-10-28. Design exploration only: no Flutter source, frontend implementation, backend, dependency or production configuration changes.
+Initial reference-generation record, 2026-10-28: design exploration only; at generation time there were no Flutter source or frontend changes. The selected revision-2 presentation was later implemented in the existing Buyer Flutter routes and screens. No backend, dependency or production configuration change accompanied the implementation.
 
 Current direction: [revision 2 — navigation and purchase quantity](revision-2.md). It supersedes the original bottom navigation and makes purchase-sheet quantity selection apply to simple and variant Products. The screenshot gallery/manifest identify the latest selected references; prior IDs remain in the superseded manifest entries.
 
@@ -20,6 +20,7 @@ Canvas cleanup is pending browser access. The remote project currently contains 
 | [canvas-cleanup.json](canvas-cleanup.json) | Verified keep/remove inventory and pending remote cleanup status |
 | [screen-map.md](screen-map.md) | References mapped to existing routes/specs; unillustrated routes explicitly identified |
 | [manifest.json](manifest.json) | Project/screen/file IDs, tool-returned references, screenshot dimensions and checksums |
+| [Stitch implementation report](../reports/stitch-implementation-2026-10-28.md) | Current Flutter source coverage, implementation evidence and pending acceptance |
 | [requests.json](requests.json) | Exact generation/refinement requests for reproducibility |
 | [review.md](review.md) | Screenshot review, corrected generation drift and remaining limitations |
 | [service-notes.md](service-notes.md) | Stitch's returned descriptions/suggestions, preserved as service output |
@@ -57,5 +58,9 @@ The manifest and gallery below identify the selected local PNG for each referenc
 ## Interpretation
 
 The repository's [Buyer design](../design-buyer.md), owning feature specs and actual controllers take precedence over generated imagery and service claims. Remote output can invent badges, pricing metadata, guarantees or controls; review notes identify the corrections and any unresolved drift. A pictured state is not verified API behavior or a completed feature acceptance criterion.
+
+## Flutter implementation adoption — 2026-10-28
+
+The 22 selected references now inform the current Buyer presentation: Home/Notifications/Account shell navigation, Messages/Cart/Terms utilities, stacked Cart/Shops pages, no Home Product quick-add, and a quantity-first sheet for simple and variant Product purchases. Existing page flows, API contracts and server authorities remain. Cart/Checkout/Order/voucher and account/communication screens were updated within their existing routes. Raw `design-system.stitch.json` remains unadopted; existing Buyer tokens and Material typography govern. Final independent tests, visual review, accessibility and device acceptance remain pending. See the linked implementation report for the reference-to-source map.
 
 These references cover the main commerce journey and representative supporting screens. They do not claim a separate design for every existing route, error state or responsive size. Local PNGs remain usable if remote file URLs expire; use the recorded project/screen IDs to retrieve fresh metadata. The project link is a convenience URL constructed from the returned project ID.

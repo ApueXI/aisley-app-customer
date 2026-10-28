@@ -2,7 +2,8 @@
   "schemaVersion": 2,
   "recordedOn": "2026-10-28",
   "timezone": "Asia/Manila",
-  "scope": "Design references only; no Flutter/frontend implementation",
+  "scope": "Selected Stitch presentation references; local Flutter presentation implemented 2026-10-28, final verification pending",
+  "initialScope": "Design references only; no Flutter/frontend implementation",
   "project": {
     "id": "3960147693568073492",
     "resourceName": "projects/3960147693568073492",
@@ -12,8 +13,16 @@
     "urlSource": "Convenience URL constructed from returned project ID"
   },
   "sourceCommit": "8c04148b5ff00841b75b1794137f25599abcc4bc",
+  "sourceCommitPurpose": "Buyer source inspected before Stitch implementation; not the implementation commit",
   "latestRecordedPlatformAdoption": "1858785e",
   "deployedBackendRevision": "unidentified",
+  "flutterPresentationAdoption": {
+    "status": "implemented_pending_final_verification",
+    "recordedOn": "2026-10-28",
+    "report": "../reports/stitch-implementation-2026-10-28.md",
+    "implementationCommit": null,
+    "apiBackendDependencyChanges": false
+  },
   "designSystem": {
     "resourceName": "assets/209b92e003bd4111b4e38fd6ede0e1ce",
     "snapshot": "design-system.stitch.json",
@@ -713,7 +722,8 @@
     ],
     "shopsAccess": "Home body shortcut; existing directory",
     "cartAccess": "Header; existing Cart subpage",
-    "implemented": false
+    "implemented": true,
+    "implementationStatus": "local Flutter implementation; final independent verification pending"
   },
   "purchaseDesign": {
     "homeQuickAdd": false,
@@ -724,7 +734,8 @@
       "20",
       "21"
     ],
-    "implemented": false
+    "implemented": true,
+    "implementationStatus": "local Flutter implementation; final independent verification pending"
   },
   "canvasCleanup": {
     "inventory": "canvas-cleanup.json",

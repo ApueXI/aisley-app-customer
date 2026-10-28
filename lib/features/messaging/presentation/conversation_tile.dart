@@ -29,7 +29,7 @@ class ConversationTile extends StatelessWidget {
           children: [
             Text(
               [
-                row.channel.label,
+                '${row.channel.label} channel',
                 if (row.reference != null) row.reference!,
               ].join(' · '),
             ),
@@ -40,7 +40,7 @@ class ConversationTile extends StatelessWidget {
                 '${localizations.formatShortDate(at)} '
                 '${localizations.formatTimeOfDay(TimeOfDay.fromDateTime(at))}',
               ),
-            if (row.unread > 0) Text('${row.unread} unread'),
+            Text(row.unread > 0 ? '${row.unread} unread' : 'Read'),
             if (row.readOnly) const Text('Read only'),
           ],
         ),

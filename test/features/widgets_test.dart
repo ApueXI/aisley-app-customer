@@ -42,6 +42,11 @@ void main() {
     );
     await tester.pumpWidget(BuyerApp(dependencies: dependencies));
     await tester.pumpAndSettle();
+    expect(
+      find.text('Sign in with your approved Buyer account.'),
+      findsOneWidget,
+    );
+    expect(find.text('AISLEY'), findsOneWidget);
     await tester.enterText(
       find.byType(TextFormField).first,
       'buyer@example.invalid',
@@ -211,7 +216,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      final accept = find.widgetWithText(FilledButton, 'Accept this version');
+      final accept = find.widgetWithText(FilledButton, 'Accept and continue');
       expect(tester.widget<FilledButton>(accept).onPressed, null);
       await tester.tap(find.byType(CheckboxListTile));
       await tester.pump();

@@ -9,20 +9,20 @@ class ProductChoices extends StatelessWidget {
     required this.product,
     required this.controller,
     this.showOptions = true,
+    this.showAvailability = true,
+    this.showQuantity = true,
   });
   final ProductDetail product;
   final ProductDetailController controller;
-  final bool showOptions;
+  final bool showOptions, showAvailability, showQuantity;
   @override
   Widget build(BuildContext context) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       if (showOptions && product.optionGroups.isNotEmpty) _options(product),
-      if (showOptions || !controller.requiresVariantSelection)
-        const SizedBox(height: 12),
-      _availability(product),
-      if (showOptions || !controller.requiresVariantSelection)
-        _quantity(context, product),
+      if (showAvailability) const SizedBox(height: 12),
+      if (showAvailability) _availability(product),
+      if (showQuantity) _quantity(context),
     ],
   );
   Widget _options(ProductDetail product) => Column(
@@ -78,7 +78,7 @@ class ProductChoices extends StatelessWidget {
     return Text(stock == null ? 'Available' : '$stock available');
   }
 
-  Widget _quantity(BuildContext context, ProductDetail product) {
+  Widget _quantity(BuildContext context) {
     final stock = controller.availableStock;
     return Wrap(
       crossAxisAlignment: WrapCrossAlignment.center,

@@ -6,7 +6,7 @@ phase: 1
 flutter_status: Implemented; target acceptance pending
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
-documentation_synced_on: 2026-10-12
+documentation_synced_on: 2026-10-28
 ---
 
 # Auth-aware navigation
@@ -49,8 +49,9 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
   retry.
 - Allow-list return routes and validate IDs/slugs; reject arbitrary URLs, another role path and mutation
   query instructions.
-- Bottom Home/Shops/Cart/Account mount only after verification; all shopping links retain a validated
-  read return through login/consent. Normal sign-in opens Home.
+- Home/Notifications/Account shell destinations mount only after verification. The active header
+  exposes Messages, Cart and Terms/Privacy; Shops and Cart open as back-navigable pages. All
+  shopping links retain a validated read return through login/consent. Normal sign-in opens Home.
 - Root sign-in has no shopping cancel; child auth/policy Back returns to sign-in. Consent offers
   explicit sign-out; no saved mutation automatically resumes.
 - Background revalidation deduplicates `/me`/consent checks and retains the current route, scroll,
@@ -215,3 +216,6 @@ No Flutter implementation checkbox is completed by documentation authoring or ro
 Append actual implementation/test outcomes to [Progress](../../../PROGRESS.md) and retain prior history.
 Follow [architecture](../../../architecture.md), [setup](../../../setup.md) and
 [verification](../../../verification.md).
+
+Presentation adoption (2026-10-28): the shell uses Home/Notifications/Account; header utilities and
+stacked Cart/Shops pages remain behind the verified identity and consent gate.

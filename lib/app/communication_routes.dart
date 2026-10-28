@@ -118,11 +118,6 @@ List<RouteBase> communicationRoutes(AppDependencies d) {
           : unavailable(),
     ),
     GoRoute(
-      path: '/notifications',
-      builder: (_, s) =>
-          plain(s) ? NotificationInboxScreen(dependencies: d) : unavailable(),
-    ),
-    GoRoute(
       path: '/notifications/:id',
       builder: (_, s) => id(s)
           ? NotificationDetailScreen(

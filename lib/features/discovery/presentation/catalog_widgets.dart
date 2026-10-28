@@ -14,12 +14,14 @@ class ProductCardTile extends StatelessWidget {
     required this.onTap,
     this.trailing,
     this.onAddToCart,
+    this.bottomAction,
     this.width = 184,
   });
   final ProductCard product;
   final DiscoveryRepository discovery;
   final VoidCallback onTap;
   final VoidCallback? onAddToCart;
+  final Widget? bottomAction;
   final Widget? trailing;
   final double width;
 
@@ -31,7 +33,7 @@ class ProductCardTile extends StatelessWidget {
       elevation: 0,
       color: Colors.white,
       shape: RoundedRectangleBorder(
-        side: const BorderSide(color: Color(0xFFE8E1E6)),
+        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Column(
@@ -86,13 +88,15 @@ class ProductCardTile extends StatelessWidget {
               ],
             ),
           ),
-          if (onAddToCart != null)
+          if (bottomAction != null || onAddToCart != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
-              child: OutlinedButton(
-                onPressed: onAddToCart,
-                child: const Text('Add to Cart'),
-              ),
+              child:
+                  bottomAction ??
+                  OutlinedButton(
+                    onPressed: onAddToCart,
+                    child: const Text('Add to Cart'),
+                  ),
             ),
         ],
       ),
@@ -116,16 +120,16 @@ class ShopCardTile extends StatelessWidget {
     clipBehavior: Clip.antiAlias,
     elevation: 0,
     shape: RoundedRectangleBorder(
-      side: const BorderSide(color: Color(0xFFE8E1E6)),
+      side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
       borderRadius: BorderRadius.circular(8),
     ),
     child: InkWell(
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.all(12),
-        child: Row(
-          children: [
-            ClipRRect(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final image = ClipRRect(
               borderRadius: BorderRadius.circular(8),
               child: CatalogImage(
                 url: shop.logoUrl,
@@ -134,29 +138,52 @@ class ShopCardTile extends StatelessWidget {
                 height: 72,
                 label: '${shop.name} logo',
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
+            );
+            final details = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(shop.name, style: Theme.of(context).textTheme.titleMedium),
+                if (shop.category != null) Text(shop.category!.name),
+                if (shop.description != null)
+                  Text(
+                    shop.description!,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+              ],
+            );
+            final viewShop = OutlinedButton(
+              onPressed: onTap,
+              child: const Text('View Shop'),
+            );
+            final compact = constraints.maxWidth < 380;
+            if (compact) {
+              return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    shop.name,
-                    style: Theme.of(context).textTheme.titleMedium,
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      image,
+                      const SizedBox(width: 12),
+                      Expanded(child: details),
+                    ],
                   ),
-                  if (shop.category != null) Text(shop.category!.name),
-                  if (shop.description != null)
-                    Text(
-                      shop.description!,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
+                  const SizedBox(height: 8),
+                  Align(alignment: Alignment.centerRight, child: viewShop),
                 ],
-              ),
-            ),
-            const Icon(Icons.chevron_right),
-          ],
+              );
+            }
+            return Row(
+              children: [
+                image,
+                const SizedBox(width: 12),
+                Expanded(child: details),
+                viewShop,
+              ],
+            );
+          },
         ),
       ),
     ),

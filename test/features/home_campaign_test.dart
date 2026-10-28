@@ -211,7 +211,9 @@ void main() {
         ),
       ]);
       await show(tester);
-      await tester.tap(find.text('Seasonal offers'));
+      final title = find.text('Seasonal offers');
+      await tester.ensureVisible(title);
+      await tester.tap(title);
       await tester.pumpAndSettle();
       expect(launcher.opened, ['/offers']);
       expect(tester.takeException(), isNull);

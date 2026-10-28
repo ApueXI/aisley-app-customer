@@ -104,30 +104,38 @@ class _OrdersScreenState extends State<OrdersScreen>
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      order.reference,
+                      'Order ref: ${order.reference}',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     const SizedBox(height: 12),
+                    ProductBoundaryCard(
+                      child: ProductItemRow(
+                        imageUrl: order.item?.imageUrl,
+                        name: order.item?.name ?? '${order.lineCount} items',
+                        discovery: widget.dependencies.discovery!,
+                        details: [
+                          Text(
+                            order.item?.name ?? '${order.lineCount} items',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          if (order.item?.variantName != null)
+                            Text(order.item!.variantName!),
+                          Text(
+                            order.item == null
+                                ? '${order.itemCount} items'
+                                : 'Quantity ${order.item!.quantity}',
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     ShippingDetails(
                       businessName: order.shippingProvider?.businessName,
                       fee: order.totals.shipping.display(order.totals.currency),
                     ),
-                    ProductItemRow(
-                      imageUrl: order.item?.imageUrl,
-                      name: order.item?.name ?? '${order.lineCount} items',
-                      discovery: widget.dependencies.discovery!,
-                      details: [
-                        Text(
-                          order.item?.name ?? '${order.lineCount} items',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        if (order.item?.variantName != null)
-                          Text(order.item!.variantName!),
-                      ],
-                    ),
                     const SizedBox(height: 8),
                     Text(
-                      '${order.itemCount} items · ${order.totals.payable.display(order.totals.currency)}',
+                      'Order total ${order.totals.payable.display(order.totals.currency)}',
                       textAlign: TextAlign.end,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),

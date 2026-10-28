@@ -75,7 +75,12 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) => ShoppingPage(
-    appBar: AppBar(title: const Text('Search')),
+    appBar: AppBar(
+      title: const Text('Search'),
+      actions: marketplaceDesktop(context)
+          ? const []
+          : marketplaceActions(context),
+    ),
     body: ListView(
       padding: pagePadding(context),
       children: [

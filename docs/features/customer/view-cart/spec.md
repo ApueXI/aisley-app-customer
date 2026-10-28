@@ -6,7 +6,7 @@ phase: 3
 flutter_status: Implemented; acceptance partial
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
-documentation_synced_on: 2026-10-12
+documentation_synced_on: 2026-10-28
 ---
 
 # Cart configuration
@@ -21,7 +21,7 @@ Flutter: **implemented; acceptance partial**. See [Phase 3 evidence](../../../re
 Valid Product configuration → Add → owned lines → quantity/variation/remove → selected checkout.
 
 - Send product_id,variant_id,quantity only. Same configuration increments/merges, different variants stay separate; valid required variant belongs to Product. PATCH quantity/variant atomically validates/merges or preserves original line on failure.
-- Cart never reserves Inventory. Display current server prices/ordered choices/availability, preserve unavailable intent and exclude ineligible selected checkout. itemCount is quantity total, distinctItemCount line total; numeric subtotals are display only.
+- Cart never reserves Inventory. Display current server prices/ordered choices/availability, preserve unavailable intent and exclude ineligible selected checkout. itemCount is quantity total, distinctItemCount line total; numeric subtotals are display only. The selected-line merchandise estimate excludes shipping and discounts; Checkout quote supplies final COD totals.
 - No guest Cart/merge. Disable duplicate taps; additive POST has no durable UUID replay contract, so uncertain adds need refetch/explanation rather than automatic incrementing again.
 
 The local bundle supplies the implementation contract. Upstream paths are optional provenance only.
@@ -39,6 +39,7 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 ### Feature behavior and boundaries
 
 - Cart is authenticated owned server state; no guest Cart or local Cart merge is available.
+- Cart is reached through the shared-header utility as a pushed page; Back returns to the previous shell route. Purchase-sheet quantity selection does not replace Cart line editing.
 - GET and every mutation return the full data Cart; normal empty Cart may still have a UUID.
 - itemCount is quantity sum, distinctItemCount counts configurations; do not confuse badge meanings.
 - Cart numeric totals are display hints and include availableSubtotal separately from full subtotal.

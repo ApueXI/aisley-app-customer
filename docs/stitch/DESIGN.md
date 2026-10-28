@@ -3,7 +3,7 @@
 Recorded 2026-10-28 (Asia/Manila). This is a mobile design-reference exercise.
 It does not implement, approve or replace the Flutter UI or feature contracts.
 
-Current design direction: [revision 2](revision-2.md) supersedes the initial navigation and purchase-control placement below. Stitch now targets Home/Notifications/Account bottom navigation, header Cart instead of the header bell, no Home quick-add buttons, and purchase-sheet quantity selection for every Product. The sections below preserve the initial source-inspection context; the Flutter application remains unchanged.
+Current design direction: [revision 2](revision-2.md) supersedes the initial navigation and purchase-control placement below. Stitch now targets Home/Notifications/Account bottom navigation, header Cart instead of the header bell, no Home quick-add buttons, and purchase-sheet quantity selection for every Product. The sections below retain the original design brief/source-inspection context; current Flutter adoption is recorded in the dated section at the end.
 
 ## Authority
 
@@ -13,7 +13,7 @@ Current design direction: [revision 2](revision-2.md) supersedes the initial nav
 - Android is primary; the same Flutter app supports local web. Stitch screenshots do not certify Flutter, API, accessibility, device or release acceptance.
 - Laravel owns identity, consent, visibility, stock, prices, shipping, vouchers, checkout and conversation permissions.
 
-## Product and tasks
+## Initial product brief — 2026-10-28
 
 1. Verified active Customers discover Products and Shops; shopping is closed until identity and required consent resolve.
 2. Home is the only main tab with shared-header Search. Dedicated Search and Shop search remain available.
@@ -28,7 +28,7 @@ Current design direction: [revision 2](revision-2.md) supersedes the initial nav
 11. Messages combine previews while retaining separate Shop, Logistics and Courier permissions and histories.
 12. Account, saved Products, Orders and vouchers remain account-scoped and clear on identity loss.
 
-## Existing Flutter presentation
+## Existing Flutter presentation at initial inspection
 
 Inspected [theme](../../lib/app/theme.dart), [router](../../lib/app/router.dart), [communication routes](../../lib/app/communication_routes.dart), [shell](../../lib/app/shell_screen.dart), [header](../../lib/core/ui/marketplace_chrome.dart) and feature presentation sources.
 
@@ -75,6 +75,12 @@ Synthetic shipping is PHP 60.00 for Luna Goods and PHP 50.00 for Studio Clay. Gr
 - Exclude Bazaar, MoneyFest, online payments, returns/refunds, account deletion/export, session registry and unsupported attachment uploads.
 - Generated design-system defaults can drift from Flutter tokens or invent badge examples. The source contract and this brief take precedence; raw Stitch metadata is evidence, not an adopted design contract.
 
-## Review scope
+## Initial reference-review scope
 
-Use Stitch screenshots for composition and visual review. Static image review cannot prove touch dimensions, contrast, focus order, text scaling, keyboard behavior, Back handling or API correctness. Those checks remain for a separately authorized implementation. The design-taste-frontend app-screen guidance informed hierarchy and honest data; its generic style palette, typography selection and web implementation workflow do not replace the established Buyer theme or this design-only scope.
+Use Stitch screenshots for composition and visual review. Static image review cannot prove touch dimensions, contrast, focus order, text scaling, keyboard behavior, Back handling or API correctness. At initial review, those checks were left for a separately authorized implementation; they remain pending for the current UI. The design-taste-frontend app-screen guidance informed hierarchy and honest data; its generic style palette, typography selection and web implementation workflow do not replace the established Buyer theme or this design-only scope.
+
+## Flutter presentation adoption — 2026-10-28
+
+The user-authorized implementation applies the selected revision-2 direction to existing Flutter routes and overlays. Phone/tablet shell destinations are Home, Notifications and Account. Shared header utilities are Messages, Cart and Terms/Privacy; Shops and Cart remain pushed pages. Product Detail has no inline quantity or preselected SKU; Home Product cards have no quick-add. Simple and variant Add-to-Cart/Buy-Now entries use the same selection and quantity sheet/dialog, with no write before explicit confirmation. Buy Now remains a separate Checkout intent.
+
+The implementation preserves the existing neutral Buyer palette and Material font. The raw generated Stitch design-system snapshot is not adopted. Checkout and server-projected Order/voucher states retain their existing contract owners. See [the implementation report](../reports/stitch-implementation-2026-10-28.md). The UI implementation is local; final independent tests, accessibility, visual and installed-device acceptance are pending.

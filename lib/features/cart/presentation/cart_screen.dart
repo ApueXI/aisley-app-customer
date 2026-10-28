@@ -25,9 +25,12 @@ class _CartScreenState extends State<CartScreen> {
   @override
   void initState() {
     super.initState();
-    widget.dependencies.commerce!.cart.addListener(_resolve);
-    widget.dependencies.commerce!.cart.load();
+    final cart = widget.dependencies.commerce!.cart;
+    cart.addListener(_resolve);
     _resolve();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) cart.load();
+    });
   }
 
   void _resolve() {
@@ -53,6 +56,17 @@ class _CartScreenState extends State<CartScreen> {
       listenable: Listenable.merge([cart, commerce.checkout, _metadata]),
       builder: (context, _) {
         if (!widget.dependencies.session.active) return const SizedBox.shrink();
+        final selectedLines = (cart.cart?.items ?? <CartLine>[])
+            .where(
+              (line) => line.selectable && cart.selection.contains(line.id),
+            )
+            .toList(growable: false);
+        final eligibleCount =
+            cart.cart?.items.where((line) => line.selectable).length ?? 0;
+        final selectedEstimate = selectedLines.fold<double>(
+          0,
+          (sum, line) => sum + line.subtotal,
+        );
         final groups = <String?, List<CartLine>>{};
         for (final line in cart.cart?.items ?? <CartLine>[]) {
           (groups[_metadata.shops[line.productId]?.id] ??= []).add(line);
@@ -95,6 +109,9 @@ class _CartScreenState extends State<CartScreen> {
                     ? (_) => cart.toggleSelectAllEligible()
                     : null,
                 title: const Text('Select all available items'),
+                subtitle: Text(
+                  '${selectedLines.length} of $eligibleCount available lines selected',
+                ),
               ),
             ),
           if (cart.cart?.items.isEmpty == true && !cart.loading) ...[
@@ -128,29 +145,69 @@ class _CartScreenState extends State<CartScreen> {
               ),
             ),
         ];
-        final purchaseSummary = Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Shipping and discounts are confirmed when you review your order.',
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              height: 48,
-              child: FilledButton(
-                onPressed: cart.canEdit && cart.selection.isNotEmpty
-                    ? () {
-                        if (commerce.checkout.begin(
-                          CheckoutIntent.cart(cart.selection),
-                        )) {
-                          context.push('/checkout');
-                        }
-                      }
-                    : null,
-                child: Text('Checkout selected (${cart.selection.length})'),
+        final purchaseSummary = LayoutBuilder(
+          builder: (context, constraints) => Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'The selected merchandise estimate excludes shipping and discounts. Final COD appears after Checkout review.',
               ),
-            ),
-          ],
+              const SizedBox(height: 8),
+              Wrap(
+                alignment: WrapAlignment.spaceBetween,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 12,
+                runSpacing: 8,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Selected merchandise estimate'),
+                      Text(
+                        '${selectedLines.length} selected ${selectedLines.length == 1 ? 'line' : 'lines'}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                  if (selectedLines.isNotEmpty)
+                    Text(
+                      '₱${selectedEstimate.toStringAsFixed(2)}',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  SizedBox(
+                    width: constraints.maxWidth < 280
+                        ? constraints.maxWidth
+                        : null,
+                    child: FilledButton(
+                      onPressed: cart.canEdit && selectedLines.isNotEmpty
+                          ? () {
+                              if (commerce.checkout.begin(
+                                CheckoutIntent.cart(
+                                  selectedLines.map((line) => line.id),
+                                ),
+                              )) {
+                                context.push('/checkout');
+                              }
+                            }
+                          : null,
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(0, 48),
+                      ),
+                      child: Text(
+                        'Checkout selected (${selectedLines.length})',
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (selectedLines.isEmpty)
+                const Text('Select available lines to see an estimate.'),
+            ],
+          ),
         );
         final compactHeight =
             MediaQuery.sizeOf(context).height -

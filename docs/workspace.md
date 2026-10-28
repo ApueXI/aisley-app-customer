@@ -4,7 +4,7 @@ Phases 1–4 Flutter flows are implemented with partial acceptance; controlled a
 
 ## Navigation
 
-Use native bottom destinations **Home**, **Shops**, **Cart**, **Account**, with search reachable from discovery screens. These bottom destinations are implemented. Header search appears only on Home; the Messages icon alongside Notifications and Terms/Privacy opens the combined authorized inbox with channel filters. Account links to Profile, Addresses, Orders, Wishlist, Recently Viewed, Notifications, Shop messages, Logistics messages, Courier messages, Support tickets, Settings/promotional preference, Policies/consent, and Logout. Distinct channels can share compatible rendering widgets while retaining separate repositories, routes, eligibility and read state.
+Phone/tablet shell destinations are **Home**, **Notifications** and **Account**. The shared header provides **Messages**, **Cart**, and **Terms/Privacy**. Cart and the Shops directory open as back-navigable pages; the Home **Shops** shortcut opens the existing directory. Desktop navigation provides Home/Shops/Orders/Notifications/Account with Cart in the header utilities. Shared-header Search appears only on Home; dedicated Search and Shop search remain available. Account links to Profile, Addresses, Orders, Wishlist, Recently Viewed, Notifications, Shop messages, Logistics messages, Courier messages, Support tickets, Settings/promotional preference, Policies/consent, and Logout. Distinct channels can share compatible rendering widgets while retaining separate repositories, routes, eligibility and read state.
 
 Product/Shop/Order detail and forms open on the current navigation stack; Android Back and browser Back return predictably. Validate destination IDs and allow-listed return routes, including notification web-path mapping. A signed-out user opening any shopping destination sees sign-in and a validated read return; the app requires an intentional retry of a protected mutation after sign-in.
 
@@ -16,7 +16,7 @@ At cold start, show session checking/retry and hide every shopping widget/naviga
 
 ## Discovery and Product configuration
 
-Home rails → Products/Shops search or Shop storefront → visible Product Detail → gallery, safe description, current price/availability → choose only a complete server-listed variant combination and bounded quantity → Add to Cart or Buy Now. Recently Viewed records a successful authenticated detail visit using server time/retention. Never write/merge guest hints. Remove only the retired public hints key best-effort without delaying authentication.
+Home Product cards open Product Detail and provide no quick-add buttons. Home's Browse Shops shortcut opens the existing directory as a stacked page. Search Product cards may retain Add to Cart; that action and Product Detail Add to Cart/Buy Now fetch current Product data and open the same scrollable selection sheet (or larger-screen dialog). Simple Products expose quantity only. Products with options require one complete current server-listed combination plus a quantity within the stock projection. Close/Cancel makes no write; confirmation invokes only the selected Add-to-Cart or Buy-Now action. Buy Now remains a separate Checkout intent and leaves Cart unchanged. Cart-line editing stays in the Cart flow. Recently Viewed records a successful authenticated detail visit using server time/retention. Never write/merge guest hints. Remove only the retired public hints key best-effort without delaying authentication.
 
 ## Address and checkout
 
@@ -52,7 +52,7 @@ Delivered owned Order Item → server review capability → rating/plain-text re
 
 ## Concrete app routes and safe entry rules
 
-These are **Flutter navigation paths**, not new APIs. Use go_router branches for /, /shops, /cart and /account. Compose detail stacks for /shops/:slug, /products/:id, /checkout, /checkout/result/:batch, /orders/:order, /account/profile, /account/addresses, /wishlist, /recently-viewed, /notifications/:id, /messages/shops/:id, /messages/logistics/:id, /messages/courier/:id and /support-tickets/:id. Separate /login, /register, /approval and /policies/:type reader/consent routes avoid private-data flashes. Detail IDs are UUIDs except Shop slug; root list paths exist independently from detail paths.
+These are **Flutter navigation paths**, not new APIs. Use go_router shell branches for /, /notifications and /account. Keep /shops and /cart as pushed pages so Back returns to the previous shell route. Compose detail stacks for /shops/:slug, /products/:id, /checkout, /checkout/result/:batch, /orders/:order, /account/profile, /account/addresses, /wishlist, /recently-viewed, /notifications/:id, /messages/shops/:id, /messages/logistics/:id, /messages/courier/:id and /support-tickets/:id. Separate /login, /register, /approval and /policies/:type reader/consent routes avoid private-data flashes. Detail IDs are UUIDs except Shop slug; root list paths exist independently from detail paths.
 
 | Entry | Required behavior |
 | --- | --- |
@@ -81,10 +81,15 @@ Visible online chats poll at15s and on focus/reconnect, preserving pending first
 Implement root configuration/token/session/error/router composition and shared consent first. Then public discovery/Shop/Product DTOs and navigation; account/PSGC addresses/wishlist/account history; Cart/quote/vouchers/place and owned Order projections; independent channels/notifications/Q&A/reviews/support. Each phase uses its own repositories/controllers and tests without importing another role’s screens. Reuse focused presentation widgets only when wire/permission/state ownership stays separate. See [architecture](architecture.md) and [setup](setup.md).
 
 Responsive desktop Buyer uses the same Flutter routes/controllers and trusted origin.
-The desktop marketplace header replaces bottom navigation at 1024 pixels when text fits;
-phone/tablet retain Home/Shops/Cart/Account. Shopping bounds are 1200 pixels; forms remain
+The desktop header replaces bottom navigation at 1024 pixels when text fits; it shows
+Home/Shops/Orders/Notifications/Account and the shared Messages/Cart/Terms utilities.
+Phone/tablet retain Home/Notifications/Account. Shopping bounds are 1200 pixels; forms remain
 560. See [marketplace design](design-buyer.md) and [verification](verification.md).
 
 Background revalidation errors preserve the mounted route, scroll, drafts and dialogs with retry feedback; identity loss clears private state and renewed consent gates shopping. Profile includes private photo viewing/selection/upload/removal; `/account/photo` links redirect there. Home categories retain expansion, Cart Select all changes eligible lines once through its controller, and listing/detail purchase controls fetch current Product data before a deliberate write. These are implemented Flutter presentation changes; current provider selection is implemented; live/device gates remain G25.
 
 Voucher journey: Home discovery or Shop vouchers → explicit collection → My Vouchers Available/Upcoming/History → explicit Checkout selection and reviewed requote. Collection does not reserve capacity or automatically apply savings. See [contract](api/voucher-collection.md).
+
+## Stitch navigation and purchase presentation — 2026-10-28
+
+The selected revision-2 presentation is implemented in existing Buyer pages and routes. It changes the shell layout and purchase entry UI; it adds no endpoint, payload, route, dependency or business authority. Final independent tests, visual review, accessibility and device checks remain pending. See the [implementation evidence map](reports/stitch-implementation-2026-10-28.md).

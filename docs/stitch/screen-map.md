@@ -2,7 +2,7 @@
 
 Stitch screen IDs, file resource names and local screenshots are recorded in [manifest.json](manifest.json). Numbered names are reference labels, not new Flutter routes. Each generated design is a draft for review; it grants no new API capability.
 
-[Revision 2](revision-2.md) governs the current design direction. Home/Notifications/Account are main navigation in these references; Cart and Shops are utility subpages. The unchanged Flutter router still uses its existing navigation until implementation is separately requested.
+[Revision 2](revision-2.md) governs the current design direction. Home/Notifications/Account are main navigation in these references; Cart and Shops are utility subpages. The local Flutter router now implements this presentation with existing routes; independent final verification remains pending. See the [implementation report](../reports/stitch-implementation-2026-10-28.md).
 
 | Reference | Existing route / flow | Feature authority |
 | --- | --- | --- |
@@ -33,7 +33,7 @@ Stitch screen IDs, file resource names and local screenshots are recorded in [ma
 
 Existing routes also include registration/email OTP, approval, session retry, recovery, policy current/history, profile/photo, password/email-code confirmation, promotional preferences, address create/edit/pin, Wishlist/history, voucher detail/wallet, committed checkout result, separate channel inboxes/Logistics/Courier threads, notification detail, Q&A, reviews/composer and support tickets/create/thread. They retain their contracts and existing Flutter implementation. A representative Account or Messages screenshot does not constitute a design for each of these routes or each error state.
 
-No new screen, navigation destination, endpoint, dependency or capability is adopted by this inventory. For eventual work, read each owning specification and actual controller before refining an unillustrated route. In particular, Order modification/cancellation must retain server capabilities; a generic action in a generated image cannot authorize either.
+The inventory adds no new API, dependency or server capability. The layout maps to existing Flutter screens/routes and presentation overlays; no new business destination is implied. Continue to use each owning specification and controller when extending an unillustrated route. In particular, Order modification/cancellation must retain server capabilities; a generic action in a generated image cannot authorize either.
 
 ## States to carry into any later implementation
 

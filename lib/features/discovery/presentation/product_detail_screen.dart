@@ -6,7 +6,6 @@ import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/marketplace_widgets.dart';
 import '../data/product_detail_model.dart';
 import 'product_controller.dart';
-import 'product_choices.dart';
 import 'product_information.dart';
 import 'product_gallery.dart';
 import 'product_purchase_actions.dart';
@@ -56,7 +55,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: _controller,
     builder: (context, _) => ShoppingPage(
-      appBar: AppBar(title: const Text('Product')),
+      appBar: AppBar(
+        title: const Text('Product Details'),
+        actions: [
+          if (_controller.product case final product?)
+            _wishlistButton(context, product.id),
+          if (!marketplaceDesktop(context)) marketplaceCartAction(context),
+        ],
+      ),
       body: _loaded(context),
       bottomBar:
           !_wide(context) &&
@@ -157,6 +163,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       final originalPrice = _controller.selectedVariant == null
           ? product.originalPrice
           : _controller.selectedVariant!.originalPrice;
+      final hasInformation =
+          product.specifications != null ||
+          product.descriptionMarkdown?.isNotEmpty == true;
       final content = Column(
         key: _contentKey,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -174,23 +183,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        product.title,
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                    ),
-                    _wishlistButton(context, product.id),
-                  ],
-                ),
-                if (product.averageRating != null)
-                  Text(
-                    '★ ${product.averageRating!.toStringAsFixed(1)} · ${product.reviewCount} reviews',
-                  ),
-                const SizedBox(height: 8),
                 Text(
                   '₱${(_controller.currentPrice ?? product.price).toStringAsFixed(2)}',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -206,16 +198,32 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       decoration: TextDecoration.lineThrough,
                     ),
                   ),
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        product.title,
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                    ),
+                  ],
+                ),
+                if (product.averageRating != null)
+                  Text(
+                    '★ ${product.averageRating!.toStringAsFixed(1)} · ${product.reviewCount} reviews',
+                  ),
                 if (product.shortDescription?.isNotEmpty == true)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(product.shortDescription!),
                   ),
                 const SizedBox(height: 16),
-                ProductChoices(
-                  product: product,
-                  controller: _controller,
-                  showOptions: false,
+                Text(
+                  product.optionGroups.isEmpty
+                      ? 'Choose a quantity when you add this Product to your Cart or buy it now.'
+                      : 'Choose Product options and a quantity after selecting Add to Cart or Buy Now.',
                 ),
                 const SizedBox(height: 12),
                 ListenableBuilder(
@@ -229,7 +237,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                         ),
                 ),
                 if (wide || _compactHeight(context)) _purchaseActions(),
-                const SizedBox(height: 20),
+                if (hasInformation) ...[
+                  const SizedBox(height: 20),
+                  ProductInformation(
+                    dependencies: widget.dependencies,
+                    product: product,
+                  ),
+                  const Divider(height: 32),
+                ],
                 Text('Shop', style: Theme.of(context).textTheme.titleLarge),
                 const SizedBox(height: 8),
                 _shopCard(context, product),
@@ -237,7 +252,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const SizedBox(height: 16),
+                      const Divider(height: 32),
                       Text(
                         'Reviews and questions',
                         style: Theme.of(context).textTheme.titleLarge,
@@ -267,10 +282,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       ),
                     ],
                   ),
-                ProductInformation(
-                  dependencies: widget.dependencies,
-                  product: product,
-                ),
                 const SizedBox(height: 24),
               ],
             ),

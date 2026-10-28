@@ -101,6 +101,19 @@ void main() {
         await tester.tap(itemCheckbox);
         await tester.pumpAndSettle();
         expect(h.commerce.cart.selection, {customerId});
+        final line = h.commerce.cart.cart!.items.single;
+        expect(find.text('Selected merchandise estimate'), findsOneWidget);
+        expect(find.text('1 selected line'), findsOneWidget);
+        expect(
+          find.text('₱${line.subtotal.toStringAsFixed(2)}'),
+          findsNWidgets(2),
+        );
+        expect(
+          find.text(
+            'The selected merchandise estimate excludes shipping and discounts. Final COD appears after Checkout review.',
+          ),
+          findsOneWidget,
+        );
         await tester.ensureVisible(find.text('Checkout selected (1)'));
         await tester.pumpAndSettle();
         final button = find.widgetWithText(
@@ -115,6 +128,45 @@ void main() {
       } finally {
         semantics.dispose();
       }
+    },
+  );
+  testWidgets(
+    'Cart estimate and checkout remain reachable in landscape with keyboard inset',
+    (tester) async {
+      await show(
+        tester,
+        CartScreen(dependencies: dependencies),
+        size: const Size(640, 360),
+      );
+      final scrollable = find
+          .descendant(
+            of: find.byType(ListView),
+            matching: find.byType(Scrollable),
+          )
+          .first;
+      final selectAll = find.widgetWithText(
+        CheckboxListTile,
+        'Select all available items',
+      );
+      await tester.scrollUntilVisible(selectAll, 160, scrollable: scrollable);
+      await tester.tap(selectAll);
+      await tester.pumpAndSettle();
+      expect(h.commerce.cart.selection, {customerId});
+
+      tester.view.viewInsets = const FakeViewPadding(bottom: 120);
+      addTearDown(tester.view.resetViewInsets);
+      await tester.pumpAndSettle();
+      final estimate = find.text('Selected merchandise estimate');
+      await tester.scrollUntilVisible(estimate, 120, scrollable: scrollable);
+      expect(estimate, findsOneWidget);
+      final button = find.widgetWithText(FilledButton, 'Checkout selected (1)');
+      await tester.ensureVisible(button);
+      await tester.pumpAndSettle();
+      expect(tester.getSize(button).height, greaterThanOrEqualTo(48));
+      expect(button.hitTestable(), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      h.commerce.checkout.invalidateQuote();
+      await tester.pumpWidget(const SizedBox());
     },
   );
   testWidgets('checkout with no intent returns to Cart and cannot place', (
@@ -184,13 +236,15 @@ void main() {
         MaterialApp.router(theme: buyerTheme(), routerConfig: router),
       );
       await tester.pumpAndSettle();
-      expect(find.text('Retry exact placement'), findsOneWidget);
+      expect(find.text('Retry the same placement'), findsOneWidget);
+      expect(find.text('Original placement details'), findsOneWidget);
       await tester.tap(find.byTooltip('Cancel'));
       await tester.pumpAndSettle();
       expect(h.commerce.checkout.pending!.key, key);
       router.go('/checkout');
       await tester.pumpAndSettle();
-      expect(find.text('Retry exact placement'), findsOneWidget);
+      expect(find.text('Retry the same placement'), findsOneWidget);
+      expect(find.textContaining('closing the app clears it'), findsOneWidget);
       expect(
         h.adapter.requests.where((r) => r.uri.path.endsWith('/place')),
         hasLength(1),

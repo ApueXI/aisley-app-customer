@@ -92,13 +92,13 @@ void main() {
       expect(find.byType(NavigationBar), findsNothing);
       me.complete();
       await tester.pumpAndSettle();
-      expect(find.text('Review required policies'), findsOneWidget);
+      expect(find.text('Required consent'), findsOneWidget);
       expect(find.text('Public Home'), findsNothing);
       expect(find.byTooltip('Cancel'), findsNothing);
       expect(h.adapter.requests, isEmpty);
       await tester.tap(find.byType(CheckboxListTile));
       await tester.pump();
-      await tester.tap(find.text('Accept this version'));
+      await tester.tap(find.text('Accept and continue'));
       await tester.pumpAndSettle();
       expect(
         router.routeInformationProvider.value.uri.path,
@@ -170,7 +170,7 @@ void main() {
       h.policies.consent = ConsentStatus.parse(consentJson(required: true));
       await tester.tap(find.text('Retry'));
       await tester.pumpAndSettle();
-      expect(find.text('Review required policies'), findsOneWidget);
+      expect(find.text('Required consent'), findsOneWidget);
       expect(h.session.customer, isNotNull);
       expect(h.adapter.requests, isEmpty);
       expect(

@@ -19,10 +19,12 @@ import '../features/discovery/presentation/search_controller.dart';
 import '../features/discovery/presentation/shop_screen.dart';
 import '../features/discovery/presentation/shop_directory_screen.dart';
 import '../features/discovery/presentation/product_detail_screen.dart';
+import '../features/notifications/presentation/notification_screens.dart';
 import '../features/saved/presentation/saved_products_screen.dart';
 import '../features/saved/presentation/saved_products_controller.dart';
 import '../core/commerce/commerce_value.dart';
 import '../core/ui/form_page.dart';
+import '../core/ui/responsive_layout.dart';
 import '../features/cart/presentation/cart_screen.dart';
 import '../features/checkout/presentation/checkout_screen.dart';
 import '../features/checkout/presentation/batch_result_screen.dart';
@@ -113,8 +115,7 @@ GoRouter buyerRouter(AppDependencies dependencies) {
         branches: [
           for (final entry in {
             '/': 'Home',
-            '/shops': 'Shops',
-            '/cart': 'Cart',
+            '/notifications': 'Notifications',
             '/account': 'Account',
           }.entries)
             StatefulShellBranch(
@@ -125,32 +126,16 @@ GoRouter buyerRouter(AppDependencies dependencies) {
                     if (entry.key == '/' && dependencies.discovery != null) {
                       return HomeScreen(dependencies: dependencies);
                     }
-                    if (entry.key == '/shops' &&
-                        dependencies.discovery != null) {
-                      final query = DiscoveryRouteQuery.parse(
-                        state.uri,
-                        kind: 'directory',
+                    if (entry.key == '/notifications' &&
+                        dependencies.communication != null &&
+                        !state.uri.hasQuery) {
+                      return NotificationInboxScreen(
+                        dependencies: dependencies,
+                        embedded: true,
                       );
-                      return query.valid
-                          ? ShopDirectoryScreen(
-                              key: ValueKey((
-                                session.generation,
-                                state.uri.path,
-                                query.category,
-                                query.query,
-                                query.mode,
-                                query.limit,
-                                query.valid,
-                              )),
-                              dependencies: dependencies,
-                              category: query.category,
-                              page: query.page,
-                              limit: query.limit,
-                            )
-                          : const _Unavailable(embedded: true);
                     }
-                    if (entry.key == '/cart' && dependencies.commerce != null) {
-                      return CartScreen(dependencies: dependencies);
+                    if (entry.key == '/notifications') {
+                      return const _Unavailable(embedded: true);
                     }
                     if (entry.key == '/account') {
                       return AccountHomeScreen(session: session);
@@ -161,6 +146,44 @@ GoRouter buyerRouter(AppDependencies dependencies) {
               ],
             ),
         ],
+      ),
+      GoRoute(
+        path: '/shops',
+        builder: (_, state) {
+          final query = DiscoveryRouteQuery.parse(state.uri, kind: 'directory');
+          return dependencies.discovery != null && query.valid
+              ? ShopDirectoryScreen(
+                  key: ValueKey((
+                    session.generation,
+                    state.uri.path,
+                    query.category,
+                    query.query,
+                    query.mode,
+                    query.limit,
+                    query.valid,
+                  )),
+                  dependencies: dependencies,
+                  category: query.category,
+                  page: query.page,
+                  limit: query.limit,
+                )
+              : const _Unavailable();
+        },
+      ),
+      GoRoute(
+        path: '/cart',
+        builder: (context, state) =>
+            dependencies.commerce != null && !state.uri.hasQuery
+            ? ShoppingPage(
+                appBar: AppBar(
+                  title: const Text('Cart'),
+                  actions: marketplaceDesktop(context)
+                      ? const []
+                      : marketplaceActions(context),
+                ),
+                body: CartScreen(dependencies: dependencies),
+              )
+            : const _Unavailable(),
       ),
       GoRoute(
         path: '/vouchers',

@@ -6,7 +6,7 @@ phase: 2
 flutter_status: Implemented; acceptance partial
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
-documentation_synced_on: 2026-10-12
+documentation_synced_on: 2026-10-28
 ---
 
 # Homepage and discovery
@@ -57,16 +57,16 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 - This nullability was observed on the deployed public Home API on 2026-10-16 (backend revision unidentified); see the dated integration-gap record. Missing fields and wrong non-null types remain decode failures.
 - Pause carousel rotation offscreen/background; provide accessible previous/next and avoid overriding
   keyboard focus.
-- Only Home opts into shared-header Search; Shops, Cart, Account and secondary routes omit it. Dedicated Search and Shop search actions remain available.
-- Home provides Search and voucher discovery; Shops remains in main navigation.
-  Only supported destinations are enabled.
+- Shared-header Search appears only on Home; dedicated Search and Shop search remain available.
+- Home links to supported Browse Shops/voucher discovery; Shops is a back-navigable directory page, not a shell destination.
 - Category cards use keyword search by Category name; they are not exact global Product-category
   filters. Initially show one width/text-scaled category row. Place Show all/Show less by the
   heading, wrapping beneath it when needed; hide it when all fit and retain expansion while Home
   stays mounted.
 - Category cards share measured label height and a 48px image/icon area; full labels fit at current text scale.
 - Shared Product cards keep square images, two-line titles, aligned price/metadata slots and aligned
-  purchase actions while respecting text scaling. Listing Add to Cart uses current Product detail.
+  content while respecting text scaling. Home rails/grids have no quick-add action; Product cards
+  open detail. Search's retained Add to Cart entry uses the Product purchase sheet.
 - Deal price/progress is a display projection; expiry/timer does not guarantee checkout eligibility or
   reservation.
 - Recommendation limit8–50 default 20 and opaque nextCursor are server-owned; null means exhausted.
@@ -225,3 +225,6 @@ Follow [architecture](../../../architecture.md), [setup](../../../setup.md) and
 [verification](../../../verification.md).
 
 Voucher collection adoption: [G28 contract](../../../api/voucher-collection.md) and [client evidence](../../../references/voucher-collection-verification.md).
+
+Presentation adoption (2026-10-28): Home cards do not expose Add to Cart; quantity/variant selection
+starts only from a retained purchase entry and requires explicit confirmation.
