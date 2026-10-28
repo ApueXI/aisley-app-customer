@@ -56,7 +56,8 @@ class MessageBubble extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
-                  row.at!.toLocal().toString(),
+                  '${MaterialLocalizations.of(context).formatShortDate(row.at!.toLocal())} '
+                  '${MaterialLocalizations.of(context).formatTimeOfDay(TimeOfDay.fromDateTime(row.at!.toLocal()))}',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ),

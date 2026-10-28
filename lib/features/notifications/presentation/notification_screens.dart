@@ -10,8 +10,13 @@ import '../data/notification_models.dart';
 import 'notification_controllers.dart';
 
 class NotificationInboxScreen extends StatefulWidget {
-  const NotificationInboxScreen({super.key, required this.dependencies});
+  const NotificationInboxScreen({
+    super.key,
+    required this.dependencies,
+    this.embedded = false,
+  });
   final AppDependencies dependencies;
+  final bool embedded;
   @override
   State<NotificationInboxScreen> createState() =>
       _NotificationInboxScreenState();
@@ -37,99 +42,115 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: Listenable.merge([controller, widget.dependencies.session]),
-    builder: (context, _) => !widget.dependencies.session.active
-        ? const SizedBox.shrink()
-        : ShoppingPage(
-            appBar: AppBar(
-              title: const Text('Notifications'),
-              actions: [
-                IconButton(
-                  tooltip: 'Refresh notifications',
-                  onPressed: controller.loading || controller.coolingDown
-                      ? null
-                      : controller.load,
-                  icon: const Icon(Icons.refresh),
-                ),
-              ],
+    builder: (context, _) {
+      if (!widget.dependencies.session.active) return const SizedBox.shrink();
+      final content = _content(context);
+      if (widget.embedded) return content;
+      return ShoppingPage(
+        appBar: AppBar(
+          title: const Text('Notifications'),
+          actions: [
+            if (!marketplaceDesktop(context)) ...marketplaceActions(context),
+            IconButton(
+              tooltip: 'Refresh notifications',
+              onPressed: controller.loading || controller.coolingDown
+                  ? null
+                  : controller.load,
+              icon: const Icon(Icons.refresh),
             ),
-            body: ListView(
-              padding: pagePadding(context),
-              children: [
-                MarketTabs<String>(
-                  values: const {
-                    'all': 'All',
-                    'unread': 'Unread',
-                    'read': 'Read',
-                  },
-                  selected: controller.status,
-                  onSelected: controller.filter,
-                ),
-                ListRecovery(
-                  stale: controller.stale,
-                  retry: controller.load,
-                  error: controller.error,
-                  retained: controller.items.isNotEmpty,
-                  busy: controller.loading,
-                  coolingDown: controller.coolingDown,
-                ),
-                if (controller.loaded &&
-                    !controller.stale &&
-                    !controller.loading &&
-                    controller.error == null &&
-                    controller.pageError == null &&
-                    controller.items.isEmpty)
-                  const MarketEmptyState(
-                    icon: Icons.notifications_none,
-                    title: 'No notifications in this filter.',
-                  ),
-                for (final item in controller.items)
-                  Card(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    color: item.readAt == null
-                        ? const Color(0xFFFFF0F6)
-                        : Colors.white,
-                    child: ListTile(
-                      minTileHeight: 72,
-                      leading: Icon(
-                        item.readAt == null
-                            ? Icons.notifications_active_outlined
-                            : Icons.notifications_outlined,
-                      ),
-                      title: Text(
-                        item.title.isEmpty ? 'Notification' : item.title,
-                        style: TextStyle(
-                          fontWeight: item.readAt == null
-                              ? FontWeight.w700
-                              : FontWeight.w500,
-                        ),
-                      ),
-                      subtitle: Text(
-                        '${item.readAt == null ? 'Unread\n' : ''}${item.summary}',
-                      ),
-                      onTap: () async {
-                        await context.push('/notifications/${item.id}');
-                        if (mounted) controller.load();
-                      },
-                    ),
-                  ),
-                ListPageAction(
-                  load: () => controller.load(more: true),
-                  hasMore: controller.hasMore,
-                  error: controller.pageError,
-                  busy: controller.paging,
-                  disabled:
-                      controller.loading ||
-                      controller.stale ||
-                      controller.coolingDown,
-                  label: 'Load more notifications',
-                ),
-                TextButton(
-                  onPressed: () => context.push('/account/preferences'),
-                  child: const Text('Promotional preferences'),
-                ),
-              ],
-            ),
+          ],
+        ),
+        body: content,
+      );
+    },
+  );
+
+  Widget _content(BuildContext context) => ListView(
+    padding: pagePadding(context),
+    children: [
+      if (widget.embedded)
+        MarketPageHeading(
+          title: 'Notifications',
+          subtitle: 'Updates for your Buyer account',
+          action: IconButton(
+            tooltip: 'Refresh notifications',
+            onPressed: controller.loading || controller.coolingDown
+                ? null
+                : controller.load,
+            icon: const Icon(Icons.refresh),
           ),
+        ),
+      MarketTabs<String>(
+        values: const {'all': 'All', 'unread': 'Unread', 'read': 'Read'},
+        selected: controller.status,
+        onSelected: controller.filter,
+      ),
+      ListRecovery(
+        stale: controller.stale,
+        retry: controller.load,
+        error: controller.error,
+        retained: controller.items.isNotEmpty,
+        busy: controller.loading,
+        coolingDown: controller.coolingDown,
+      ),
+      if (controller.loaded &&
+          !controller.stale &&
+          !controller.loading &&
+          controller.error == null &&
+          controller.pageError == null &&
+          controller.items.isEmpty)
+        const MarketEmptyState(
+          icon: Icons.notifications_none,
+          title: 'No notifications in this filter.',
+        ),
+      for (final item in controller.items)
+        Card(
+          margin: const EdgeInsets.only(bottom: 8),
+          color: item.readAt == null ? const Color(0xFFFFF0F6) : Colors.white,
+          child: ListTile(
+            minTileHeight: 72,
+            leading: Icon(
+              item.readAt == null
+                  ? Icons.notifications_active_outlined
+                  : Icons.notifications_outlined,
+            ),
+            title: Text(
+              item.title.isEmpty ? 'Notification' : item.title,
+              style: TextStyle(
+                fontWeight: item.readAt == null
+                    ? FontWeight.w700
+                    : FontWeight.w500,
+              ),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(item.readAt == null ? 'Unread' : 'Read'),
+                Text(item.summary),
+                if (item.createdAt != null)
+                  Text(
+                    MaterialLocalizations.of(context)
+                        .formatMediumDate(item.createdAt!.toLocal()),
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+              ],
+            ),
+            onTap: () async {
+              await context.push('/notifications/${item.id}');
+              if (mounted) controller.load();
+            },
+          ),
+        ),
+      ListPageAction(
+        load: () => controller.load(more: true),
+        hasMore: controller.hasMore,
+        error: controller.pageError,
+        busy: controller.paging,
+        disabled:
+            controller.loading || controller.stale || controller.coolingDown,
+        label: 'Load more notifications',
+      ),
+    ],
   );
 }
 
@@ -184,7 +205,12 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
       }
       final target = item == null ? null : notificationDestination(item);
       return ShoppingPage(
-        appBar: AppBar(title: const Text('Notification')),
+        appBar: AppBar(
+          title: const Text('Notification'),
+          actions: [
+            if (!marketplaceDesktop(context)) ...marketplaceActions(context),
+          ],
+        ),
         body: ListView(
           padding: pagePadding(context),
           children: [

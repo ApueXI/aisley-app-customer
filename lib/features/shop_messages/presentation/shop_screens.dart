@@ -6,6 +6,7 @@ import '../../../core/ui/foreground_poll.dart';
 import '../../../core/ui/responsive_layout.dart';
 import '../../messaging/presentation/message_views.dart';
 import 'shop_thread_controller.dart';
+import '../data/shop_models.dart';
 
 class ShopInboxScreen extends StatefulWidget {
   const ShopInboxScreen({
@@ -110,6 +111,7 @@ class _ShopThreadScreenState extends State<ShopThreadScreen> {
                 subtitle: c.shop?.availability.label,
                 media: c.media,
                 mediaContext: c.mediaContext,
+                contextAction: _contextCard(context, _latestContext(c)),
                 rows: [
                   for (final e in c.messages)
                     MessageRow(
@@ -151,6 +153,46 @@ class _ShopThreadScreenState extends State<ShopThreadScreen> {
                 fieldError: c.fieldErrors['body'],
                 coolingDown: c.coolingDown,
               ),
+      ),
+    );
+  }
+
+  ShopMessageContext? _latestContext(ShopThreadController controller) {
+    for (final message in controller.messages.reversed) {
+      if (message.context != null) return message.context;
+    }
+    return null;
+  }
+
+  Widget? _contextCard(BuildContext context, ShopMessageContext? value) {
+    if (value == null) return null;
+    final type = value.type.toLowerCase();
+    final route = value.id == null
+        ? null
+        : switch (type) {
+            'product' => '/products/${value.id}',
+            'order' => '/orders/${value.id}',
+            _ => null,
+          };
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        minTileHeight: 64,
+        leading: Icon(
+          type == 'order'
+              ? Icons.receipt_long_outlined
+              : Icons.shopping_bag_outlined,
+        ),
+        title: Text(
+          type == 'order'
+              ? 'Order context'
+              : type == 'product'
+              ? 'Product context'
+              : 'Conversation context',
+        ),
+        subtitle: Text(value.label),
+        trailing: route == null ? null : const Icon(Icons.chevron_right),
+        onTap: route == null ? null : () => context.push(route),
       ),
     );
   }

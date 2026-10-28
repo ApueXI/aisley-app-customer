@@ -6,7 +6,7 @@ phase: 4
 flutter_status: Implemented; acceptance partial
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
-documentation_synced_on: 2026-10-12
+documentation_synced_on: 2026-10-28
 ---
 
 # Inbox notifications and preference
@@ -19,7 +19,7 @@ unread-count/read-all/native push absent.
 Flutter: **implemented; acceptance partial**. See [Phase 4 evidence](../../../references/phase-4-verification.md).
 Broad counterpart/device and concurrency criteria remain open.
 
-Account Notifications → all/read/unread page → allowed target → mark read; settings controls in-app promotions.
+Notifications shell tab or Account Notifications shortcut → all/read/unread page → allowed target → mark read; settings controls in-app promotions.
 
 - List status all/read/unread, per_page 1–50/default 20 and Laravel data/links/meta pagination. Mark read is idempotent and never advances Order/chat/ticket state. No dedicated unread-count/read-all; page unread is not global total.
 - Allowed records cover announcements, important Order decisions/outcomes, ongoing promos/campaigns, Q&A answered and Seller Review response; routine movement/first-mile schedules are filtered out.
@@ -40,6 +40,8 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 ### Feature behavior and boundaries
 
 - General notification inbox is separate from chat unread counts and ticket read markers.
+- Notifications is a persistent shell destination after verified active Customer identity and required
+  consent; it has no invented global unread-count badge.
 - List uses Laravel page data/links/meta, default 20/per_page1–50 and status all|unread|read.
 - Only current allow-listed own types are returned; private user IDs/order snapshots are not exposed.
 - Notification destination is server-sanitized but still validated and mapped to supported Flutter
@@ -214,3 +216,6 @@ Append actual implementation/test outcomes to [Progress](../../../PROGRESS.md) a
 history.
 Follow [architecture](../../../architecture.md), [setup](../../../setup.md) and
 [verification](../../../verification.md).
+
+Presentation adoption (2026-10-28): the existing inbox occupies the Notifications shell tab; API,
+pagination, per-row read state, and the no-global-count boundary are unchanged.

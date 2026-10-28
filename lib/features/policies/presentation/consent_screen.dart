@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../core/platform/trusted_launcher.dart';
 import '../../../core/security/session_controller.dart';
@@ -42,10 +41,15 @@ class _ConsentScreenState extends State<ConsentScreen> {
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: Listenable.merge([_model, widget.session]),
     builder: (context, _) => FormPage(
-      title: 'Review required policies',
+      title: 'Required consent',
+      showAppBar: false,
       canLeave: false,
       busy: _model.busy,
       children: [
+        Text(
+          'Required consent',
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
         const Text(
           'Read each required current policy and explicitly confirm acceptance to continue.',
         ),
@@ -55,10 +59,21 @@ class _ConsentScreenState extends State<ConsentScreen> {
           ),
         if (_model.failure != null) FailureNotice(_model.failure!),
         if (_model.policy != null) ...[
-          PolicyContent(policy: _model.policy!, launcher: widget.launcher),
+          Card(
+            margin: EdgeInsets.zero,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: PolicyContent(
+                policy: _model.policy!,
+                launcher: widget.launcher,
+              ),
+            ),
+          ),
           CheckboxListTile(
             value: _model.confirmed,
             controlAffinity: ListTileControlAffinity.leading,
+            contentPadding: EdgeInsets.zero,
+            minTileHeight: 56,
             title: Text(
               'I have read and accept ${_model.policy!.label}, version ${_model.policy!.version.version}.',
             ),
@@ -66,24 +81,25 @@ class _ConsentScreenState extends State<ConsentScreen> {
                 ? null
                 : (value) => _model.confirm(value ?? false),
           ),
-          FilledButton(
-            onPressed: _model.mayAccept ? _model.accept : null,
-            child: Text(_model.busy ? 'Accepting…' : 'Accept this version'),
-          ),
         ],
         if (_model.failure != null || _model.policy == null && !_model.loading)
           OutlinedButton(
             onPressed: _model.busy ? null : _model.load,
             child: const Text('Refresh policies'),
           ),
-        if (widget.session.active)
+        if (_model.policy != null)
           FilledButton(
-            onPressed: () => context.go(widget.returnTo),
-            child: const Text('Continue'),
+            onPressed: _model.mayAccept ? _model.accept : null,
+            child: Text(_model.busy ? 'Accepting…' : 'Accept and continue'),
           ),
-        TextButton(
-          onPressed: widget.session.signingOut ? null : widget.session.signOut,
-          child: const Text('Sign out'),
+        Align(
+          alignment: Alignment.center,
+          child: TextButton(
+            onPressed: widget.session.signingOut
+                ? null
+                : widget.session.signOut,
+            child: const Text('Sign out'),
+          ),
         ),
       ],
     ),

@@ -16,7 +16,7 @@ class ProductBoundaryCard extends StatelessWidget {
     margin: const EdgeInsets.only(bottom: 12),
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(8),
-      side: const BorderSide(color: Color(0xFF8B8188)),
+      side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
     ),
     child: Padding(padding: const EdgeInsets.all(12), child: child),
   );

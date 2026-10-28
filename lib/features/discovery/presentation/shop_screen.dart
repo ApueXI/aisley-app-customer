@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -8,7 +6,6 @@ import '../../../core/ui/responsive_layout.dart';
 import '../../../core/ui/list_recovery.dart';
 import '../data/catalog_models.dart';
 import 'catalog_widgets.dart';
-import 'product_purchase_flow.dart';
 import 'shop_controllers.dart';
 import '../../vouchers/presentation/shop_vouchers_section.dart';
 
@@ -68,7 +65,12 @@ class _ShopScreenState extends State<ShopScreen> {
 
   @override
   Widget build(BuildContext context) => ShoppingPage(
-    appBar: AppBar(title: const Text('Shop')),
+    appBar: AppBar(
+      title: const Text('Shop'),
+      actions: marketplaceDesktop(context)
+          ? const []
+          : marketplaceActions(context),
+    ),
     body: ListenableBuilder(
       listenable: _controller,
       builder: (context, _) {
@@ -172,13 +174,10 @@ class _ShopScreenState extends State<ShopScreen> {
                         product: product,
                         discovery: widget.dependencies.discovery!,
                         onTap: () => context.push('/products/${product.id}'),
-                        onAddToCart: () => unawaited(
-                          beginProductPurchase(
-                            context: context,
-                            dependencies: widget.dependencies,
-                            productId: product.id,
-                            action: ProductPurchaseAction.addToCart,
-                          ),
+                        bottomAction: OutlinedButton(
+                          onPressed: () =>
+                              context.push('/products/${product.id}'),
+                          child: const Text('View Product'),
                         ),
                       ),
                   ],

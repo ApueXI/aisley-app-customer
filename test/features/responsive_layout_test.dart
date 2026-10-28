@@ -271,9 +271,7 @@ void main() {
             type: PolicyType.terms,
           ),
           'home' => ShoppingPage(body: HomeScreen(dependencies: d)),
-          'directory' => ShoppingPage(
-            body: ShopDirectoryScreen(dependencies: d),
-          ),
+          'directory' => ShopDirectoryScreen(dependencies: d),
           'search' => SearchScreen(
             dependencies: d,
             mode: SearchMode.products,
@@ -396,7 +394,9 @@ void main() {
           );
           expect(
             (outlinedCard.shape! as RoundedRectangleBorder).side.color,
-            const Color(0xFF8B8188),
+            Theme.of(tester.element(productCards.first))
+                .colorScheme
+                .outlineVariant,
           );
           if (feature == 'checkout') {
             final firstItem =
@@ -539,6 +539,7 @@ void main() {
         tester.view.physicalSize = const Size(1440, 900);
         await tester.pumpAndSettle();
         final requests = h.adapter.requests.length;
+        final resizeStartedAt = tester.binding.clock.now();
         for (final size in marketplaceSizes) {
           for (final actual in [size, Size(size.height, size.width)]) {
             for (final textScale in [1.0, 1.5, 2.0]) {
@@ -548,7 +549,6 @@ void main() {
                 bottom: actual.height > 500 ? 240 : 100,
               );
               await tester.pumpWidget(app());
-              await tester.pumpAndSettle();
               expect(
                 tester.takeException(),
                 isNull,
@@ -561,7 +561,7 @@ void main() {
                 if (inputFocus?.hasFocus == true &&
                     find.byType(TextFormField).evaluate().isNotEmpty) {
                   await tester.ensureVisible(find.byType(TextFormField).first);
-                  await tester.pumpAndSettle();
+                  await tester.pumpAndSettle(const Duration(milliseconds: 10));
                 }
                 await checkAccessibilityGuidelines(
                   tester,
@@ -579,7 +579,7 @@ void main() {
                 if (find.text('Show all').evaluate().isNotEmpty) {
                   await tester.ensureVisible(find.text('Show all'));
                   await tester.tap(find.text('Show all'));
-                  await tester.pumpAndSettle();
+                  await tester.pumpAndSettle(const Duration(milliseconds: 10));
                 }
                 final cards = ['Books', 'Home and kitchen accessories']
                     .map(
@@ -608,12 +608,25 @@ void main() {
           400.0,
         ]) {
           tester.view.physicalSize = Size(width, 700);
-          await tester.pumpAndSettle();
+          await tester.pump();
           expect(tester.takeException(), isNull);
         }
+        await tester.pumpAndSettle(const Duration(milliseconds: 10));
         if (input != null) {
           expect(input.controller!.text, 'Safe synthetic draft');
           expect(inputFocus!.hasFocus, isTrue);
+        }
+        if ([
+          'message',
+          'support',
+          'ticket composer',
+          'ticket',
+        ].contains(feature)) {
+          expect(
+            tester.binding.clock.now().difference(resizeStartedAt),
+            lessThan(const Duration(seconds: 15)),
+            reason: 'Keep the resize matrix shorter than the periodic foreground refresh interval.',
+          );
         }
         expect(
           h.adapter.requests.length,

@@ -17,6 +17,7 @@ class FormPage extends StatefulWidget {
     this.maxWidth = 560,
     this.bottomBar,
     this.compact = false,
+    this.showAppBar = true,
   });
   final String title;
   final List<Widget> children;
@@ -24,7 +25,7 @@ class FormPage extends StatefulWidget {
   final VoidCallback? onCancel;
   final double maxWidth;
   final Widget? bottomBar;
-  final bool compact;
+  final bool compact, showAppBar;
   @override
   State<FormPage> createState() => _FormPageState();
 }
@@ -111,21 +112,28 @@ class _FormPageState extends State<FormPage> {
       if (!didPop) _leave();
     },
     child: Scaffold(
-      appBar: marketplaceAppBar(
-        context,
-        AppBar(
-          title: Text(widget.title),
-          automaticallyImplyLeading: false,
-          leading: widget.canLeave
-              ? IconButton(
-                  tooltip: 'Cancel',
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: _leave,
-                )
-              : null,
-        ),
-        compact: widget.compact,
-      ),
+      appBar: widget.showAppBar
+          ? marketplaceAppBar(
+              context,
+              AppBar(
+                title: Text(widget.title),
+                actions:
+                    MarketplaceScope.maybeOf(context)?.active == true &&
+                        (widget.compact || !marketplaceDesktop(context))
+                    ? marketplaceActions(context)
+                    : const [],
+                automaticallyImplyLeading: false,
+                leading: widget.canLeave
+                    ? IconButton(
+                        tooltip: 'Cancel',
+                        icon: const Icon(Icons.arrow_back),
+                        onPressed: _leave,
+                      )
+                    : null,
+              ),
+              compact: widget.compact,
+            )
+          : null,
       body: SafeArea(
         child: AccountContext(
           child: SingleChildScrollView(

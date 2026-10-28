@@ -6,7 +6,7 @@ phase: 2
 flutter_status: Implemented; acceptance partial
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
-documentation_synced_on: 2026-10-12
+documentation_synced_on: 2026-10-28
 ---
 
 # Shop directory and storefront
@@ -38,6 +38,8 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 ### Feature behavior and boundaries
 
 - Directory business Category and one Shop’s Product Category are different filter domains.
+- Shops is a stacked destination reached from Home's Browse Shops shortcut; Back returns to the
+  previous Buyer page rather than switching a persistent shell tab.
 - Directory accepts active shop_category slug; Category options remain stable across its current
   page.
 - Shop detail resolves by public slug, returns the same safe Shop type and may have nullable
@@ -217,5 +219,8 @@ Append actual implementation/test outcomes to [Progress](../../../PROGRESS.md) a
 history.
 Follow [architecture](../../../architecture.md), [setup](../../../setup.md) and
 [verification](../../../verification.md).
+
+Presentation adoption (2026-10-28): Shops remains the same directory/storefront route and contract;
+only its entry and Back-stack placement changed.
 
 Voucher collection adoption: [G28 contract](../../../api/voucher-collection.md) and [client evidence](../../../references/voucher-collection-verification.md).

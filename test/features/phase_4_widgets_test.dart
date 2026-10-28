@@ -135,10 +135,8 @@ void main() {
         ),
       );
       expect(find.textContaining('Read only.'), findsOneWidget);
-      await tester.scrollUntilVisible(
+      await tester.ensureVisible(
         find.widgetWithText(FilledButton, 'Send message'),
-        200,
-        scrollable: find.byType(Scrollable).first,
       );
       final button = tester.widget<FilledButton>(
         find.widgetWithText(FilledButton, 'Send message'),
@@ -214,12 +212,8 @@ void main() {
       );
       final list = tester.widget<ListView>(find.byType(ListView));
       final scroll = list.controller!;
-      await tester.scrollUntilVisible(
-        find.byType(TextFormField),
-        300,
-        maxScrolls: 50,
-        scrollable: find.byType(Scrollable).first,
-      );
+      await tester.ensureVisible(find.byType(TextFormField));
+      await tester.pumpAndSettle();
       final composerInput = find.descendant(
         of: find.byType(TextFormField),
         matching: find.byType(EditableText),

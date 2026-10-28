@@ -9,6 +9,8 @@ import 'checkout_controller.dart';
 import 'commerce_widgets.dart';
 import 'quote_review.dart';
 import 'shipping_options_section.dart';
+import 'pending_checkout_summary.dart';
+import 'checkout_address_section.dart';
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key, required this.dependencies});
@@ -75,12 +77,20 @@ class _CheckoutScreenState extends State<CheckoutScreen>
             : null,
         children: [
           if (c.pending != null) ...[
-            const Text(
-              'Your order is not yet confirmed',
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
-            const Text(
-              'Check the original request before placing another order. You can return to this page during this session. Closing the app loses this recovery record.',
+            const MarketSection(
+              title: 'Your order is not yet confirmed',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'We did not receive confirmation for this placement. Do not start another order while the outcome is unclear.',
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Retry the same placement or Check Orders. This recovery stays in the current session; closing the app clears it.',
+                  ),
+                ],
+              ),
             ),
             if (c.error != null)
               Semantics(liveRegion: true, child: Text(c.error!)),
@@ -88,8 +98,17 @@ class _CheckoutScreenState extends State<CheckoutScreen>
               const LinearProgressIndicator(
                 semanticsLabel: 'Checking placement',
               ),
+            if (c.quote case final quote?)
+              PendingCheckoutSummary(
+                quote: quote,
+                discovery: widget.dependencies.discovery!,
+              )
+            else
+              const Text(
+                'The reviewed quote details are no longer shown, but the original placement is still held for this session.',
+              ),
             if (wide || inlineActions) _actions(),
-            TextButton(
+            OutlinedButton(
               onPressed: () => context.push('/orders'),
               child: const Text('Check Orders'),
             ),
@@ -125,19 +144,16 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                     key: _mainKey,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _addresses(),
+                      CheckoutAddressSection(
+                        controller: c,
+                        onManageAddresses: () async {
+                          c.invalidateQuote();
+                          await context.push('/account/addresses');
+                          if (mounted) await c.loadAddresses();
+                        },
+                      ),
                       const SizedBox(height: 16),
                       ShippingOptionsSection(controller: c),
-                      const SizedBox(height: 16),
-                      const MarketSection(
-                        title: 'Payment',
-                        child: ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          leading: Icon(Icons.payments_outlined),
-                          title: Text('Cash on delivery (COD)'),
-                          subtitle: Text('Pay when your order arrives.'),
-                        ),
-                      ),
                       const SizedBox(height: 16),
                       if (c.quote != null)
                         QuoteReview(
@@ -154,6 +170,16 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                                 : '${c.intent!.cartIds.length} selected Cart items. Review your order to confirm prices and shipping.',
                           ),
                         ),
+                      const SizedBox(height: 16),
+                      const MarketSection(
+                        title: 'Payment method',
+                        child: ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(Icons.payments_outlined),
+                          title: Text('Cash on delivery (COD)'),
+                          subtitle: Text('Pay when your order arrives.'),
+                        ),
+                      ),
                       if (!wide && c.quote != null) ...[
                         const SizedBox(height: 16),
                         MarketSection(
@@ -161,26 +187,32 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                           child: TotalsView(c.quote!.summary),
                         ),
                       ],
-                      if (c.vouchers.isNotEmpty) ...[
+                      if (c.vouchers.isNotEmpty && c.quote == null) ...[
                         const SizedBox(height: 16),
                         MarketSection(
                           title: 'Selected vouchers',
                           child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
+                              Text(
+                                '${c.vouchers.length} selected ${c.vouchers.length == 1 ? 'voucher' : 'vouchers'}',
+                              ),
+                              const Text(
+                                'Eligibility and savings appear in the next reviewed quote.',
+                              ),
                               for (final selection in c.vouchers)
-                                ListTile(
-                                  title: const Text('Voucher selected'),
-                                  subtitle: const Text(
-                                    'Review your order to confirm the saving.',
-                                  ),
-                                  trailing: IconButton(
-                                    tooltip: 'Remove selected voucher',
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: TextButton.icon(
                                     onPressed: c.editable
                                         ? () => c.removeVoucher(
                                             selection.voucherId,
                                           )
                                         : null,
                                     icon: const Icon(Icons.close),
+                                    label: const Text(
+                                      'Remove selected voucher',
+                                    ),
                                   ),
                                 ),
                             ],
@@ -218,67 +250,6 @@ class _CheckoutScreenState extends State<CheckoutScreen>
     _ => 'Order details',
   };
 
-  Widget _addresses() {
-    final c = _controller;
-    return MarketSection(
-      title: 'Delivery address',
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (c.addressesFresh && c.addresses.isEmpty)
-            const Text('Add a shipping address to continue.'),
-          RadioGroup<String>(
-            groupValue: c.addressId,
-            onChanged: (value) {
-              if (value != null && c.editable && c.addressesFresh) {
-                c.chooseAddress(value);
-              }
-            },
-            child: Column(
-              children: [
-                for (final address in c.addresses)
-                  RadioListTile<String>(
-                    contentPadding: EdgeInsets.zero,
-                    materialTapTargetSize: MaterialTapTargetSize.padded,
-                    visualDensity: VisualDensity.standard,
-                    minTileHeight: 48,
-                    title: Text(address.label ?? address.recipientName),
-                    subtitle: Text(
-                      '${address.recipientName} · ${address.contactNumber}\n${address.addressLine1}, ${address.barangay}, ${address.cityMunicipality}, ${address.province}, ${address.region} ${address.postalCode}, ${address.country}',
-                    ),
-                    value: address.id,
-                    enabled: c.editable && c.addressesFresh,
-                  ),
-              ],
-            ),
-          ),
-          Wrap(
-            spacing: 8,
-            children: [
-              TextButton.icon(
-                onPressed: c.editable
-                    ? () async {
-                        c.invalidateQuote();
-                        await context.push('/account/addresses');
-                        if (mounted) await c.loadAddresses();
-                      }
-                    : null,
-                icon: const Icon(Icons.location_on_outlined),
-                label: const Text('Manage addresses'),
-              ),
-              TextButton(
-                onPressed: c.loadingAddresses || !c.editable
-                    ? null
-                    : c.loadAddresses,
-                child: const Text('Refresh addresses'),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _actions() {
     final c = _controller;
     return Column(
@@ -291,7 +262,9 @@ class _CheckoutScreenState extends State<CheckoutScreen>
                 ? null
                 : () => _place(retry: true),
             child: Text(
-              c.coolingDown ? 'Wait before retrying' : 'Retry exact placement',
+              c.coolingDown
+                  ? 'Wait before retrying'
+                  : 'Retry the same placement',
             ),
           )
         else ...[

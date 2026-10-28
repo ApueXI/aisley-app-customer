@@ -159,7 +159,7 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True, ship
         ('/checkout', 'Choose Buy Now from a Product or select Cart items to start checkout.'),
         ('/orders', 'Orders'),
         ('/orders/' + ID, 'Order'),
-        ('/account', 'Your account'),
+        ('/account', 'Account details'),
         ('/account/profile', 'Email, role and account status are managed by AISLEY.'),
         ('/account/password', 'Change password'),
         ('/account/preferences', 'Promotional messages'),
@@ -216,7 +216,7 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True, ship
 
     def click(label):
         for _ in range(20):
-            if script("const b = Array.from(document.querySelectorAll('[role=button],[role=link],button,a')).find(e => {const name = e.getAttribute('aria-label') || e.innerText || e.title || ''; const lines = name.split(/[\\n,]/).map(value => value.trim()); const wanted = " + json.dumps(label) + "; return lines.includes(wanted) || name.trim() === wanted || name.trim().startsWith(wanted + ',') || name.trim().startsWith(wanted + ' ');}); if (b && b.getAttribute('aria-disabled') !== 'true') {b.click(); return true;} return false;"):
+            if script("const b = Array.from(document.querySelectorAll('[role=button],[role=link],[role=tab],button,a')).reverse().find(e => {const name = e.getAttribute('aria-label') || e.innerText || e.title || ''; const lines = name.split(/[\\n,]/).map(value => value.trim()); const wanted = " + json.dumps(label) + "; return (lines.includes(wanted) || name.trim() === wanted || name.trim().startsWith(wanted + ',') || name.trim().startsWith(wanted + ' ')) && e.getAttribute('aria-disabled') !== 'true';}); if (b) {b.click(); return true;} return false;"):
                 return
             dimensions = script('return {width:window.innerWidth,height:window.innerHeight};')
             call(prefix + '/actions', {'actions': [{'type':'wheel','id':'journey-scroll','actions':[
@@ -262,7 +262,7 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True, ship
         current = script('return location.hash.slice(1);')
         if current != '/account':
             raise AssertionError('Account Back/Cancel did not return to /account: ' + current)
-        wait_text('Your account')
+        wait_text('Account details')
 
     def open_accessibility_route(route, expected):
         if route.startswith('/account/'):
@@ -271,7 +271,7 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True, ship
                 back_to_account()
             elif current != '/account':
                 script("window.location.hash = '/account';")
-                wait_text('Your account')
+                wait_text('Account details')
             destinations = {
                 '/account/profile': 'Profile',
                 '/account/password': 'Password',
@@ -292,6 +292,11 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True, ship
             wait_text(expected)
 
     accessibility_report = None
+    stitch_journey_checks = {
+        'mobileNavigationAndUtilityBack': False,
+        'desktopMainDestinations': False,
+        'purchaseSheetsAndBuyNowCartIsolation': False,
+    }
     if accessibility:
         failures = []
         journeys = []
@@ -478,7 +483,7 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True, ship
         if accessibility_route is None or accessibility_route == '/account/profile':
             if accessibility_route is None:
                 script("window.location.hash = '/account';")
-                wait_text('Your account')
+                wait_text('Account details')
                 click('Profile')
                 wait_text('Email, role and account status are managed by AISLEY.')
             field = call(prefix + '/elements', {
@@ -553,7 +558,7 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True, ship
                 call(prefix + '/back', {})
                 wait_text('Leave this screen?')
                 click('Leave')
-                wait_text('Your account')
+                wait_text('Account details')
 
         accessibility_report = {
             'origin': 'http://localhost:8766',
@@ -584,6 +589,49 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True, ship
         script("window.location.hash = '/';")
         wait_text('Search Products or Shops')
         wait_text('Explore Categories')
+        if width == 390:
+            assert script("""
+              const labels = Array.from(document.querySelectorAll('[aria-label]'))
+                .filter(e => e.getBoundingClientRect().bottom > innerHeight - 90)
+                .map(e => (e.getAttribute('aria-label') || '').trim());
+              const has = value => labels.includes(value);
+              return has('Home') && has('Notifications') && has('Account') &&
+                !has('Shops') && !has('Cart');
+            """), 'Mobile main navigation must be Home, Notifications and Account.'
+            assert script("""
+              const labels = Array.from(document.querySelectorAll('[role=button],[role=link],button,a'))
+                .map(e => (e.getAttribute('aria-label') || e.innerText || e.title || '').trim());
+              return labels.some(x => x.startsWith('Messages')) &&
+                labels.some(x => x.startsWith('Cart')) &&
+                labels.some(x => x === 'Terms and privacy');
+            """), 'Home header must expose Messages, Cart and Terms/Privacy.'
+            click('Notifications')
+            wait_text('All')
+            capture('navigation-notifications-mobile')
+            click('Account')
+            wait_text('Account details')
+            click('Notifications')
+            wait_text('All')
+            script("window.location.hash = '/';")
+            wait_text('Explore Categories')
+            click('Shops')
+            wait_text('Explore Shops')
+            capture('shops-utility-mobile')
+            assert not script("return Array.from(document.querySelectorAll('[aria-label]')).some(e => ['Home','Notifications','Account'].includes((e.getAttribute('aria-label') || '').trim()) && e.getBoundingClientRect().bottom > innerHeight - 90);"), 'The Shops utility route must not show the bottom navigation.'
+            click('Back')
+            wait_text('Explore Categories')
+            click('Cart')
+            wait_text('Your Cart')
+            capture('cart-utility-mobile')
+            assert not script("return Array.from(document.querySelectorAll('[aria-label]')).some(e => ['Home','Notifications','Account'].includes((e.getAttribute('aria-label') || '').trim()) && e.getBoundingClientRect().bottom > innerHeight - 90);"), 'The Cart utility route must not show the bottom navigation.'
+            click('Back')
+            wait_text('Explore Categories')
+            stitch_journey_checks['mobileNavigationAndUtilityBack'] = True
+        else:
+            assert all(label in script('return document.body.innerText;') for label in
+                       ['Home', 'Shops', 'Orders', 'Notifications', 'Account']), 'Desktop main destinations must remain available.'
+            assert script("return Array.from(document.querySelectorAll('[role=button],[role=link],button,a')).some(e => (e.getAttribute('aria-label') || e.innerText || e.title || '').trim().startsWith('Cart'));")
+            stitch_journey_checks['desktopMainDestinations'] = True
         capture('home-' + str(width))
         # Web Enter submits the exact search query into route history.
         field = call(prefix + '/elements', {'using':'css selector','value':'input[aria-label="Search Products or Shops"]'})
@@ -597,20 +645,34 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True, ship
         script("window.location.hash = '/products/" + ID + "';")
         wait_text('Add to Cart')
         capture('product-' + str(width))
+        cart_writes_before_add = sum(item['path'].endswith('/cart/items') and item['method'] == 'POST'
+                                     for item in script('return window.buyerSyntheticCalls;'))
+        click('Add to Cart')
+        wait_text('Quantity')
+        capture('sheet-add-' + str(width))
+        assert sum(item['path'].endswith('/cart/items') and item['method'] == 'POST'
+                   for item in script('return window.buyerSyntheticCalls;')) == cart_writes_before_add, 'Opening Add to Cart must not write before confirmation.'
         click('Add to Cart')
         wait_text('Added to Cart')
+        cart_writes_before_buy = sum(item['path'].endswith('/cart/items') and item['method'] == 'POST'
+                                     for item in script('return window.buyerSyntheticCalls;'))
         click('Buy Now')
+        wait_text('Continue to checkout')
+        capture('sheet-buy-now-' + str(width))
+        assert sum(item['path'].endswith('/cart/items') and item['method'] == 'POST'
+                   for item in script('return window.buyerSyntheticCalls;')) == cart_writes_before_buy, 'Opening Buy Now must leave the Cart unchanged.'
+        click('Continue to checkout')
         wait_text('Review order')
         if shipping_selection:
             wait_text('Shipping provider')
             choose_shipping('Synthetic Logistics')
         click('Review order')
-        wait_text('Review your COD order')
+        wait_text('Reviewed COD quote')
         wait_text('Place COD order')
         if shipping_selection:
             wait_text('Shipping provider: Synthetic Logistics')
             choose_shipping('Synthetic Alternate Logistics')
-            assert 'Review your COD order' not in script('return document.body.innerText;'), 'Changing provider must clear the reviewed quote.'
+            assert 'Reviewed COD quote' not in script('return document.body.innerText;'), 'Changing provider must clear the reviewed quote.'
             assert script("return !Array.from(document.querySelectorAll('[role=button]')).some(e => (e.innerText || '').trim() === 'Place COD order' && e.getAttribute('aria-disabled') !== 'true');"), 'Placement must be disabled until renewed review.'
             click('Review order')
             wait_text('Shipping provider: Synthetic Alternate Logistics')
@@ -641,7 +703,7 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True, ship
             wait_text('Shipping provider')
             choose_shipping('Synthetic Logistics')
         click('Review order')
-        wait_text('Review your COD order')
+        wait_text('Reviewed COD quote')
         wait_text('Place COD order')
         script("window.location.hash = '/messages/shops/" + ID + "';")
         wait_text('Refresh conversation')
@@ -655,8 +717,9 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True, ship
         assert all(item['selections'] is None for item in calls if item['path'].endswith('/logistics-options')), 'Discovery must omit selections.'
     assert not any(item['path'].endswith('/checkout/place') for item in calls)
     assert all(not item['path'].endswith('/merge') for item in calls)
+    stitch_journey_checks['purchaseSheetsAndBuyNowCartIsolation'] = True
     script("window.location.hash = '/account';")
-    wait_text('Your account')
+    wait_text('Account details')
     # Scroll the actual Flutter viewport to the deliberate sign-out control.
     for _ in range(12):
         if script("return Array.from(document.querySelectorAll('[role=button]')).some(e => (e.innerText || e.getAttribute('aria-label') || '').trim() === 'Sign out');"):
@@ -672,4 +735,7 @@ def check_shopping(call, prefix, script, wait_text, resize, *, matrix=True, ship
     wait_text('Sign in with your approved Buyer account.')
     coverage = 'phone/tablet/desktop layouts and shopping' if matrix else 'mobile/desktop purchase journeys'
     print('PASS: synthetic browser identity, ' + coverage + ', Enter/search history, Add to Cart, accessible selected Cart, explicit quote and cancelled placement, sign-out; all API traffic intercepted.')
-    return accessibility_report
+    if accessibility_report is not None:
+        accessibility_report['stitchJourneys'] = stitch_journey_checks
+        return accessibility_report
+    return stitch_journey_checks

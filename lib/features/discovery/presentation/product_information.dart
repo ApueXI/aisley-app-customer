@@ -58,13 +58,27 @@ class ProductInformation extends StatelessWidget {
               padding: EdgeInsets.only(top: 8),
               child: Text('Some specifications are unavailable.'),
             ),
-          for (final row in rows)
-            ListTile(
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              title: Text(row.$1),
-              subtitle: Text(row.$2),
+          for (var index = 0; index < rows.length; index++) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 2,
+                    child: Text(
+                      rows[index].$1,
+                      style: Theme.of(context).textTheme.bodyMedium
+                          ?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(flex: 3, child: Text(rows[index].$2)),
+                ],
+              ),
             ),
+            if (index + 1 < rows.length) const Divider(height: 1),
+          ],
         ],
       ),
     );

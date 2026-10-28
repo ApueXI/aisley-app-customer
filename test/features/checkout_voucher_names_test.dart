@@ -230,6 +230,17 @@ void main() {
           .widgetWithText(CheckboxListTile, 'Voucher $appDiscountB')
           .first;
       await tester.ensureVisible(replacement);
+      final semantics = tester.ensureSemantics();
+      try {
+        final replacementLabel = tester
+            .getSemantics(replacement)
+            .getSemanticsData()
+            .label;
+        expect(replacementLabel, contains('Voucher $appDiscountB'));
+        expect(replacementLabel, contains('Merchandise discount'));
+      } finally {
+        semantics.dispose();
+      }
       await tester.tap(replacement);
       await tester.pumpAndSettle();
       expect(h.checkout.quote, isNull);

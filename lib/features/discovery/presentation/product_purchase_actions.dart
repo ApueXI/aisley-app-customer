@@ -117,8 +117,6 @@ class _ProductPurchaseActionsState extends State<ProductPurchaseActions> {
         dependencies: widget.dependencies,
         productId: widget.product.productId,
         action: action,
-        variantId: widget.product.selectedVariant?.id,
-        quantity: widget.product.quantity,
       );
     } finally {
       if (mounted) setState(() => _preparing = false);

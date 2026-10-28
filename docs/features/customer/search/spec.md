@@ -6,7 +6,7 @@ phase: 2
 flutter_status: Implemented; acceptance partial
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
-documentation_synced_on: 2026-10-12
+documentation_synced_on: 2026-10-28
 ---
 
 # Products and Shops search
@@ -68,6 +68,8 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
   enrichment.
 - No Shop ratings/following, arbitrary sort or Product quick-add bypassing variants is
   supplied.
+- The dedicated Search page remains available from Home; its Product Add to Cart card action uses
+  current Product detail and the same quantity/option sheet, never bypassing selection.
 - Test each mode, escaped wildcards, empty q,100/101 chars, scalar array/repeated query and
   page bounds.
 - Test delayed old-mode results, offline draft, back/forward restoration and page Retry without
@@ -215,3 +217,6 @@ Append actual implementation/test outcomes to [Progress](../../../PROGRESS.md) a
 history.
 Follow [architecture](../../../architecture.md), [setup](../../../setup.md) and
 [verification](../../../verification.md).
+
+Presentation adoption (2026-10-28): Home-only shared-header Search and the Search-page purchase
+entry both preserve the existing query, variant, stock and Cart operation contracts.

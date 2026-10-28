@@ -56,9 +56,10 @@ void main() {
         await tester.pumpAndSettle();
         for (final label in [
           'AISLEY',
+          'Home',
           'Shops',
           'Orders',
-          'Cart (3)',
+          'Notifications',
           'Account',
         ]) {
           expect(find.text(label), findsOneWidget);
@@ -68,7 +69,7 @@ void main() {
           );
         }
         expect(find.byKey(const ValueKey('messages-action')), findsOneWidget);
-        expect(find.byTooltip('Notifications'), findsOneWidget);
+        expect(find.byTooltip('Cart, 3 items'), findsOneWidget);
         expect(find.byTooltip('Terms and privacy'), findsOneWidget);
         await tester.tap(find.byType(TextField));
         await tester.enterText(find.byType(TextField), 'linen shirt');

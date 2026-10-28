@@ -8,6 +8,7 @@ import 'package:aisley_mobile_buyer/features/discovery/presentation/search_contr
 import 'package:aisley_mobile_buyer/features/discovery/presentation/search_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../support/commerce_harness.dart';
@@ -141,7 +142,12 @@ void main() {
     await showFlow(tester, product: _variantProduct());
     await tester.tap(find.text('Add from listing'));
     await tester.pumpAndSettle();
-    expect(find.text('Choose Product options'), findsOneWidget);
+    expect(
+      find.text(
+        'Choose one available value from each option group, then set a quantity.',
+      ),
+      findsOneWidget,
+    );
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
     expect(
@@ -154,7 +160,26 @@ void main() {
     );
   });
 
-  testWidgets('detail purchase keeps its chosen quantity after a fresh read', (
+  testWidgets('closing a simple Product sheet makes no Cart write', (
+    tester,
+  ) async {
+    await showFlow(tester, product: _simpleProduct());
+    await tester.tap(find.text('Add from listing'));
+    await tester.pumpAndSettle();
+    expect(find.text('Set the quantity before continuing.'), findsOneWidget);
+    await tester.tap(find.byTooltip('Close'));
+    await tester.pumpAndSettle();
+    expect(
+      harness.adapter.requests.where(
+        (request) =>
+            request.method == 'POST' &&
+            request.uri.path == '/api/v1/customer/cart/items',
+      ),
+      isEmpty,
+    );
+  });
+
+  testWidgets('detail purchase chooses quantity in the confirmation sheet', (
     tester,
   ) async {
     serveProduct(_simpleProduct());
@@ -172,9 +197,22 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    expect(find.text('Quantity'), findsNothing);
+    expect(find.byTooltip('Increase quantity'), findsNothing);
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Add to Cart'));
+    await tester.pumpAndSettle();
+    expect(find.byTooltip('Increase quantity'), findsOneWidget);
     await tester.tap(find.byTooltip('Increase quantity'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Add to Cart'));
+    expect(
+      harness.adapter.requests.where(
+        (request) =>
+            request.method == 'POST' &&
+            request.uri.path == '/api/v1/customer/cart/items',
+      ),
+      isEmpty,
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Add to Cart'));
     await tester.pumpAndSettle();
 
     final writes = harness.adapter.requests.where(
@@ -190,7 +228,7 @@ void main() {
     });
   });
 
-  testWidgets('simple listing purchase adds one unit with a null variant', (
+  testWidgets('simple listing purchase waits for the sheet confirmation', (
     tester,
   ) async {
     final product = _simpleProduct();
@@ -224,6 +262,17 @@ void main() {
     await tester.ensureVisible(addButton);
     await tester.tap(addButton);
     await tester.pumpAndSettle();
+    expect(find.text('Set the quantity before continuing.'), findsOneWidget);
+    expect(
+      harness.adapter.requests.where(
+        (request) =>
+            request.method == 'POST' &&
+            request.uri.path == '/api/v1/customer/cart/items',
+      ),
+      isEmpty,
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Add to Cart'));
+    await tester.pumpAndSettle();
     final writes = harness.adapter.requests.where(
       (request) =>
           request.method == 'POST' &&
@@ -243,7 +292,9 @@ void main() {
     await showFlow(tester, product: _variantProduct(), doubleTap: true);
     await tester.tap(find.text('Add from listing'));
     await tester.pumpAndSettle();
-    expect(find.text('Choose Product options'), findsOneWidget);
+    expect(find.byType(DropdownButtonFormField<String?>), findsOneWidget);
+    final confirm = find.widgetWithText(FilledButton, 'Add to Cart');
+    expect(tester.widget<FilledButton>(confirm).onPressed, isNull);
     expect(
       harness.adapter.requests.where(
         (request) => request.uri.path == '/api/v1/products/$customerId',
@@ -255,9 +306,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Blue').last);
     await tester.pumpAndSettle();
+    expect(tester.widget<FilledButton>(confirm).onPressed, isNotNull);
     await tester.tap(find.byTooltip('Increase quantity'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Add to Cart'));
+    await tester.tap(find.widgetWithText(FilledButton, 'Add to Cart'));
     await tester.pumpAndSettle();
 
     final writes = harness.adapter.requests.where(
@@ -271,5 +323,72 @@ void main() {
       'variant_id': _variantId,
       'quantity': 2,
     });
+  });
+
+  testWidgets('Buy Now confirms separately and leaves Cart unchanged', (
+    tester,
+  ) async {
+    serveProduct(_simpleProduct());
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, _) => Scaffold(
+            body: Center(
+              child: FilledButton(
+                onPressed: () {
+                  unawaited(
+                    beginProductPurchase(
+                      context: context,
+                      dependencies: dependencies,
+                      productId: customerId,
+                      action: ProductPurchaseAction.buyNow,
+                    ),
+                  );
+                },
+                child: const Text('Buy from listing'),
+              ),
+            ),
+          ),
+        ),
+        GoRoute(
+          path: '/checkout',
+          builder: (_, _) => const Scaffold(body: Text('Checkout opened')),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+    await tester.pumpWidget(
+      MaterialApp.router(theme: buyerTheme(), routerConfig: router),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Buy from listing'));
+    await tester.pumpAndSettle();
+    expect(find.text('Buy Now'), findsOneWidget);
+    expect(find.text('Continue to checkout'), findsOneWidget);
+    expect(
+      harness.adapter.requests.where(
+        (request) =>
+            request.method == 'POST' &&
+            request.uri.path == '/api/v1/customer/cart/items',
+      ),
+      isEmpty,
+    );
+    await tester.tap(find.widgetWithText(FilledButton, 'Continue to checkout'));
+    await tester.pumpAndSettle();
+    expect(find.text('Checkout opened'), findsOneWidget);
+    expect(harness.commerce.checkout.intent?.mode, 'buy_now');
+    expect(
+      harness.adapter.requests.where(
+        (request) =>
+            request.method == 'POST' &&
+            request.uri.path == '/api/v1/customer/cart/items',
+      ),
+      isEmpty,
+    );
   });
 }

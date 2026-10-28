@@ -46,6 +46,7 @@ class MessageInboxView extends StatelessWidget {
       appBar: AppBar(
         title: Text(title),
         actions: [
+          if (!marketplaceDesktop(context)) ...marketplaceActions(context),
           IconButton(
             tooltip: 'Refresh inbox',
             onPressed: loading || coolingDown ? null : refresh,

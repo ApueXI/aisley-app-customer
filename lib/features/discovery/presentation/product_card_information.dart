@@ -12,7 +12,6 @@ class ProductCardInformation extends StatelessWidget {
     final titleStyle = Theme.of(context).textTheme.bodyMedium
         ?.copyWith(fontWeight: FontWeight.w600);
     final titleLine = _lineHeight(context, titleStyle);
-    final metadataLine = _lineHeight(context, body);
     final shownPrice = product.minPrice ?? product.price;
     final ranged =
         product.minPrice != null &&
@@ -30,6 +29,8 @@ class ProductCardInformation extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Text(product.shop.name, style: body),
+        const SizedBox(height: 4),
         SizedBox(
           height: titleLine * 2,
           child: Text(
@@ -40,37 +41,27 @@ class ProductCardInformation extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-        ConstrainedBox(
-          constraints: BoxConstraints(minHeight: metadataLine),
-          child: Text(
-            '${ranged ? 'From ' : ''}₱${shownPrice.toStringAsFixed(2)}',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontSize: 18,
-              color: Theme.of(context).colorScheme.primary,
-              fontWeight: FontWeight.w700,
-            ),
+        Text(
+          '${ranged ? 'From ' : ''}₱${shownPrice.toStringAsFixed(2)}',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontSize: 18,
+            color: Theme.of(context).colorScheme.primary,
+            fontWeight: FontWeight.w700,
           ),
         ),
-        ConstrainedBox(
-          constraints: BoxConstraints(minHeight: metadataLine),
-          child: Text(
-            promotion,
-            style: body?.copyWith(
-              decoration: promotion.startsWith('Was ')
-                  ? TextDecoration.lineThrough
-                  : null,
+        if (promotion.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(
+              promotion,
+              style: body?.copyWith(decoration: TextDecoration.lineThrough),
             ),
           ),
-        ),
-        const SizedBox(height: 4),
-        ConstrainedBox(
-          constraints: BoxConstraints(minHeight: metadataLine),
-          child: Text(product.shop.name, style: body),
-        ),
-        ConstrainedBox(
-          constraints: BoxConstraints(minHeight: metadataLine),
-          child: Text(metadata, style: body),
-        ),
+        if (metadata.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(metadata, style: body),
+          ),
       ],
     );
   }

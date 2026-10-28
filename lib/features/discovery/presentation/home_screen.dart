@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -12,7 +10,6 @@ import 'catalog_widgets.dart';
 import 'home_campaign_banner.dart';
 import 'home_controller.dart';
 import 'home_shopping_shortcuts.dart';
-import 'product_purchase_flow.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key, required this.dependencies});
@@ -84,14 +81,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       error: _controller.error,
                       coolingDown: _controller.coolingDown,
                     ),
+                    if (home.categories.isNotEmpty)
+                      _categories(context, home.categories),
                     if (_campaign(home) case final campaign?)
                       HomeCampaignBanner(
                         campaign: campaign,
                         discovery: widget.dependencies.discovery!,
                         launcher: widget.dependencies.launcher,
                       ),
-                    if (home.categories.isNotEmpty)
-                      _categories(context, home.categories),
                     if (_supportedActions(home).isNotEmpty)
                       _quickActions(context, _supportedActions(home)),
                     if (home.flashDeals case final deals?
@@ -293,7 +290,7 @@ class _HomeScreenState extends State<HomeScreen> {
       for (final action in actions)
         OutlinedButton.icon(
           onPressed: () =>
-              context.go(action.key == 'shops' ? '/shops' : '/search'),
+              context.push(action.key == 'shops' ? '/shops' : '/search'),
           icon: Icon(
             action.key == 'shops' ? Icons.storefront_outlined : Icons.search,
           ),
@@ -337,14 +334,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       product: product,
                       discovery: widget.dependencies.discovery!,
                       onTap: () => context.push('/products/${product.id}'),
-                      onAddToCart: () => unawaited(
-                        beginProductPurchase(
-                          context: context,
-                          dependencies: widget.dependencies,
-                          productId: product.id,
-                          action: ProductPurchaseAction.addToCart,
-                        ),
-                      ),
                     ),
                   ),
               ],
@@ -370,14 +359,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 product: product,
                 discovery: widget.dependencies.discovery!,
                 onTap: () => context.push('/products/${product.id}'),
-                onAddToCart: () => unawaited(
-                  beginProductPurchase(
-                    context: context,
-                    dependencies: widget.dependencies,
-                    productId: product.id,
-                    action: ProductPurchaseAction.addToCart,
-                  ),
-                ),
               ),
           ],
         ),

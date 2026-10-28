@@ -4,15 +4,44 @@ import '../../../core/ui/marketplace_widgets.dart';
 import '../data/tracking_models.dart';
 
 class OrderTimeline extends StatelessWidget {
-  const OrderTimeline({super.key, required this.events});
+  const OrderTimeline({
+    super.key,
+    required this.events,
+    required this.mapAvailable,
+    required this.mapMessage,
+  });
   final List<TrackingEvent> events;
+  final bool mapAvailable;
+  final String mapMessage;
   @override
   Widget build(BuildContext context) => MarketSection(
     title: 'Tracking',
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (events.isEmpty) const Text('Tracking updates will appear here.'),
+        if (!mapAvailable)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.location_off_outlined),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    mapMessage.trim().isEmpty
+                        ? 'Live map unavailable.'
+                        : mapMessage,
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          const Text(
+            'Map display is unavailable in Buyer. Tracking events show the latest Order updates.',
+          ),
+        if (events.isEmpty) const Text('No tracking updates yet.'),
         for (var i = 0; i < events.length; i++)
           Padding(
             padding: const EdgeInsets.only(bottom: 16),

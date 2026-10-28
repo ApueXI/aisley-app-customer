@@ -29,25 +29,41 @@ class MarketplaceScope extends InheritedWidget {
       chatUpdatesManaged != oldWidget.chatUpdatesManaged;
 }
 
-List<Widget> marketplaceActions(BuildContext context) {
+List<Widget> marketplaceActions(
+  BuildContext context, {
+  int? cartCountOverride,
+}) {
   final scope = MarketplaceScope.maybeOf(context);
+  final cartCount = scope?.cartCount ?? cartCountOverride;
   return [
     MessageAction(
       unread: scope?.chatUnread,
       stale: scope?.chatStale ?? false,
       onPressed: () => context.push('/messages'),
     ),
-    IconButton(
-      tooltip: 'Notifications',
-      onPressed: () => context.push('/notifications'),
-      icon: const Icon(Icons.notifications_outlined),
-    ),
+    marketplaceCartAction(context, cartCountOverride: cartCount),
     IconButton(
       tooltip: 'Terms and privacy',
       onPressed: () => context.push('/policies/terms_of_service'),
       icon: const Icon(Icons.policy_outlined),
     ),
   ];
+}
+
+Widget marketplaceCartAction(BuildContext context, {int? cartCountOverride}) {
+  final cartCount =
+      MarketplaceScope.maybeOf(context)?.cartCount ?? cartCountOverride;
+  return IconButton(
+    tooltip: cartCount == null || cartCount == 0
+        ? 'Cart'
+        : 'Cart, $cartCount items',
+    onPressed: () => context.push('/cart'),
+    icon: Badge(
+      isLabelVisible: (cartCount ?? 0) > 0,
+      label: Text('${cartCount ?? 0}'),
+      child: const Icon(Icons.shopping_bag_outlined),
+    ),
+  );
 }
 
 bool marketplaceDesktop(BuildContext context) {
@@ -58,9 +74,10 @@ bool marketplaceDesktop(BuildContext context) {
   var utilityWidth = 0.0;
   for (final label in const [
     'AISLEY',
+    'Home',
     'Shops',
     'Orders',
-    'Cart (999)',
+    'Notifications',
     'Account',
   ]) {
     final painter = TextPainter(
@@ -189,7 +206,10 @@ class _MarketplaceHeaderState extends State<MarketplaceHeader> {
                   height: 48,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
-                    children: marketplaceActions(context),
+                    children: marketplaceActions(
+                      context,
+                      cartCountOverride: widget.cartCount,
+                    ),
                   ),
                 ),
               ),
@@ -217,22 +237,30 @@ class _MarketplaceHeaderState extends State<MarketplaceHeader> {
                             else
                               const Spacer(),
                             const SizedBox(width: 16),
+                            _destinationButton(
+                              context,
+                              path: '/',
+                              label: 'Home',
+                            ),
                             for (final entry in const {
                               '/shops': 'Shops',
                               '/orders': 'Orders',
-                              '/cart': 'Cart',
+                              '/notifications': 'Notifications',
                               '/account': 'Account',
                             }.entries)
                               TextButton(
-                                onPressed: () => entry.key == '/orders'
-                                    ? context.push(entry.key)
-                                    : context.go(entry.key),
-                                child: Text(
-                                  entry.key == '/cart' &&
-                                          (widget.cartCount ?? 0) > 0
-                                      ? 'Cart (${widget.cartCount})'
-                                      : entry.value,
+                                onPressed: () =>
+                                    _openDestination(context, entry.key),
+                                style: TextButton.styleFrom(
+                                  foregroundColor:
+                                      _destinationSelected(
+                                        _path(context),
+                                        entry.key,
+                                      )
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Theme.of(context).colorScheme.onSurface,
                                 ),
+                                child: Text(entry.value),
                               ),
                           ],
                         )
@@ -247,6 +275,36 @@ class _MarketplaceHeaderState extends State<MarketplaceHeader> {
         ),
       ),
     ),
+  );
+
+  String _path(BuildContext context) =>
+      GoRouter.maybeOf(context)?.routeInformationProvider.value.uri.path ?? '';
+
+  bool _destinationSelected(String current, String destination) =>
+      destination == '/'
+      ? current == '/'
+      : current == destination || current.startsWith('$destination/');
+
+  void _openDestination(BuildContext context, String destination) {
+    if (destination == '/notifications' || destination == '/account') {
+      context.go(destination);
+    } else {
+      context.push(destination);
+    }
+  }
+
+  Widget _destinationButton(
+    BuildContext context, {
+    required String path,
+    required String label,
+  }) => TextButton(
+    onPressed: () => context.go(path),
+    style: TextButton.styleFrom(
+      foregroundColor: _destinationSelected(_path(context), path)
+          ? Theme.of(context).colorScheme.primary
+          : Theme.of(context).colorScheme.onSurface,
+    ),
+    child: Text(label),
   );
 }
 

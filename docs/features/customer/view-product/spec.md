@@ -6,7 +6,7 @@ phase: 2
 flutter_status: Implemented; acceptance partial
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
-documentation_synced_on: 2026-10-12
+documentation_synced_on: 2026-10-28
 ---
 
 # Product Detail and configuration
@@ -52,12 +52,17 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 - No options means variant_id is explicitly null in Add Cart/Buy Now, not omitted.
 - Add Cart hands exact Product/variant/quantity to CartRepository; it increments and is not UUID
   replay-safe.
-- Listing Add to Cart and detail Add/Buy Now fetch current Product detail before purchase. Simple
-  listing cards add one unit; detail quantity is retained. Variant purchases use a bounded mobile
-  bottom sheet or larger-screen dialog and require a complete available combination. Cancel makes
-  no write; unavailable combinations cannot be confirmed.
-- Detail keeps interactive variant selection in the purchase flow. The picker shows current option
-  price/stock/quantity and submits only a valid combination through the owning screen controller.
+- Home Product cards have no quick-add control. Retained Search Add to Cart fetches current Product
+  detail and enters the same purchase flow as Product Detail.
+- Product Detail has no inline quantity or preselected SKU. Detail Add to Cart/Buy Now and retained
+  Search Add to Cart open a bounded, scrollable mobile sheet or larger-screen dialog.
+- Simple Products show quantity only; Products with options require a complete current server-listed
+  combination and bounded quantity. The selection surface shows current price/stock and quantity.
+- Close/Cancel makes no write; unavailable combinations cannot be confirmed. Confirmed Add submits
+  the selected configuration once. Confirmed Buy Now creates the separate Checkout intent and leaves
+  Cart unchanged. Cart-line editing is a separate flow.
+- Detail keeps interactive variant selection inside the purchase flow. The picker submits only a
+  valid combination through the owning screen controller.
 - Buy Now builds a checkout intent without changing Cart and requires owned shipping address/COD quote.
 - Wishlist and Q&A/review sections use their own repositories and independent loading/error state.
 - Only record Recently Viewed after successful public detail display; error/loading does not create
@@ -220,3 +225,6 @@ No Flutter implementation checkbox is completed by documentation authoring or ro
 Append actual implementation/test outcomes to [Progress](../../../PROGRESS.md) and retain prior history.
 Follow [architecture](../../../architecture.md), [setup](../../../setup.md) and
 [verification](../../../verification.md).
+
+Presentation adoption (2026-10-28): simple and variant Product purchase entry points use the
+quantity-first selection flow; independent visual/device acceptance is still pending.

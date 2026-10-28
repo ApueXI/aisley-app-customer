@@ -43,15 +43,10 @@ void main() {
       final searchHeight = tester
           .getSize(find.byType(MarketplaceHeader))
           .height;
-      for (final label in ['Shops', 'Cart', 'Account', 'Home']) {
-        final desktop = width >= 1024;
+      for (final label in ['Home', 'Notifications', 'Account']) {
+        final desktop = find.byType(NavigationBar).evaluate().isEmpty;
         final button = desktop
-            ? find
-                  .widgetWithText(
-                    TextButton,
-                    label == 'Home' ? 'AISLEY' : label,
-                  )
-                  .first
+            ? find.widgetWithText(TextButton, label).first
             : find.descendant(
                 of: find.byType(NavigationBar),
                 matching: find.text(label),
@@ -69,7 +64,6 @@ void main() {
             'linen shirt',
           );
         }
-        expect(find.byTooltip('Notifications'), findsOneWidget);
         expect(find.byTooltip('Terms and privacy'), findsOneWidget);
         if (!desktop && label != 'Home') {
           expect(
@@ -79,6 +73,16 @@ void main() {
         }
         expect(tester.takeException(), isNull);
       }
+      final desktop = find.byType(NavigationBar).evaluate().isEmpty;
+      await tester.tap(
+        desktop
+            ? find.widgetWithText(TextButton, 'Home').first
+            : find.descendant(
+                of: find.byType(NavigationBar),
+                matching: find.text('Home'),
+              ),
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('messages-action')));
       await tester.pumpAndSettle();
       expect(find.byType(ConversationTile), findsNWidgets(3));
@@ -90,11 +94,16 @@ void main() {
       await tester.tap(find.byTooltip('Back'));
       await tester.pumpAndSettle();
       expect(find.byType(TextField), findsOneWidget);
-      await tester.tap(find.byTooltip('Notifications'));
+      await tester.tap(
+        desktop
+            ? find.widgetWithText(TextButton, 'Notifications').first
+            : find.descendant(
+                of: find.byType(NavigationBar),
+                matching: find.text('Notifications'),
+              ),
+      );
       await tester.pumpAndSettle();
       expect(find.byType(TextField), findsNothing);
-      await tester.tap(find.byTooltip('Back'));
-      await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Terms and privacy'));
       await tester.pumpAndSettle();
       expect(find.textContaining('Terms of Service'), findsWidgets);
@@ -125,12 +134,23 @@ void main() {
             ),
           );
           await tester.pumpAndSettle();
+          final inboxScrollable = find
+              .descendant(
+                of: find.byKey(const PageStorageKey('combined-messages')),
+                matching: find.byType(Scrollable),
+              )
+              .first;
           for (final entry in {
             'Shops': 'shops',
             'Logistics': 'logistics',
             'Courier': 'courier',
           }.entries) {
             final filter = find.widgetWithText(TextButton, entry.key);
+            await tester.scrollUntilVisible(
+              filter,
+              -180,
+              scrollable: inboxScrollable,
+            );
             await tester.ensureVisible(filter);
             await tester.pumpAndSettle();
             await tester.tap(filter);
@@ -151,7 +171,13 @@ void main() {
             await tester.pumpAndSettle();
             expect(tester.takeException(), isNull);
           }
-          await tester.ensureVisible(find.widgetWithText(TextButton, 'All'));
+          final allFilter = find.widgetWithText(TextButton, 'All');
+          await tester.scrollUntilVisible(
+            allFilter,
+            -180,
+            scrollable: inboxScrollable,
+          );
+          await tester.ensureVisible(allFilter);
           await tester.pumpAndSettle();
           await tester.tap(find.widgetWithText(TextButton, 'All'));
           await tester.pumpAndSettle();

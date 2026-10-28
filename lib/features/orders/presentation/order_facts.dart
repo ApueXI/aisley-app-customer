@@ -8,6 +8,7 @@ import '../../checkout/presentation/shipping_details.dart';
 import '../../discovery/data/discovery_repository.dart';
 import '../data/order_models.dart';
 import '../../discovery/presentation/product_item_row.dart';
+import '../../checkout/presentation/voucher_savings_summary.dart';
 
 class OrderFacts extends StatelessWidget {
   const OrderFacts(this.order, {super.key, required this.discovery});
@@ -18,19 +19,24 @@ class OrderFacts extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       MarketSection(
-        title: order.reference,
+        title: order.shop.name,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              order.shop.name,
-              style: Theme.of(context).textTheme.titleMedium,
+            Text('Order ref: ${order.reference}'),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                MarketStatusLabel(order.statusLabel),
+                MarketStatusLabel(order.groupLabel),
+              ],
             ),
             const SizedBox(height: 8),
-            MarketStatusLabel('${order.statusLabel} · ${order.groupLabel}'),
-            const SizedBox(height: 8),
             Text('Placed ${order.placedAt.toLocal()}'),
-            Text('${order.paymentMethod} · ${order.paymentStatus}'),
+            Text('Payment method: ${order.paymentMethod.toUpperCase()}'),
+            Text('Payment status: ${order.paymentStatus}'),
           ],
         ),
       ),
@@ -41,23 +47,30 @@ class OrderFacts extends StatelessWidget {
           children: [
             for (final item in order.items)
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: ProductItemRow(
-                  imageUrl: item.imageUrl,
-                  name: item.name,
-                  discovery: discovery,
-                  details: [
-                    Text('${item.name} × ${item.quantity}'),
-                    if (item.variantName != null) Text(item.variantName!),
-                    Text(
-                      item.options
-                          .map((o) => '${o.group}: ${o.value}')
-                          .join(', '),
-                    ),
-                    Text(
-                      '${item.unitPrice.display(item.currency)} each · ${item.subtotal.display(item.currency)}',
-                    ),
-                  ],
+                padding: const EdgeInsets.only(bottom: 8),
+                child: ProductBoundaryCard(
+                  child: ProductItemRow(
+                    imageUrl: item.imageUrl,
+                    name: item.name,
+                    discovery: discovery,
+                    details: [
+                      Text(
+                        item.name,
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      if (item.variantName != null) Text(item.variantName!),
+                      if (item.options.isNotEmpty)
+                        Text(
+                          item.options
+                              .map((o) => '${o.group}: ${o.value}')
+                              .join(', '),
+                        ),
+                      Text('Quantity ${item.quantity}'),
+                      Text(
+                        '${item.unitPrice.display(item.currency)} each · Line subtotal ${item.subtotal.display(item.currency)}',
+                      ),
+                    ],
+                  ),
                 ),
               ),
           ],
@@ -65,7 +78,7 @@ class OrderFacts extends StatelessWidget {
       ),
       const SizedBox(height: 16),
       MarketSection(
-        title: 'Order summary',
+        title: 'Payment breakdown',
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -74,29 +87,47 @@ class OrderFacts extends StatelessWidget {
               businessName: order.shippingProvider?.businessName,
               fee: order.totals.shipping.display(order.totals.currency),
             ),
-            for (final voucher in order.vouchers)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  '${voucher.code}: ${voucher.discount.display(voucher.currency ?? order.totals.currency)}\n${voucher.terms}',
-                ),
+            for (final voucher in order.vouchers) ...[
+              VoucherSavingsSummary(
+                name: voucher.name,
+                code: voucher.code,
+                issuer: voucher.issuer,
+                benefit: voucher.benefit,
+                discount: voucher.discount,
+                currency: voucher.currency ?? order.totals.currency,
               ),
+              if (voucher.terms.isNotEmpty)
+                Text(
+                  voucher.terms,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+            ],
           ],
         ),
       ),
       const SizedBox(height: 16),
       MarketSection(
-        title: 'Delivery address snapshot',
-        child: AddressSnapshotView(order.address),
+        title: 'Delivery details',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            AddressSnapshotView(order.address),
+            const SizedBox(height: 12),
+            ShippingDetails(
+              businessName: order.shippingProvider?.businessName,
+              fee: order.totals.shipping.display(order.totals.currency),
+            ),
+            if (order.delivery != null) ...[
+              const Divider(height: 24),
+              Text('Delivery status: ${order.delivery!.status}'),
+              if (order.delivery!.name != null)
+                Text('Courier: ${order.delivery!.name}'),
+              if (order.delivery!.contact != null)
+                Text('Courier contact: ${order.delivery!.contact!}'),
+            ],
+          ],
+        ),
       ),
-      const SizedBox(height: 16),
-      if (order.delivery != null) ...[
-        Text('Delivery: ${order.delivery!.status}'),
-        if (order.delivery!.name != null)
-          Text('Courier: ${order.delivery!.name}'),
-        if (order.delivery!.contact != null) Text(order.delivery!.contact!),
-      ],
-      const Text('Live Courier map is unavailable.'),
     ],
   );
 }

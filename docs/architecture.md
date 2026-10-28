@@ -55,7 +55,7 @@ Private caches/drafts/quotes/keys/photos are memory-only. Logout/account loss cl
 
 ## Navigation and identity-dependent reads
 
-`go_router` owns Home/Shops/Cart/Account bottom branches; detail/forms stack within their origin branch. Validate allow-listed internal return routes and UUID/slug parameters. Auth and consent redirects preserve safe read destinations, never executable mutation intent. Native deep-link reset adoption remains unavailable; trusted storefront recovery opens intentionally through url_launcher.
+`go_router` owns Home/Notifications/Account shell branches. Shops and Cart are pushed utility pages; their Back action returns to the previous shell route. Detail/forms stack within their origin branch. The active header exposes Messages, Cart and Terms/Privacy. Validate allow-listed internal return routes and UUID/slug parameters. Auth and consent redirects preserve safe read destinations, never executable mutation intent. Native deep-link reset adoption remains unavailable; trusted storefront recovery opens intentionally through url_launcher.
 
 Public Product/Shop reads may use a bounded public memory cache keyed by normalized endpoint/query/page. Optional-auth Home is always private when a token was supplied, even when its viewer projection looks anonymous. Shopping routes require active verified identity and consent even where the backend endpoint remains public. Guest recency composition/storage/automatic merge are removed; startup only best-effort deletes the retired hints key through shared_preferences. Default private repository state is cleared before changing identity.
 
@@ -88,3 +88,11 @@ Background identity/consent revalidation retains mounted route state after tempo
 ## Combined Messages presentation — 2026-10-17
 
 `MessageCenter` combines display projections from the three session-owned channel inbox controllers; channel-qualified identities, typed repositories, cursor trails, thread routes and read markers stay separate. The shared paging controller deduplicates concurrent loads and preserves loaded pages/older cursor frontiers on foreground refresh. Confirmed thread reads/sends invalidate only the affected channel total. `MessageUpdates` owns one 15s foreground scheduler, refreshes on focus/resume and pauses during background, offline channel failures or blocked consent. Header values sum complete fresh server totals; errors or incomplete/stale totals expose unknown status instead of an exact count. No native push, new backend route or dependency is introduced.
+
+## Stitch presentation adoption — 2026-10-28
+
+The current shell presents Home, Notifications and Account as the three persistent phone/tablet destinations. Messages, Cart and Terms/Privacy are shared-header utilities. The Shops directory and Cart are pushed pages, preserving the prior branch beneath them. Desktop uses the same destinations with Home/Shops/Orders/Notifications/Account in its main header; Cart remains an action. Home alone exposes the shared-header Search field.
+
+Product Detail no longer owns inline quantity or SKU selection. Detail Add to Cart/Buy Now and retained Search Add-to-Cart actions fetch current Product data and open the same scrollable quantity/option selection sheet or dialog. Simple Products expose quantity only; variant choices must match the current server-listed combination. Cancel/Close makes no write. Confirmed Add uses the existing additive Cart operation; Buy Now builds the existing separate intent and leaves Cart unchanged. Home Product cards have no quick-add buttons. Cart line editing remains separate.
+
+These are presentation/route changes inside existing app composition. Session and consent guards, server-owned eligibility/prices/stock, Checkout quote/place/recovery, Order/voucher projections and separate communication repositories retain their existing owners. No API, backend, dependency or raw generated design-system adoption occurred. Source/test coverage and the pending acceptance boundary are recorded in [the Stitch implementation report](reports/stitch-implementation-2026-10-28.md).

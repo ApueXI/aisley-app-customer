@@ -59,7 +59,6 @@ class BuyerShell extends StatelessWidget {
                     child: NavigationBar(
                       selectedIndex: navigation.currentIndex,
                       onDestinationSelected: (index) {
-                        if (index == 2) commerce?.cart.load();
                         navigation.goBranch(
                           index,
                           initialLocation: index == navigation.currentIndex,
@@ -72,19 +71,9 @@ class BuyerShell extends StatelessWidget {
                           label: 'Home',
                         ),
                         const NavigationDestination(
-                          icon: Icon(Icons.storefront_outlined),
-                          selectedIcon: Icon(Icons.storefront),
-                          label: 'Shops',
-                        ),
-                        NavigationDestination(
-                          icon: Badge(
-                            isLabelVisible:
-                                commerce?.cart.badge != null &&
-                                commerce!.cart.badge! > 0,
-                            label: Text('${commerce?.cart.badge ?? 0}'),
-                            child: const Icon(Icons.shopping_cart_outlined),
-                          ),
-                          label: 'Cart',
+                          icon: Icon(Icons.notifications_outlined),
+                          selectedIcon: Icon(Icons.notifications),
+                          label: 'Notifications',
                         ),
                         const NavigationDestination(
                           icon: Icon(Icons.person_outline),

@@ -149,6 +149,7 @@ class _BatchResultScreenState extends State<BatchResultScreen> {
                       VoucherSavingsSummary(
                         name: voucher.name,
                         code: voucher.code,
+                        issuer: voucher.issuer,
                         benefit: voucher.benefit,
                         discount: voucher.discount,
                         currency: order.totals.currency,

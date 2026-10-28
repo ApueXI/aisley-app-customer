@@ -161,6 +161,16 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                             ),
                           ),
                     ],
+                    if (_controller.order!.shop.slug != null)
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton(
+                          onPressed: () => context.push(
+                            '/shops/${Uri.encodeComponent(_controller.order!.shop.slug!)}',
+                          ),
+                          child: const Text('View Shop'),
+                        ),
+                      ),
                     const SizedBox(height: 16),
                     Wrap(
                       spacing: 8,
@@ -201,7 +211,11 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                         'Cancellation and contact changes are unavailable at this stage.',
                       ),
                     const SizedBox(height: 20),
-                    OrderTimeline(events: _controller.timeline),
+                    OrderTimeline(
+                      events: _controller.timeline,
+                      mapAvailable: _controller.order!.mapAvailable,
+                      mapMessage: _controller.order!.mapMessage,
+                    ),
                     if (_controller.pageError != null)
                       Text(_controller.pageError!),
                     if (_controller.hasMore)

@@ -160,13 +160,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('Shop available'), findsOneWidget);
-      final scrollable = find
-          .descendant(
-            of: find.byKey(const ValueKey('message-detail')),
-            matching: find.byType(Scrollable),
-          )
-          .first;
-      await tester.scrollUntilVisible(getSend(), 200, scrollable: scrollable);
+      await tester.ensureVisible(getSend());
       expect(tester.widget<FilledButton>(getSend()).onPressed, isNotNull);
       final rect = tester.getRect(getSend());
       expect(rect.width, greaterThanOrEqualTo(48));

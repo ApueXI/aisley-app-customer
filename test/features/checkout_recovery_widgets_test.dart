@@ -182,7 +182,7 @@ void main() {
             findsOneWidget,
           );
           await tester.ensureVisible(find.text('Check Orders'));
-          final check = find.widgetWithText(TextButton, 'Check Orders');
+          final check = find.widgetWithText(OutlinedButton, 'Check Orders');
           expect(tester.getSize(check).height, greaterThanOrEqualTo(48));
           expect(tester.getSize(check).width, greaterThanOrEqualTo(48));
           expect(tester.getSemantics(check).label, contains('Check Orders'));
