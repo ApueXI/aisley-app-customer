@@ -1,9 +1,12 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:aisley_mobile_buyer/app/theme.dart';
 import 'package:aisley_mobile_buyer/app/router_guard.dart';
 import 'package:aisley_mobile_buyer/features/messaging/data/conversation_preview.dart';
+import 'package:aisley_mobile_buyer/features/messaging/presentation/message_center_screen.dart';
 import 'package:aisley_mobile_buyer/features/policies/data/policy_models.dart';
 
 import '../support/communication_harness.dart';
@@ -103,6 +106,216 @@ void main() {
       expect(inbox.items, hasLength(2));
     },
   );
+
+  for (final lateFailure in [false, true]) {
+    testWidgets(
+      'combined pull-to-refresh supersedes delayed pagination ${lateFailure ? 'failure' : 'success'}',
+      (tester) async {
+        h.dispose();
+        h = CommunicationHarness();
+        await h.initialize(deadline: const Duration(minutes: 1));
+        const freshId = '88888888-8888-4888-8888-888888888888';
+        const latePageId = '77777777-7777-4777-8777-777777777777';
+        const bridgePageId = '99999999-9999-4999-8999-999999999999';
+        final delayedPages = {
+          for (final channel in MessageChannel.values)
+            channel.name: Completer<ResponseBody>(),
+        };
+        var refreshing = false;
+        h.reply = (request) {
+          final channel = channelFor(request);
+          final cursor = request.uri.queryParameters['cursor'];
+          if (cursor == 'older-$channel') {
+            return delayedPages[channel]!.future;
+          }
+          if (cursor == 'bridge-$channel') {
+            return jsonReply(
+              inboxPage(
+                channel,
+                id: bridgePageId,
+                unread: 2,
+                label: 'Older page $channel',
+              ),
+            );
+          }
+          if (cursor != null) {
+            throw StateError('Unexpected inbox cursor request.');
+          }
+          return jsonReply(
+            refreshing
+                ? inboxPage(
+                    channel,
+                    id: freshId,
+                    unread: 2,
+                    next: 'bridge-$channel',
+                    label: 'Fresh $channel',
+                  )
+                : inboxPage(
+                    channel,
+                    unread: 1,
+                    next: 'older-$channel',
+                    label: 'Existing $channel',
+                  ),
+          );
+        };
+        final dependencies = h.dependencies();
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: buyerTheme(),
+            home: MessageCenterScreen(dependencies: dependencies),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(h.state.messages.conversations(), hasLength(3));
+        for (final channel in MessageChannel.values) {
+          expect(find.text('Existing ${channel.name}'), findsOneWidget);
+        }
+
+        await tester.tap(find.text('Load more conversations'));
+        await tester.pump();
+        for (
+          var attempt = 0;
+          attempt < 100 &&
+              h.adapter.requests
+                      .where(
+                        (request) =>
+                            request.uri.queryParameters.containsKey('cursor'),
+                      )
+                      .length <
+                  MessageChannel.values.length;
+          attempt++
+        ) {
+          await tester.pump(const Duration(milliseconds: 1));
+        }
+        for (final channel in MessageChannel.values) {
+          expect(h.state.messages.channels[channel]!.paging, isTrue);
+          expect(
+            h.adapter.requests.where(
+              (request) =>
+                  channelFor(request) == channel.name &&
+                  request.uri.queryParameters['cursor'] ==
+                      'older-${channel.name}',
+            ),
+            hasLength(1),
+          );
+        }
+
+        final beforeAutomaticRefresh = h.adapter.requests.length;
+        await h.state.messages.refresh(automatic: true);
+        expect(h.adapter.requests, hasLength(beforeAutomaticRefresh));
+        expect(h.state.messages.busy, isTrue);
+
+        refreshing = true;
+        final list = find.byKey(const PageStorageKey('combined-messages'));
+        await tester.drag(list, const Offset(0, 450));
+        await tester.pumpAndSettle();
+
+        expect(h.adapter.requests.length, beforeAutomaticRefresh + 3);
+        expect(h.state.messages.busy, isFalse);
+        expect(h.state.messages.unread, 6);
+        final refreshedRows = h.state.messages.conversations();
+        expect(
+          refreshedRows.map((row) => row.label),
+          containsAll([
+            'Fresh shop',
+            'Fresh logistics',
+            'Fresh courier',
+            'Existing shop',
+            'Existing logistics',
+            'Existing courier',
+          ]),
+        );
+        expect(find.text('Fresh shop'), findsOneWidget);
+        expect(
+          delayedPages.values.every((response) => !response.isCompleted),
+          isTrue,
+        );
+        for (final channel in MessageChannel.values) {
+          final inbox = h.state.messages.channels[channel]!;
+          expect(inbox.unread, 2);
+          expect(inbox.unreadFresh, isTrue);
+          expect(inbox.trail.next, 'bridge-${channel.name}');
+          expect(inbox.paging, isFalse);
+          expect(inbox.loading, isFalse);
+        }
+
+        for (final channel in MessageChannel.values) {
+          delayedPages[channel.name]!.complete(
+            lateFailure
+                ? jsonReply({}, status: 422)
+                : jsonReply(
+                    inboxPage(
+                      channel.name,
+                      id: latePageId,
+                      unread: 99,
+                      next: 'obsolete-${channel.name}',
+                      label: 'Obsolete ${channel.name}',
+                    ),
+                  ),
+          );
+        }
+        await tester.pump(const Duration(milliseconds: 1));
+        await tester.pumpAndSettle();
+        expect(h.state.messages.unread, 6);
+        for (final channel in MessageChannel.values) {
+          final inbox = h.state.messages.channels[channel]!;
+          expect(
+            h.state.messages.conversations(channel).map((item) => item.label),
+            isNot(contains('Obsolete ${channel.name}')),
+          );
+          expect(inbox.unread, 2);
+          expect(inbox.unreadFresh, isTrue);
+          expect(inbox.error, isNull);
+          expect(inbox.pageError, isNull);
+          expect(inbox.trail.next, 'bridge-${channel.name}');
+          expect(inbox.busy, isFalse);
+        }
+        expect(find.textContaining('Could not load'), findsNothing);
+        for (final channel in MessageChannel.values) {
+          expect(find.text('Obsolete ${channel.name}'), findsNothing);
+        }
+
+        var bridgeLoadCompleted = false;
+        final bridgeLoad = h.state.messages.loadMore().whenComplete(
+          () => bridgeLoadCompleted = true,
+        );
+        for (
+          var attempt = 0;
+          attempt < 100 && !bridgeLoadCompleted;
+          attempt++
+        ) {
+          await tester.pump(const Duration(milliseconds: 1));
+        }
+        expect(bridgeLoadCompleted, isTrue);
+        await bridgeLoad;
+        for (final channel in MessageChannel.values) {
+          final inbox = h.state.messages.channels[channel]!;
+          expect(inbox.trail.next, 'older-${channel.name}');
+          expect(
+            h.adapter.requests.where(
+              (request) =>
+                  channelFor(request) == channel.name &&
+                  request.uri.queryParameters['cursor'] ==
+                      'bridge-${channel.name}',
+            ),
+            hasLength(1),
+          );
+        }
+
+        h.policies.consent = ConsentStatus.parse(consentJson(required: true));
+        await h.session.refreshConsent();
+        await tester.pumpAndSettle();
+        expect(h.state.messages.conversations(), isEmpty);
+        expect(h.state.messages.unread, isNull);
+        for (final inbox in h.state.messages.channels.values) {
+          expect(inbox.items, isEmpty);
+          expect(inbox.loaded, isFalse);
+          expect(inbox.busy, isFalse);
+        }
+        await tester.pumpWidget(const SizedBox.shrink());
+      },
+    );
+  }
 
   test('partial failure retains successful channels without a false total or empty success', () async {
     await h.state.messages.refresh();
