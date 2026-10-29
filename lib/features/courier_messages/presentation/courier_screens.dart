@@ -94,13 +94,19 @@ class _CourierThreadScreenState extends State<CourierThreadScreen> {
   Widget build(BuildContext context) {
     final c = widget.controller;
     return ForegroundPoll(
-      refresh: c.load,
-      paused: () => c.offline || !widget.dependencies.session.active,
+      refresh: c.refresh,
+      interval: const Duration(seconds: 5),
+      retryInterval: const Duration(seconds: 30),
+      recoverable: () => c.offline || c.refreshError != null,
+      busy: () =>
+          c.loading || c.refreshing || c.paging || c.sending || c.coolingDown,
+      paused: () => !widget.dependencies.session.active || c.unavailable,
       child: ListenableBuilder(
         listenable: Listenable.merge([c, widget.dependencies.session]),
         builder: (context, _) => !widget.dependencies.session.active
             ? const SizedBox.shrink()
             : MessageThreadView(
+                compactComposer: true,
                 inbox: widget.dependencies.communication == null
                     ? null
                     : CourierInboxScreen(
@@ -154,7 +160,7 @@ class _CourierThreadScreenState extends State<CourierThreadScreen> {
                         child: const Text('Contact current delivery Courier'),
                       ),
                 reason: c.conversation?.reason,
-                error: c.error,
+                error: c.error ?? c.refreshError,
                 pageError: c.pageError,
                 readError: c.readError,
                 fieldError: c.fieldErrors['body'],

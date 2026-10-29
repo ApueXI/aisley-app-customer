@@ -27,3 +27,12 @@ Short, dated implementation log. Append entries; archive complete logs after 150
 ## 2026-10-29 — Independent nullable-notification retest
 
 - Independent tester confirms Buyer accepts the saved nullable-resource reproduction with no new findings; five contract checks and one redacted list/detail/read widget check pass. No app build, environment access, live API, or device acceptance occurred. Courier retest also passed; see the main progress log for its separate result.
+
+
+## 2026-10-29 — Product photos, Shop vouchers and automatic chat updates
+
+- Removed the Home discounted-price “Was” prefix, corrected image bounds and added credential-free loading for the exact public legacy photo host evidenced in Laravel `850a73b43b3c28b058fd1502269e4ed125ca31ed`; unsupported hosts remain unavailable. Buyer backend adoption stays `1858785e` plus recorded slices; no API/backend changes were needed.
+- Replaced inline Shop vouchers with a dedicated scoped page and normal Back navigation. Open Shop/Logistics/Courier threads now refresh quietly every five seconds, recover failed reads every thirty seconds and preserve drafts, pending keys and older-history position. Inbox offline recovery is bounded; session/consent/throttle/lifecycle guards remain. Compact chat styling follows Stitch, with stacked large-text controls and bounded scrolling Product context.
+- [Verification](reports/buyer-fixes-verification-2026-10-29.md): final full suite **1,001 passed / 42 live-skipped / zero failures**; final Flutter analysis zero issues; all 40 changed/new Dart files formatted; web and release APK builds pass with synthetic public configuration. Bundle/spec-length/link/asset/Android and whitespace checks pass. The untouched baseline formatter issue is recorded in the report.
+- [Independent design review](reports/buyer-fixes-design-2026-10-29.md): 43 synthetic screenshots reviewed across seven viewports; voucher tap/Back and a received reply without manual refresh verified. Strict Stitch fidelity **7.7/10**; four remaining visual differences are documented, so pixel identity is not claimed. The later long-context correction has focused widget coverage.
+- Controlled deployed API/media/counterpart exchange, installed Android/TalkBack/real-keyboard acceptance and production configuration/signing remain open. Builds and synthetic fixtures do not close those gates.

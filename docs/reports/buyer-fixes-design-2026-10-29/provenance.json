@@ -1,0 +1,27 @@
+{
+  "sourceSha256": "fdcff497299ec9644826e74cf8b6b9eace2b5b40f2ec26e01581c22a1fb54040",
+  "sourceFilesDifferFromBuildCopy": [],
+  "compiledJsSha256": "c8c709dff8d98f66c28106f106c85c887a3148cde1c390e54fff1586c6636782",
+  "referenceSha256": {
+    "01 Home": {
+      "sha256": "db98db7338e1b901b6068795add2450301ec119cada63a270bd2158735dc5691",
+      "matchesManifest": true
+    },
+    "02 Product Details": {
+      "sha256": "fc2dc6a222fd24dac76eb59bcd5f6fd9560cffcccbab4f3c9d4b1be3b455d44e",
+      "matchesManifest": true
+    },
+    "09 Shop Storefront": {
+      "sha256": "e5e7819376bf31b22194f5ec5967157a2e25bb79ef6cb9d93bc13796c86e3364",
+      "matchesManifest": true
+    },
+    "13 Vouchers": {
+      "sha256": "7c79778916b17ac8e3be516e50802e44d182c8fbdab9cdbfbed1903543f463e8",
+      "matchesManifest": true
+    },
+    "15 Shop Conversation": {
+      "sha256": "991591992a4baefef9d8867392e7a85c427587fc3c22fba4de57c7f976ef497e",
+      "matchesManifest": true
+    }
+  }
+}

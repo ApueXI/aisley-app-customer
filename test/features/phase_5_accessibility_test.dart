@@ -208,7 +208,7 @@ void main() {
               await tester.pump();
               tester.view.viewInsets = const FakeViewPadding(bottom: 120);
               addTearDown(tester.view.resetViewInsets);
-              await tester.ensureVisible(find.text('Send message'));
+              await tester.ensureVisible(find.text('Send'));
               await tester.pumpAndSettle();
               await check(tester);
               expect(

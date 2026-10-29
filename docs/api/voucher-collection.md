@@ -69,6 +69,6 @@ Newly invalid `VOUCHER_*` eligibility at placement maps to `409 QUOTE_STALE` bef
 
 ## Buyer route and transport adoption
 
-Buyer implements `/vouchers`, `/vouchers/:id`, `/account/vouchers` and an independent Shop voucher section. Shopping retains verified sign-in/consent. The scalar-only API client encodes status arrays as `ids[0]`, `ids[1]`, etc., equivalent to Laravel `ids[]`; 1–50 distinct IDs only. Detail checks private statuses first to retain eligible targeted/history access, then public detail if no private record exists.
+Buyer implements `/vouchers`, `/vouchers/:id`, `/account/vouchers` and the dedicated `/shops/:slug/vouchers` page. A single View Shop vouchers row opens it from the Shop storefront; entering the storefront does not request vouchers. Shop voucher filters and pagination stay independent of Products, and Back preserves the storefront state. Shopping retains verified sign-in/consent. The scalar-only API client encodes status arrays as `ids[0]`, `ids[1]`, etc., equivalent to Laravel `ids[]`; 1–50 distinct IDs only. Detail checks private statuses first to retain eligible targeted/history access, then public detail if no private record exists.
 
 Checkout opens detail only while editable and invalidates review while retaining intent/address/provider/voucher choices. Returning requires explicit Review order, eligible selection and another reviewed quote. Collection never automatically selects, applies or places. Unresolved placement keeps its frozen original payload/key.

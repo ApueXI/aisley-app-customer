@@ -10,7 +10,6 @@ import 'package:aisley_mobile_buyer/features/checkout/presentation/checkout_cont
 import 'package:aisley_mobile_buyer/features/vouchers/data/voucher_repository.dart';
 import 'package:aisley_mobile_buyer/features/discovery/data/discovery_repository.dart';
 import 'package:aisley_mobile_buyer/features/vouchers/presentation/voucher_screens.dart';
-import 'package:aisley_mobile_buyer/features/vouchers/presentation/shop_vouchers_section.dart';
 
 import '../support/commerce_harness.dart';
 import '../support/fakes.dart';
@@ -110,11 +109,7 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: buyerTheme(),
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: ShopVouchersSection(dependencies: d, slug: 'demo-shop'),
-            ),
-          ),
+          home: VoucherListScreen(dependencies: d, shopSlug: 'demo-shop'),
         ),
       );
       await settle(tester);

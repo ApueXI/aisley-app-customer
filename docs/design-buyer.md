@@ -74,3 +74,24 @@ Home shortcuts open existing voucher discovery, Orders, Wishlist and account his
 Orders separate current status/reference, purchased items, totals and the saved address into readable sections. Vouchers emphasize the supplied benefit and issuer. Message inboxes use consistent rows; scoped message bubbles and a distinct scrollable composer surface also serve support tickets. Notifications retain textual unread labels. Authentication, consent, profile, password and address forms share the theme and responsive form padding. The existing controllers, routing, validation, authorization, media adapters and mutation contracts retain their responsibilities.
 
 See [overhaul verification](reports/buyer-ui-overhaul-2026-10-17.md) for dated source, test, browser and build coverage. Controlled live/deployed API, installed Android/TalkBack and production signing remain separate acceptance gates.
+
+
+## Product, Shop vouchers and foreground chat — 2026-10-29
+
+Discounted Product cards show the original struck-through amount without a “Was”
+prefix. Product images fill their assigned bounds while preserving card/gallery fit;
+public legacy photos use the narrow [catalogue media contract](api/catalog-media.md).
+Shop storefronts expose one View Shop vouchers row, opening the dedicated scoped
+voucher list with normal Back behavior instead of fetching/rendering offers inline.
+
+Shop, Logistics and Courier threads use a compact image/message/Send row at normal
+phone widths, stacking at narrow widths or enlarged text. Image constraints and
+selected-image controls remain accessible when needed; unresolved-send, field and
+upload errors remain visible. Mine bubbles use the secondary purple with white text,
+received bubbles use white, and sender/time appear above the bubble. Shop context
+stays above the scrolling history. Support retains its existing expanded composer.
+Quiet five-second reads preserve input/focus and follow latest only when already
+near the end; older readers keep their place and a new-message cue. Failed reads
+use bounded thirty-second recovery, with lifecycle/session/consent/throttle guards.
+Stitch screenshot comparison and remaining parity limits are recorded in the
+[design review](reports/buyer-fixes-design-2026-10-29.md).

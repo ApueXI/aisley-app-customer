@@ -166,3 +166,16 @@ This is a documentation correction. The dated G25 tests above retain their origi
 The configured deployed public `GET /api/v1/customer/home?limit=20` returns HTTP 200 with explicit null Campaign `title`, `altText` and `destinationUrl` values for image-only promotions. The prior local wire table required strings, so the Buyer parser rejected the entire Home response at Campaign.title. An in-memory probe confirmed the remaining Home sections parse when optional banners are omitted. The deployed backend revision is unidentified; this observation adopts only these three nullable fields, not a new general backend baseline.
 
 Buyer now accepts explicit nulls while rejecting missing fields and other non-string types. Image-only promotions retain their media, receive a neutral accessible label and have no link action without a destination; empty campaigns are skipped. Product/recommendation data still comes from the API, and configured storefront validation continues to own external link launches. Live response payloads and media bytes were neither logged nor saved; public configuration values were not logged. Synthetic client verification and the public in-memory parse check are recorded in Progress; authenticated Home, installed Android/TalkBack and the deployed revision remain acceptance gates.
+
+## Legacy catalogue photograph delivery — 2026-10-29
+
+Laravel source `850a73b43b3c28b058fd1502269e4ed125ca31ed` returns explicit
+`images.unsplash.com` URLs for legacy Product media with no MIME in the demo
+catalogue; Buyer previously accepted only its API media paths and showed fallback
+images for those photos. Buyer now supports this exact HTTPS public host through
+its credential-free, redirect-rejecting image-byte loader. The existing trusted API
+media whitelist and private-media authorization remain in force. See the
+[catalogue media policy](../api/catalog-media.md) for source evidence and boundaries.
+Other raw storage/provider hosts remain unsupported; no arbitrary storage URL or
+backend proxy is introduced. Deployed media, installed Android and TalkBack
+acceptance remain open.

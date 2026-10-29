@@ -6,7 +6,7 @@ phase: 4
 flutter_status: Text/images and received video/documents implemented locally; live/device acceptance open G27
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
-documentation_synced_on: 2026-10-12
+documentation_synced_on: 2026-10-29
 ---
 
 # Delivery Courier messages
@@ -60,9 +60,9 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
   conversation.
 - 201 created/200 exact replay are successful; frozen key/body/context prevents duplicate delivery
   contact.
-- Uncertain first send survives polling and cannot rebind to replacement Courier silently.
-- History limit1–50 default 20; newest-first page selection with ascending output; merge by UUID/sequence.
-- Poll visible online 15s and focus/reconnect; no push/background guarantees or offline queue.
+- Draft/validation and uncertain first sends survive polling; writes wait for reads and cannot rebind to a replacement Courier or identity silently.
+- History limit1–50 default 20; newest-first/ascending output, UUID/sequence merge. Follow latest only when nearby; older readers keep position and a new-message cue.
+- Open threads refresh quietly every 5s; failed reads recover every 30s or focus/resume. Pause background/denied/consent/disposed work and honor Retry-After; no offline writes.
 - Caption≤2,000; images adopted locally; receive-only video/documents implemented; uploads/live/device pending G27 in Flutter. No edit/delete/presence/calls/proof sharing or Customer delivery completion.
 - Clear transcript/draft/key/timers on identity/scoped denial; keep safe readonly UI for ended relation.
 - Test accepted eligibility vs offer/unaccepted/invalid affiliation, foreign Order, reassignment privacy
@@ -179,8 +179,8 @@ universal error envelope.
   response.
 - Forbidden clears affected private content; consent-required offers reading/acceptance; offline offers
   truthful read/retry limits.
-- Light-only Material styling follows [Buyer design](../../../design-buyer.md); keyboard/back/focus never
-  silently lose safe drafts.
+- Compact image/message/Send stacks for narrow/large text; purple/white bubbles show sender/time above. Follow [Buyer design](../../../design-buyer.md) for keyboard/back/focus;
+  never silently lose safe drafts.
 - Use at least 48×48 logical-pixel touch targets, visible focus, text-scale tolerance and non-color status
   cues.
 - Android Back/browser Back/cancel return predictably. Confirm destructive actions and warn before

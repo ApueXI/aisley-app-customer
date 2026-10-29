@@ -6,7 +6,7 @@ phase: 1
 flutter_status: Implemented; target acceptance pending
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
-documentation_synced_on: 2026-10-28
+documentation_synced_on: 2026-10-29
 ---
 
 # Auth-aware navigation
@@ -48,7 +48,7 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 - Consent completion rechecks status before a safe read destination; blocked writes require deliberate
   retry.
 - Allow-list return routes and validate IDs/slugs; reject arbitrary URLs, another role path and mutation
-  query instructions.
+  query instructions. Shop voucher returns allow only `/shops/:slug/vouchers` with a valid slug and no query.
 - Home/Notifications/Account shell destinations mount only after verification. The active header
   exposes Messages, Cart and Terms/Privacy; Shops and Cart open as back-navigable pages. All
   shopping links retain a validated read return through login/consent. Normal sign-in opens Home.

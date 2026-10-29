@@ -23,7 +23,9 @@ class CommunicationHarness {
   int keys = 0;
   Future<void> initialize({
     bool active = true,
-    Duration deadline = const Duration(milliseconds: 200),
+    // Ordinary fixture reads should not race host CPU load from parallel tests
+    // and builds. Timeout-specific cases supply an explicit shorter deadline.
+    Duration deadline = const Duration(seconds: 5),
   }) async {
     session = SessionController(
       auth,

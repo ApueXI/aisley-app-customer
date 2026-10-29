@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show ViewFocusEvent, ViewFocusState;
 
 import 'package:flutter/material.dart';
 
@@ -11,6 +12,9 @@ class ForegroundPoll extends StatefulWidget {
     required this.paused,
     this.visible,
     this.busy,
+    this.interval = const Duration(seconds: 15),
+    this.retryInterval = const Duration(seconds: 30),
+    this.recoverable,
     required this.child,
   });
   final Future<void> Function() refresh;
@@ -19,6 +23,8 @@ class ForegroundPoll extends StatefulWidget {
 
   /// Automatic refresh must not supersede a deliberate list/page action.
   final bool Function()? busy;
+  final Duration interval, retryInterval;
+  final bool Function()? recoverable;
   final Widget child;
   @override
   State<ForegroundPoll> createState() => _ForegroundPollState();
@@ -27,7 +33,7 @@ class ForegroundPoll extends StatefulWidget {
 class _ForegroundPollState extends State<ForegroundPoll>
     with WidgetsBindingObserver {
   Timer? _timer;
-  bool _foreground = true;
+  bool _foreground = true, _refreshing = false;
   bool get _busy => widget.busy?.call() == true;
   bool get _visible =>
       mounted &&
@@ -37,14 +43,50 @@ class _ForegroundPollState extends State<ForegroundPoll>
   @override
   void initState() {
     super.initState();
+    final lifecycle = WidgetsBinding.instance.lifecycleState;
+    _foreground = lifecycle == null || lifecycle == AppLifecycleState.resumed;
     WidgetsBinding.instance.addObserver(this);
     _start();
   }
 
   void _start() {
     _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 15), (_) {
-      if (_visible && !_busy && !widget.paused()) unawaited(widget.refresh());
+    if (!mounted || !_foreground) return;
+    _timer = Timer(
+      widget.recoverable?.call() == true
+          ? widget.retryInterval
+          : widget.interval,
+      () => unawaited(_refresh()),
+    );
+  }
+
+  Future<void> _refresh() async {
+    if (!_visible || _busy || widget.paused() || _refreshing) {
+      if (!_refreshing) _start();
+      return;
+    }
+    _timer?.cancel();
+    _refreshing = true;
+    try {
+      await widget.refresh();
+    } catch (error, stack) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stack,
+          library: 'Buyer foreground refresh',
+        ),
+      );
+    } finally {
+      _refreshing = false;
+      _start();
+    }
+  }
+
+  void _focusRefresh() {
+    // Let the focused button's action establish its busy state first.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) unawaited(_refresh());
     });
   }
 
@@ -53,10 +95,15 @@ class _ForegroundPollState extends State<ForegroundPoll>
     _foreground = state == AppLifecycleState.resumed;
     if (_foreground) {
       _start();
-      if (_visible && !_busy) unawaited(widget.refresh());
+      unawaited(_refresh());
     } else {
       _timer?.cancel();
     }
+  }
+
+  @override
+  void didChangeViewFocus(ViewFocusEvent event) {
+    if (event.state == ViewFocusState.focused) unawaited(_refresh());
   }
 
   @override
@@ -70,14 +117,7 @@ class _ForegroundPollState extends State<ForegroundPoll>
   Widget build(BuildContext context) => Focus(
     onFocusChange: (focus) {
       if (!focus || !_visible) return;
-      if (widget.busy == null) {
-        unawaited(widget.refresh());
-      } else {
-        // Let the focused button's action establish its busy state first.
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_visible && !_busy) unawaited(widget.refresh());
-        });
-      }
+      _focusRefresh();
     },
     child: widget.child,
   );

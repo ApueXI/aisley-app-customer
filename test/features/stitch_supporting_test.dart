@@ -32,9 +32,11 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         theme: buyerTheme(),
-        home: NotificationInboxScreen(
-          dependencies: dependencies,
-          embedded: true,
+        home: Material(
+          child: NotificationInboxScreen(
+            dependencies: dependencies,
+            embedded: true,
+          ),
         ),
       ),
     );
@@ -46,7 +48,7 @@ void main() {
     expect(find.text('All'), findsOneWidget);
     expect(find.text('Unread'), findsNWidgets(2));
     expect(find.text('Read'), findsOneWidget);
-    expect(find.text('Synthetic example'), findsWidgets);
+    expect(find.text('Support ticket reply'), findsOneWidget);
     expect(find.text('Promotional preferences'), findsNothing);
     expect(
       h.adapter.requests.where((request) => request.method == 'POST'),
@@ -162,9 +164,15 @@ void main() {
     );
     await settle(tester);
 
-    expect(find.text('Product context'), findsOneWidget);
-    expect(find.text('Synthetic product context'), findsOneWidget);
-    final send = find.widgetWithText(FilledButton, 'Send message');
+    expect(find.text('View product'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(Card),
+        matching: find.text('Synthetic product context'),
+      ),
+      findsOneWidget,
+    );
+    final send = find.widgetWithText(FilledButton, 'Send');
     await tester.ensureVisible(send);
     await settle(tester);
     expect(tester.widget<FilledButton>(send).onPressed, isNotNull);

@@ -39,7 +39,11 @@ class _CatalogImageState extends State<CatalogImage> {
   @override
   void didUpdateWidget(CatalogImage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.url != widget.url || oldWidget.lease != widget.lease) _load();
+    if (oldWidget.url != widget.url ||
+        oldWidget.lease != widget.lease ||
+        oldWidget.discovery != widget.discovery) {
+      _load();
+    }
   }
 
   void _load() {
@@ -66,6 +70,8 @@ class _CatalogImageState extends State<CatalogImage> {
               if (snapshot.hasData) {
                 return Image.memory(
                   snapshot.data!,
+                  width: widget.width,
+                  height: widget.height,
                   fit: widget.fit,
                   semanticLabel: widget.label,
                   errorBuilder: (_, _, _) => _fallback(context),

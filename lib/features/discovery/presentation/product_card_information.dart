@@ -19,7 +19,7 @@ class ProductCardInformation extends StatelessWidget {
         product.minPrice != product.maxPrice;
     final promotion =
         product.originalPrice != null && product.originalPrice! > shownPrice
-        ? 'Was ₱${product.originalPrice!.toStringAsFixed(2)}'
+        ? '₱${product.originalPrice!.toStringAsFixed(2)}'
         : '';
     final metadata = [
       if (product.averageRating != null)

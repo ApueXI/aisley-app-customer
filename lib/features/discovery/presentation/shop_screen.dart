@@ -84,7 +84,6 @@ class _ShopScreenState extends State<ShopScreen> {
                 widget.dependencies.vouchers != null)
               ShopVouchersSection(
                 key: ValueKey(widget.slug),
-                dependencies: widget.dependencies,
                 slug: widget.slug,
               ),
             TextField(

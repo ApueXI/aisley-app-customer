@@ -23,7 +23,7 @@ class MessageUpdates extends StatefulWidget {
 
 class _MessageUpdatesState extends State<MessageUpdates>
     with WidgetsBindingObserver {
-  Timer? _timer;
+  Timer? _timer, _recoveryTimer;
   bool _foreground = true, _enabled = false, _scheduled = false;
   bool _onlyNeeded = true;
   bool get _allowed {
@@ -52,9 +52,13 @@ class _MessageUpdatesState extends State<MessageUpdates>
     if (allowed != _enabled) {
       _enabled = allowed;
       _timer?.cancel();
+      _recoveryTimer?.cancel();
       if (allowed) {
         _timer = Timer.periodic(const Duration(seconds: 15), (_) {
           if (_allowed) unawaited(widget.messages.refresh(automatic: true));
+        });
+        _recoveryTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+          if (_allowed) unawaited(widget.messages.recoverOffline());
         });
         _scheduleRefresh();
       }
@@ -93,6 +97,7 @@ class _MessageUpdatesState extends State<MessageUpdates>
   @override
   void dispose() {
     _timer?.cancel();
+    _recoveryTimer?.cancel();
     widget.messages.removeListener(_sync);
     widget.router.routerDelegate.removeListener(_sync);
     WidgetsBinding.instance.removeObserver(this);

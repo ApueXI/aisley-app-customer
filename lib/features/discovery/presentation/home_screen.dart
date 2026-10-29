@@ -204,7 +204,7 @@ class _HomeScreenState extends State<HomeScreen> {
           text: TextSpan(text: category.name, style: labelStyle),
           textDirection: Directionality.of(context),
           textScaler: MediaQuery.textScalerOf(context),
-        )..layout(maxWidth: tileWidth - 24);
+        )..layout(maxWidth: tileWidth - 16);
         if (painter.height > labelHeight) labelHeight = painter.height;
         painter.dispose();
       }
@@ -220,7 +220,7 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SectionHeading(
-            title: 'Explore Categories',
+            title: 'Categories',
             action: showToggle
                 ? TextButton(
                     onPressed: () => setState(
@@ -246,7 +246,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         '/search?mode=products&q=${Uri.encodeQueryComponent(category.name)}',
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.all(12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 12,
+                        ),
                         child: Column(
                           children: [
                             if (category.imageUrl != null)

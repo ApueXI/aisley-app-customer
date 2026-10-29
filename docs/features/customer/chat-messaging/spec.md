@@ -7,7 +7,7 @@ flutter_status: Shop context/availability, text/images and received video/docume
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 contract_inspected_shop_context: 1d40b5d34fac1bfa93b9c32f5ee4fb0d54f43167
-documentation_synced_on: 2026-10-15
+documentation_synced_on: 2026-10-29
 ---
 
 # Shop messages
@@ -56,14 +56,14 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 - History cursor selection is newest-first, page output ascending; render chronological
   sequence/time/mine.
 - Fixed inbox20/history30, no configurable limit. Cursor≤2048 is opaque.
-- Poll visible online screen every 15s plus focus/reconnect; pause background/offline/disposed timers.
+- Open threads refresh quietly every 5s; failed reads recover every 30s and on focus/resume. Pause background, denied, blocked-consent and disposed work; honor Retry-After.
 - Freeze body/context/key after uncertain first/send. Polling cannot discard unresolved first-send
   context.
 - 201 new and replay are successful; IDs/sequence deduplicate lost-response retry.
 - 409 idempotency or relationship conflict needs refresh/review; do not silently generate another key.
 - Seller inactive/permission loss disables sends while authorized scoped history remains readable.
-- Incoming messages do not steal input focus or force scrolling away from older history; expose
-  new-message cue.
+- Background reads preserve drafts/validation; follow latest only when already nearby. Older readers keep their position and see a
+  new-message cue; pending sends keep their exact body/context/key and wait for active reads.
 - Images and received video/documents are adopted locally; live/device acceptance remains open G27; no edit/delete/presence/calls/offline queue/Admin transcript access is provided.
 - Test start reuse across Product/Order, foreign context, missing/changed UUID key, server plain text and
   readonly Seller.
@@ -179,8 +179,8 @@ universal error envelope.
   response.
 - Forbidden clears affected private content; consent-required offers reading/acceptance; offline offers
   truthful read/retry limits.
-- Light-only Material styling follows [Buyer design](../../../design-buyer.md); keyboard/back/focus never
-  silently lose safe drafts.
+- Compact image/message/Send stacks for narrow/large text; purple/white bubbles show sender/time above. Follow [Buyer design](../../../design-buyer.md) for keyboard/back/focus;
+  never silently lose safe drafts.
 - Use at least 48×48 logical-pixel touch targets, visible focus, text-scale tolerance and non-color status
   cues.
 - Android Back/browser Back/cancel return predictably. Confirm destructive actions and warn before

@@ -43,8 +43,11 @@ class ShopThreadController extends CommerceController {
   ShopPendingMessage? pending;
   String draft = '';
   bool unavailable = false;
-  String? pageError, readError;
+  String? pageError, readError, refreshError;
+  String? _loadError;
+  Future<void>? _backgroundLoad;
   bool loading = false,
+      refreshing = false,
       paging = false,
       sending = false,
       offline = false,
@@ -88,10 +91,23 @@ class ShopThreadController extends CommerceController {
     }
   }
 
-  Future<void> load({bool more = false}) async {
+  Future<void> refresh() async {
+    final existing = _backgroundLoad;
+    if (existing != null) return existing;
+    final operation = load(background: true);
+    _backgroundLoad = operation;
+    try {
+      await operation;
+    } finally {
+      if (identical(_backgroundLoad, operation)) _backgroundLoad = null;
+    }
+  }
+
+  Future<void> load({bool more = false, bool background = false}) async {
     final credential = lease;
     final cursor = more ? trail.next : null;
     if (credential == null ||
+        refreshing ||
         loading ||
         paging ||
         sending ||
@@ -104,10 +120,13 @@ class ShopThreadController extends CommerceController {
     if (more) {
       paging = true;
       pageError = null;
+    } else if (background) {
+      refreshing = true;
     } else {
       loading = true;
       error = null;
-      offline = false;
+      _loadError = null;
+      refreshError = null;
     }
     notifyListeners();
     try {
@@ -126,7 +145,12 @@ class ShopThreadController extends CommerceController {
           target = value.conversationId;
         }
       }
-      if (target == null) return;
+      if (target == null) {
+        offline = false;
+        if (_loadError != null && error == _loadError) error = null;
+        _loadError = refreshError = null;
+        return;
+      }
       final summary = await repository.detail(credential, target);
       if (!current(stamp, credential)) return;
       _checkSummary(summary, target);
@@ -134,6 +158,9 @@ class ShopThreadController extends CommerceController {
       if (!current(stamp, credential)) return;
       id = target;
       unavailable = false;
+      offline = false;
+      if (_loadError != null && error == _loadError) error = null;
+      _loadError = refreshError = null;
       conversation = summary;
       final prior = messages.map((e) => e.id).toSet();
       final oldMax = messages.isEmpty ? 0 : messages.last.sequence;
@@ -167,8 +194,11 @@ class ShopThreadController extends CommerceController {
       offline = e.kind == FailureKind.offline || e.kind == FailureKind.timeout;
       if (more) {
         pageError = describeFailure(e);
+      } else if (background) {
+        refreshError = describeFailure(e);
       } else {
         failure(e);
+        _loadError = error;
       }
       if (e.status == 403 || e.status == 404) {
         reset(preserveUnresolved: false);
@@ -177,7 +207,7 @@ class ShopThreadController extends CommerceController {
       }
     } finally {
       if (current(stamp, credential)) {
-        loading = paging = false;
+        loading = refreshing = paging = false;
         notifyListeners();
       }
     }
@@ -196,6 +226,10 @@ class ShopThreadController extends CommerceController {
   }
 
   Future<void> send() async {
+    final originEpoch = epoch;
+    final originLease = lease;
+    await _backgroundLoad;
+    if (originLease == null || !current(originEpoch, originLease)) return;
     if (pending != null ||
         !canSend ||
         conflict ||
@@ -213,6 +247,7 @@ class ShopThreadController extends CommerceController {
         ? null
         : plainTextError(value, 2000);
     if (invalid != null) {
+      _loadError = null;
       error = invalid;
       notifyListeners();
       return;
@@ -231,6 +266,10 @@ class ShopThreadController extends CommerceController {
   }
 
   Future<void> retry() async {
+    final originEpoch = epoch;
+    final originLease = lease;
+    await _backgroundLoad;
+    if (originLease == null || !current(originEpoch, originLease)) return;
     final credential = lease, record = pending;
     if (credential == null ||
         record == null ||
@@ -244,6 +283,7 @@ class ShopThreadController extends CommerceController {
     }
     final stamp = epoch;
     sending = true;
+    _loadError = null;
     error = null;
     fieldErrors = const {};
     notifyListeners();
@@ -316,7 +356,12 @@ class ShopThreadController extends CommerceController {
       return;
     }
     if (sequence > _readWanted) _readWanted = sequence;
-    if (sequence <= _readSent || _reading || loading || paging || sending) {
+    if (sequence <= _readSent ||
+        _reading ||
+        loading ||
+        refreshing ||
+        paging ||
+        sending) {
       return;
     }
     _reading = true;
@@ -370,8 +415,9 @@ class ShopThreadController extends CommerceController {
     trail.clear();
     draft = '';
     unavailable = false;
-    pageError = readError = null;
-    loading = paging = sending = offline = _reading = false;
+    pageError = readError = refreshError = _loadError = null;
+    _backgroundLoad = null;
+    loading = refreshing = paging = sending = offline = _reading = false;
     arrivals = _readWanted = _readSent = 0;
     if (!preserveUnresolved) {
       pending = null;

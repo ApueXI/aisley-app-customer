@@ -135,11 +135,9 @@ void main() {
         ),
       );
       expect(find.textContaining('Read only.'), findsOneWidget);
-      await tester.ensureVisible(
-        find.widgetWithText(FilledButton, 'Send message'),
-      );
+      await tester.ensureVisible(find.widgetWithText(FilledButton, 'Send'));
       final button = tester.widget<FilledButton>(
-        find.widgetWithText(FilledButton, 'Send message'),
+        find.widgetWithText(FilledButton, 'Send'),
       );
       expect(button.onPressed, isNull);
       expect(tester.takeException(), isNull);
@@ -248,7 +246,7 @@ void main() {
     },
   );
   testWidgets(
-    'Visible-only foreground polling pauses offline/background and resumes',
+    'Visible-only foreground polling respects hard pause and background',
     (tester) async {
       var count = 0;
       var offline = false;
@@ -273,7 +271,7 @@ void main() {
       expect(count, initial + 1);
       focus.requestFocus();
       await tester.pump();
-      expect(count, initial + 2);
+      expect(count, initial + 1);
       focus.unfocus();
       await tester.pump();
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
@@ -281,12 +279,12 @@ void main() {
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
       offline = false;
       await tester.pump(const Duration(seconds: 30));
-      expect(count, initial + 2);
+      expect(count, initial + 1);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await tester.pump();
-      expect(count, initial + 3);
+      expect(count, initial + 2);
       await tester.pumpWidget(const SizedBox.shrink());
     },
   );

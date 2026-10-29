@@ -15,6 +15,7 @@ import '../../../core/communication/text_rules.dart';
 
 export 'inbox_view.dart';
 part 'message_composer.dart';
+part 'message_thread_header.dart';
 
 class MessageThreadView extends StatefulWidget {
   const MessageThreadView({
@@ -50,11 +51,13 @@ class MessageThreadView extends StatefulWidget {
     this.inbox,
     this.media,
     this.mediaContext = const {},
+    this.compactComposer = false,
   });
   final String title, draft;
   final ChatMediaDraftController? media;
   final Map<String, Object?> mediaContext;
   final List<MessageRow> rows;
+  final bool compactComposer;
   final bool loading,
       paging,
       sending,
@@ -115,6 +118,12 @@ class _MessageThreadViewState extends State<MessageThreadView> {
     final oldHeight = _scroll.hasClients
         ? _scroll.position.maxScrollExtent
         : 0.0;
+    final nearLatest =
+        !_scroll.hasClients || _scroll.position.extentAfter <= 80;
+    final addedLatest =
+        widget.rows.isNotEmpty &&
+        (old.rows.isEmpty ||
+            widget.rows.last.sequence > old.rows.last.sequence);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (addedOlder && _scroll.hasClients) {
@@ -124,6 +133,9 @@ class _MessageThreadViewState extends State<MessageThreadView> {
             _scroll.position.maxScrollExtent,
           ),
         );
+      } else if (addedLatest && nearLatest && _scroll.hasClients) {
+        _scroll.jumpTo(_scroll.position.maxScrollExtent);
+        if (widget.arrivals > 0) widget.acknowledge();
       }
       _displayed();
     });
@@ -234,29 +246,7 @@ class _MessageThreadViewState extends State<MessageThreadView> {
         if (!didPop) _leave();
       },
       child: ShoppingPage(
-        appBar: AppBar(
-          title: Text(widget.title),
-          leading: IconButton(
-            tooltip: 'Back',
-            onPressed: _leave,
-            icon: const Icon(Icons.arrow_back),
-          ),
-          actions: [
-            if (widget.arrivals > 0)
-              IconButton(
-                tooltip: 'View ${widget.arrivals} new messages',
-                onPressed: _viewArrivals,
-                icon: const Icon(Icons.mark_chat_unread_outlined),
-              ),
-            IconButton(
-              tooltip: 'Refresh conversation',
-              onPressed: widget.loading || widget.sending || widget.coolingDown
-                  ? null
-                  : widget.refresh,
-              icon: const Icon(Icons.refresh),
-            ),
-          ],
-        ),
+        appBar: _threadHeader(),
         body: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -282,18 +272,31 @@ class _MessageThreadViewState extends State<MessageThreadView> {
                   );
                   return Column(
                     children: [
+                      if (widget.compactComposer &&
+                          widget.contextAction != null)
+                        ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxHeight: constraints.maxHeight * .25,
+                          ),
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                            child: widget.contextAction!,
+                          ),
+                        ),
                       Expanded(
                         child: ListView(
                           key: _messageViewport,
                           controller: _scroll,
                           padding: pagePadding(context),
                           children: [
-                            if (widget.subtitle != null)
+                            if (widget.subtitle != null &&
+                                !widget.compactComposer)
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 12),
                                 child: Text(widget.subtitle!),
                               ),
-                            if (widget.contextAction != null)
+                            if (widget.contextAction != null &&
+                                !widget.compactComposer)
                               widget.contextAction!,
                             if (widget.loading || widget.sending)
                               const LinearProgressIndicator(
@@ -346,6 +349,7 @@ class _MessageThreadViewState extends State<MessageThreadView> {
                                 child: MessageBubble(
                                   row: row,
                                   media: widget.media,
+                                  conversationStyle: widget.compactComposer,
                                 ),
                               ),
                             if (widget.readError != null) ...[
@@ -362,15 +366,16 @@ class _MessageThreadViewState extends State<MessageThreadView> {
                               Text(
                                 'Read only. ${widget.reason ?? 'Sending is currently unavailable.'}',
                               ),
-                            TextButton(
-                              onPressed:
-                                  widget.loading ||
-                                      widget.sending ||
-                                      widget.coolingDown
-                                  ? null
-                                  : widget.refresh,
-                              child: const Text('Retry / refresh'),
-                            ),
+                            if (!widget.compactComposer || widget.error != null)
+                              TextButton(
+                                onPressed:
+                                    widget.loading ||
+                                        widget.sending ||
+                                        widget.coolingDown
+                                    ? null
+                                    : widget.refresh,
+                                child: const Text('Retry / refresh'),
+                              ),
                           ],
                         ),
                       ),
@@ -379,16 +384,7 @@ class _MessageThreadViewState extends State<MessageThreadView> {
                         child: SingleChildScrollView(
                           controller: _composerScroll,
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-                          child: Card(
-                            margin: EdgeInsets.zero,
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: _composer(),
-                              ),
-                            ),
-                          ),
+                          child: _composerSurface(),
                         ),
                       ),
                     ],

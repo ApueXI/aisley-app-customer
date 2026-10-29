@@ -11,42 +11,37 @@ class HomeShoppingShortcuts extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: 12),
-    child: Card(
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: MarketShortcutGrid(
-          children: [
-            MarketShortcut(
-              icon: Icons.storefront_outlined,
-              label: 'Shops',
-              onTap: () => context.push('/shops'),
-            ),
-            if (dependencies.vouchers != null)
-              MarketShortcut(
-                icon: Icons.local_offer_outlined,
-                label: 'Discover vouchers',
-                onTap: () => context.push('/vouchers'),
-              ),
-            if (dependencies.commerce != null)
-              MarketShortcut(
-                icon: Icons.receipt_long_outlined,
-                label: 'Orders',
-                onTap: () => context.push('/orders'),
-              ),
-            if (dependencies.wishlist != null)
-              MarketShortcut(
-                icon: Icons.favorite_border,
-                label: 'Wishlist',
-                onTap: () => context.push('/account/wishlist'),
-              ),
-            MarketShortcut(
-              icon: Icons.history,
-              label: 'Recently viewed',
-              onTap: () => context.push('/account/recently-viewed'),
-            ),
-          ],
+    child: MarketShortcutGrid(
+      children: [
+        MarketShortcut(
+          icon: Icons.storefront_outlined,
+          label: 'Shops',
+          onTap: () => context.push('/shops'),
         ),
-      ),
+        if (dependencies.vouchers != null)
+          MarketShortcut(
+            icon: Icons.local_offer_outlined,
+            label: 'Vouchers',
+            onTap: () => context.push('/vouchers'),
+          ),
+        if (dependencies.commerce != null)
+          MarketShortcut(
+            icon: Icons.receipt_long_outlined,
+            label: 'Orders',
+            onTap: () => context.push('/orders'),
+          ),
+        if (dependencies.wishlist != null)
+          MarketShortcut(
+            icon: Icons.favorite_border,
+            label: 'Wishlist',
+            onTap: () => context.push('/account/wishlist'),
+          ),
+        MarketShortcut(
+          icon: Icons.history,
+          label: 'Recent',
+          onTap: () => context.push('/account/recently-viewed'),
+        ),
+      ],
     ),
   );
 }

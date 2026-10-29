@@ -6,7 +6,7 @@ phase: 2
 flutter_status: Implemented; acceptance partial
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
-documentation_synced_on: 2026-10-28
+documentation_synced_on: 2026-10-29
 ---
 
 # Shop directory and storefront
@@ -47,6 +47,9 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 - Visible empty Shop is valid; hidden/unknown Shop404 is unavailable, not an empty catalogue
   success.
 - One Shop Product page combines optional q Product-name search with its own category filter.
+- A single View Shop vouchers row opens `/shops/:slug/vouchers`; Shop browsing does not fetch
+  or embed voucher results. The dedicated page uses the issuing-Shop collection endpoint, existing
+  benefit filters, collection states and independent paging; Back preserves Product filters.
 - Product q does not match Shop name/description/category text; global Search is a separate feature.
 - Category belongs to the resolved Shop’s visible Product categories; never apply a global result
   then filter client-side.

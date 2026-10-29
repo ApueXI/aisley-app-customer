@@ -9,6 +9,7 @@ import 'api_failure.dart';
 import 'bounded_media_adapter.dart';
 
 part 'private_media_transport.dart';
+part 'public_catalog_media_transport.dart';
 
 /// An in-memory credential bound to one controller generation.
 class SessionLease {
