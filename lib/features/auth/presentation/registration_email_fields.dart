@@ -9,10 +9,12 @@ class RegistrationEmailFields extends StatefulWidget {
     required this.controller,
     this.onVerified,
     this.disabled = false,
+    this.draftEmail,
   });
   final RegistrationEmailController controller;
   final VoidCallback? onVerified;
   final bool disabled;
+  final String? draftEmail;
   @override
   State<RegistrationEmailFields> createState() =>
       _RegistrationEmailFieldsState();
@@ -26,7 +28,15 @@ class _RegistrationEmailFieldsState extends State<RegistrationEmailFields> {
   @override
   void initState() {
     super.initState();
-    _email.text = widget.controller.email;
+    _email.text = widget.draftEmail ?? widget.controller.email;
+  }
+
+  @override
+  void didUpdateWidget(covariant RegistrationEmailFields oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.draftEmail != null && _email.text != widget.draftEmail) {
+      _email.text = widget.draftEmail!;
+    }
   }
 
   Future<void> _send() async {
@@ -100,6 +110,7 @@ class _RegistrationEmailFieldsState extends State<RegistrationEmailFields> {
             else ...[
               TextFormField(
                 controller: _email,
+                readOnly: widget.draftEmail != null,
                 enabled: !c.busy && c.challenge == null && !widget.disabled,
                 keyboardType: TextInputType.emailAddress,
                 autofillHints: const [AutofillHints.email],

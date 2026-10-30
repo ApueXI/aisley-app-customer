@@ -34,6 +34,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     );
   }
 
+  bool _showVerification = false;
   final _form = GlobalKey<FormState>();
   final _fields = {
     for (final key in [
@@ -99,7 +100,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     int max = 255,
   }) => TextFormField(
     controller: _fields[key],
-    readOnly: key == 'email',
+    enabled: !_action.busy,
     focusNode: _focus[key],
     obscureText: secret,
     enableSuggestions: !secret,
@@ -111,6 +112,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         (validate ?? ((v) => requiredText(v, max: max)))(v) ??
         _action.fieldError(key),
     onChanged: (_) {
+      if (key == 'email' &&
+          _text('email').trim().toLowerCase() != _verification.email) {
+        _verification.reset();
+        _showVerification = false;
+      }
       _action.clearField(key);
       setState(() {});
     },
@@ -170,15 +176,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           const Text(
             'The registration result is unconfirmed. Try signing in before deliberately submitting again; registration may already be pending.',
           ),
-        RegistrationEmailFields(
-          controller: _verification,
-          disabled: _action.busy,
-          onVerified: () {
-            _fields['email']!.text = _verification.verifiedEmail;
-          },
-        ),
         Offstage(
-          offstage: !_verification.verified,
+          offstage: false,
           child: Form(
             key: _form,
             child: Column(
@@ -220,10 +219,12 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       child: Text('Prefer not to say'),
                     ),
                   ],
-                  onChanged: (v) {
-                    _action.clearField('sex');
-                    setState(() => _sex = v);
-                  },
+                  onChanged: _action.busy
+                      ? null
+                      : (v) {
+                          _action.clearField('sex');
+                          setState(() => _sex = v);
+                        },
                   validator: (v) => v == null
                       ? 'Select an option.'
                       : _action.fieldError('sex'),
@@ -262,10 +263,26 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             ),
           ),
         ),
+        if (!_verification.verified && !_showVerification)
+          FilledButton(
+            onPressed: _action.enabled
+                ? () {
+                    if (!validateForm(_form.currentState!)) return;
+                    setState(() => _showVerification = true);
+                  }
+                : null,
+            child: const Text('Continue to email verification'),
+          ),
+        if (_showVerification)
+          RegistrationEmailFields(
+            controller: _verification,
+            draftEmail: _text('email'),
+            disabled: _action.busy,
+          ),
         if (_verification.verified)
           FilledButton(
             onPressed: _action.enabled ? _submit : null,
-            child: Text(_action.busy ? 'Submitting…' : 'Register'),
+            child: Text(_action.busy ? 'Submitting…' : 'Submit registration'),
           ),
         const Text(
           'Address and ID evidence cannot be submitted in this registration flow.',

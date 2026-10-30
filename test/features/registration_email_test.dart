@@ -167,7 +167,7 @@ void main() {
     },
   );
   testWidgets(
-    'registration details stay hidden until OTP and survive changing email',
+    'details precede OTP and survive backgrounding and email changes',
     (tester) async {
       final auth = FakeAuth();
       final router = GoRouter(
@@ -178,47 +178,68 @@ void main() {
             builder: (_, _) =>
                 RegistrationScreen(repository: auth, clock: DateTime.now),
           ),
-          GoRoute(
-            path: '/approval',
-            builder: (_, _) => const Scaffold(body: Text('Pending approval')),
-          ),
         ],
       );
       addTearDown(router.dispose);
       await tester.pumpWidget(MaterialApp.router(routerConfig: router));
       await tester.pumpAndSettle();
       Finder field(String label) => find.byWidgetPredicate(
-        (widget) =>
-            widget is TextField && widget.decoration?.labelText == label,
+        (w) => w is TextField && w.decoration?.labelText == label,
       );
-      expect(field('First name'), findsNothing);
-      await tester.enterText(field('Email address'), 'buyer@example.com');
+      for (final entry in {
+        'First name': 'Preserved',
+        'Last name': 'Buyer',
+        'Contact number': '09171234567',
+        'Birth date (YYYY-MM-DD)': '2000-01-01',
+        'Email': 'buyer@example.com',
+        'Password': 'Synthetic123',
+        'Confirm password': 'Synthetic123',
+      }.entries) {
+        await tester.ensureVisible(field(entry.key));
+        await tester.enterText(field(entry.key), entry.value);
+      }
+      await tester.ensureVisible(find.byType(DropdownButtonFormField<String>));
+      await tester.tap(find.byType(DropdownButtonFormField<String>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Female').last);
+      await tester.pumpAndSettle();
+      expect(find.text('Send verification code'), findsNothing);
+      await tester.ensureVisible(find.text('Continue to email verification'));
+      await tester.tap(find.text('Continue to email verification'));
+      await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('Send verification code'));
       await tester.tap(find.text('Send verification code'));
       await tester.pumpAndSettle();
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+      expect(
+        tester.widget<TextField>(field('Password')).controller!.text,
+        'Synthetic123',
+      );
+      await tester.ensureVisible(field('Verification code'));
       await tester.enterText(field('Verification code'), '012345');
       await tester.ensureVisible(find.text('Verify email'));
       await tester.tap(find.text('Verify email'));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(field('First name'));
-      await tester.enterText(field('First name'), 'Preserved');
-      await tester.ensureVisible(find.text('Change email'));
-      await tester.tap(find.text('Change email'));
+      expect(find.text('Submit registration'), findsOneWidget);
+      expect(auth.registrations, 0);
+      await tester.ensureVisible(field('Email'));
+      await tester.enterText(field('Email'), 'changed@example.com');
       await tester.pumpAndSettle();
-      expect(field('First name'), findsNothing);
-      await tester.ensureVisible(find.text('Send verification code'));
-      await tester.tap(find.text('Send verification code'));
-      await tester.pumpAndSettle();
-      await tester.enterText(field('Verification code'), '012345');
-      await tester.ensureVisible(find.text('Verify email'));
-      await tester.tap(find.text('Verify email'));
-      await tester.pumpAndSettle();
+      expect(find.text('Submit registration'), findsNothing);
       expect(
         tester.widget<TextField>(field('First name')).controller!.text,
         'Preserved',
       );
-      expect(tester.widget<TextField>(field('Email')).readOnly, true);
-      expect(auth.registrations, 0);
+      expect(
+        tester.widget<TextField>(field('Password')).controller!.text,
+        'Synthetic123',
+      );
       await tester.pumpWidget(const SizedBox.shrink());
     },
   );

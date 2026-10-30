@@ -36,3 +36,8 @@ Short, dated implementation log. Append entries; archive complete logs after 150
 - [Verification](reports/buyer-fixes-verification-2026-10-29.md): final full suite **1,001 passed / 42 live-skipped / zero failures**; final Flutter analysis zero issues; all 40 changed/new Dart files formatted; web and release APK builds pass with synthetic public configuration. Bundle/spec-length/link/asset/Android and whitespace checks pass. The untouched baseline formatter issue is recorded in the report.
 - [Independent design review](reports/buyer-fixes-design-2026-10-29.md): 43 synthetic screenshots reviewed across seven viewports; voucher tap/Back and a received reply without manual refresh verified. Strict Stitch fidelity **7.7/10**; four remaining visual differences are documented, so pixel identity is not claimed. The later long-context correction has focused widget coverage.
 - Controlled deployed API/media/counterpart exchange, installed Android/TalkBack/real-keyboard acceptance and production configuration/signing remain open. Builds and synthetic fixtures do not close those gates.
+
+## 2026-10-30 — Details-first Buyer registration
+
+- Collect existing profile, email and password fields before email OTP, then explicitly submit. Preserve controllers through verification, email edits and background/resume; lock inputs during submission. Updated affected registration/auth contracts.
+- Verification: 10 focused OTP/controller/widget tests pass, including simulated app-switch retention; full and final scoped analyzers and web build pass. No live API/SMTP, installed Android or release APK acceptance; process termination recovery is outside scope. Existing account approval handling is unchanged.
