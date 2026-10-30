@@ -6,7 +6,7 @@ phase: 2
 flutter_status: Implemented; acceptance partial
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
-documentation_synced_on: 2026-10-28
+documentation_synced_on: 2026-10-29
 ---
 
 # Product Detail and configuration
@@ -71,7 +71,7 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
   media/launch URLs.
 - Specifications preserve stored JSON; recognize supported name/value pairs and show unavailable for
   malformed legacy entries.
-- Public media URLs check owning publication/visibility; no raw storage path construction.
+- Public API media check visibility; returned public photos follow the [media policy](../../../api/catalog-media.md).
 - AverageRating/originalPrice/discount may be null; never show zero ratings or a fake discount for null.
 - Shop vacation flag disables purchasing as appropriate; backend Cart/checkout still owns final
   eligibility.

@@ -13,9 +13,11 @@ class VoucherListScreen extends StatefulWidget {
     super.key,
     required this.dependencies,
     this.wallet = false,
+    this.shopSlug,
   });
   final AppDependencies dependencies;
   final bool wallet;
+  final String? shopSlug;
   @override
   State<VoucherListScreen> createState() => _VoucherListScreenState();
 }
@@ -26,6 +28,7 @@ class _VoucherListScreenState extends State<VoucherListScreen> {
     widget.dependencies.vouchers!,
     widget.dependencies.voucherCollection!,
     wallet: widget.wallet,
+    shopSlug: widget.shopSlug,
   );
   @override
   void initState() {
@@ -42,7 +45,13 @@ class _VoucherListScreenState extends State<VoucherListScreen> {
   @override
   Widget build(BuildContext context) => ShoppingPage(
     appBar: AppBar(
-      title: Text(widget.wallet ? 'My Vouchers' : 'Discover vouchers'),
+      title: Text(
+        widget.wallet
+            ? 'My Vouchers'
+            : widget.shopSlug != null
+            ? 'Shop vouchers'
+            : 'Discover vouchers',
+      ),
       actions: widget.wallet
           ? null
           : [

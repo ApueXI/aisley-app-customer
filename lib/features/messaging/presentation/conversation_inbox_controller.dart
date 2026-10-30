@@ -37,8 +37,9 @@ abstract class ConversationInboxController<T> extends CommerceController {
   }) async {
     final credential = lease;
     final cursor = more ? trail.next : null;
+    final requestBusy = more ? busy : loading || (automatic && paging);
     if (credential == null ||
-        busy ||
+        requestBusy ||
         coolingDown ||
         automatic && offline ||
         more && (cursor == null || stale)) {
@@ -56,6 +57,7 @@ abstract class ConversationInboxController<T> extends CommerceController {
       pageError = null;
       error = null;
       offline = false;
+      paging = false;
     }
     notifyListeners();
     try {

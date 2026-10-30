@@ -135,11 +135,9 @@ void main() {
         ),
       );
       expect(find.textContaining('Read only.'), findsOneWidget);
-      await tester.ensureVisible(
-        find.widgetWithText(FilledButton, 'Send message'),
-      );
+      await tester.ensureVisible(find.widgetWithText(FilledButton, 'Send'));
       final button = tester.widget<FilledButton>(
-        find.widgetWithText(FilledButton, 'Send message'),
+        find.widgetWithText(FilledButton, 'Send'),
       );
       expect(button.onPressed, isNull);
       expect(tester.takeException(), isNull);
@@ -248,7 +246,7 @@ void main() {
     },
   );
   testWidgets(
-    'Visible-only foreground polling pauses offline/background and resumes',
+    'Visible-only foreground polling respects hard pause and background',
     (tester) async {
       var count = 0;
       var offline = false;
@@ -273,7 +271,7 @@ void main() {
       expect(count, initial + 1);
       focus.requestFocus();
       await tester.pump();
-      expect(count, initial + 2);
+      expect(count, initial + 1);
       focus.unfocus();
       await tester.pump();
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
@@ -281,15 +279,74 @@ void main() {
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
       offline = false;
       await tester.pump(const Duration(seconds: 30));
-      expect(count, initial + 2);
+      expect(count, initial + 1);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await tester.pump();
-      expect(count, initial + 3);
+      expect(count, initial + 2);
       await tester.pumpWidget(const SizedBox.shrink());
     },
   );
+  testWidgets(
+    'redacted ticket alerts remain readable with an own-detail fallback',
+    (tester) async {
+      h.reply = (request) {
+        final operation = request.uri.path == '/api/v1/customer/notifications'
+            ? 'op-054'
+            : request.method == 'POST'
+            ? 'op-056'
+            : 'op-055';
+        final body = fixture('notifications', operation);
+        final notification = operation == 'op-054'
+            ? (body['data'] as List).single as Map<String, dynamic>
+            : body['data'] as Map<String, dynamic>;
+        notification['resource_type'] = null;
+        notification['resource_id'] = null;
+        notification['destination'] = null;
+        if (operation == 'op-056') {
+          notification['read_at'] = '2026-10-29T02:01:00Z';
+        }
+        return jsonReply(body);
+      };
+
+      await show(
+        tester,
+        NotificationInboxScreen(dependencies: h.dependencies()),
+        scale: 1,
+      );
+      expect(find.text('Support ticket reply'), findsOneWidget);
+      expect(find.text('Support tickets'), findsWidgets);
+
+      await show(
+        tester,
+        NotificationDetailScreen(
+          dependencies: h.dependencies(),
+          id: customerId,
+        ),
+        scale: 1,
+      );
+      expect(find.text('Support ticket reply'), findsOneWidget);
+      expect(
+        find.text(
+          'Related destination is unavailable. This notification remains readable.',
+        ),
+        findsOneWidget,
+      );
+      expect(find.text('Open related content'), findsNothing);
+      expect(find.text('Read'), findsOneWidget);
+      expect(
+        h.adapter.requests.where(
+          (request) =>
+              request.method == 'POST' && request.uri.path.endsWith('/read'),
+        ),
+        hasLength(1),
+      );
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
   testWidgets('Notification read is sent after successful display only', (
     tester,
   ) async {
@@ -304,7 +361,30 @@ void main() {
           .length,
       1,
     );
-    expect(find.text('Synthetic example'), findsNWidgets(2));
+    expect(find.text('Support ticket reply'), findsOneWidget);
+    expect(find.text('Support replied to Ticket SUP-1234.'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+  testWidgets('Notification category chips keep independent status filters', (
+    tester,
+  ) async {
+    await show(
+      tester,
+      NotificationInboxScreen(dependencies: h.dependencies()),
+      scale: 2,
+    );
+    final support = find.byKey(const ValueKey('notification-category-support'));
+    await tester.ensureVisible(support);
+    await tester.tap(support);
+    await tester.pumpAndSettle();
+
+    final request = h.adapter.requests.lastWhere(
+      (request) => request.uri.path.endsWith('/customer/notifications'),
+    );
+    expect(request.uri.queryParameters['status'], 'all');
+    expect(request.uri.queryParameters['category'], 'support');
+    expect(find.text('Support tickets'), findsWidgets);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());
   });

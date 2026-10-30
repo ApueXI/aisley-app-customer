@@ -297,6 +297,21 @@ GoRouter buyerRouter(AppDependencies dependencies) {
         },
       ),
       GoRoute(
+        path: '/shops/:slug/vouchers',
+        builder: (_, state) {
+          final slug = state.pathParameters['slug']!;
+          return dependencies.vouchers != null &&
+                  !state.uri.hasQuery &&
+                  RegExp(r'^[A-Za-z0-9][A-Za-z0-9_-]{0,254}$').hasMatch(slug)
+              ? VoucherListScreen(
+                  key: ValueKey((session.generation, slug)),
+                  dependencies: dependencies,
+                  shopSlug: slug,
+                )
+              : const _Unavailable();
+        },
+      ),
+      GoRoute(
         path: '/shops/:slug',
         builder: (_, state) {
           final query = DiscoveryRouteQuery.parse(state.uri, kind: 'shop');

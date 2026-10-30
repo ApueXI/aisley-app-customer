@@ -35,7 +35,7 @@ screen; public backend methods/envelopes remain unchanged. Auth/recovery/Terms/P
 Phone/tablet padding, natural content heights and keyboard/text resizing follow [Buyer design](../../../design-buyer.md).
 
 ## MUST
-- Registration now requires email-first OTP and `email_verification_token`; see [registration email contract](../../../registration-email.md) for exact endpoints, limits, errors, retry, proof expiry, and client behavior. Adopted locally on 2026-10-14; deployed/device acceptance remains open.
+- Registration now collects details first, then requires email OTP and `email_verification_token`; see [registration email contract](../../../registration-email.md) for exact endpoints, limits, errors, retry, proof expiry, and client behavior. Adopted locally on 2026-10-14; deployed/device acceptance remains open.
 
 ### Feature behavior and boundaries
 
@@ -43,8 +43,8 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
   fields.
 - Registration has first/last name, optional middle name, contact, sex, birth date, email, password and
   confirmation; never submit age.
-- All four sex values are supported: male, female, non_binary, prefer_not_to_say. Birth date must be before
-  today.
+- All four sex values are supported: male, female, non_binary, prefer_not_to_say. Choose birth date using
+  a calendar picker; dates must be before today and submit as YYYY-MM-DD. Cancel preserves the draft.
 - Passwords require at least eight characters, mixed case and a number; mismatch gets field feedback before
   submitting.
 - Normalize email through the request adapter; retain display draft but never store passwords across process

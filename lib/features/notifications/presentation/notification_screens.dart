@@ -85,6 +85,29 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
         selected: controller.status,
         onSelected: controller.filter,
       ),
+      const SizedBox(height: 12),
+      Text('Category', style: Theme.of(context).textTheme.labelLarge),
+      const SizedBox(height: 8),
+      Wrap(
+        spacing: 8,
+        runSpacing: 4,
+        children: [
+          FilterChip(
+            key: const ValueKey('notification-category-all'),
+            label: const Text('All categories'),
+            selected: controller.category == 'all',
+            onSelected: (_) => controller.setCategory('all'),
+          ),
+          for (final category in controller.categories)
+            FilterChip(
+              key: ValueKey('notification-category-${category.key}'),
+              label: Text(category.label),
+              selected: controller.category == category.key,
+              onSelected: (_) => controller.setCategory(category.key),
+            ),
+        ],
+      ),
+      const SizedBox(height: 8),
       ListRecovery(
         stale: controller.stale,
         retry: controller.load,
@@ -125,7 +148,15 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.readAt == null ? 'Unread' : 'Read'),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Chip(label: Text(item.categoryLabel)),
+                    Text(item.readAt == null ? 'Unread' : 'Read'),
+                  ],
+                ),
                 Text(item.summary),
                 if (item.createdAt != null)
                   Text(
@@ -225,6 +256,7 @@ class _NotificationDetailScreenState extends State<NotificationDetailScreen> {
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
               SelectableText(item.summary),
+              Chip(label: Text(item.categoryLabel)),
               if (item.createdAt != null)
                 Text(item.createdAt!.toLocal().toString()),
               Text(item.readAt == null ? 'Unread' : 'Read'),

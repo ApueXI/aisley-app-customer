@@ -74,7 +74,7 @@ A stale quote asks for reviewed refresh, not automatic Place. A lost placement r
 
 Scoped Order denial clears the Order and its contact context; account-wide denial clears every private repository. Consent denial retains authentication while protected actions stop. Secure-storage failure is a retry state that fails closed, not a valid signed-in flag. Offline logout can clear local state but must explain remote revocation is unconfirmed.
 
-Visible online chats poll at15s and on focus/reconnect, preserving pending first-send intent and reachable older history. Background/offline pauses timers. Reassignment/ended custody replaces contact eligibility and makes original authorized history readonly; transcripts are never copied between participants. Support detail uses Laravel’s request-bound cursor resolver. Preserve returned older cursors and verify traversal beyond the first history page.
+Open chats refresh quietly every 5s and on focus/resume, preserving drafts, pending first-send intent and reachable older history. Failed reads use bounded 30s recovery probes; background, blocked-consent, denied and disposed work pauses. Reassignment/ended custody replaces contact eligibility and makes original authorized history readonly; transcripts are never copied between participants. Support detail uses Laravel’s request-bound cursor resolver. Preserve returned older cursors and verify traversal beyond the first history page.
 
 ## Feature implementation sequence
 

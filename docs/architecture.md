@@ -96,3 +96,15 @@ The current shell presents Home, Notifications and Account as the three persiste
 Product Detail no longer owns inline quantity or SKU selection. Detail Add to Cart/Buy Now and retained Search Add-to-Cart actions fetch current Product data and open the same scrollable quantity/option selection sheet or dialog. Simple Products expose quantity only; variant choices must match the current server-listed combination. Cancel/Close makes no write. Confirmed Add uses the existing additive Cart operation; Buy Now builds the existing separate intent and leaves Cart unchanged. Home Product cards have no quick-add buttons. Cart line editing remains separate.
 
 These are presentation/route changes inside existing app composition. Session and consent guards, server-owned eligibility/prices/stock, Checkout quote/place/recovery, Order/voucher projections and separate communication repositories retain their existing owners. No API, backend, dependency or raw generated design-system adoption occurred. Source/test coverage and the pending acceptance boundary are recorded in [the Stitch implementation report](reports/stitch-implementation-2026-10-28.md).
+
+
+## Foreground thread updates — 2026-10-29
+
+Thread controllers expose quiet refresh state independently from initial/manual
+loading and send-validation errors. A five-second foreground scheduler waits for each
+read to finish; failed reads back off to thirty-second probes. Focus/resume uses the
+same visibility, active-session, consent, busy and scoped-denial guards. Send/retry
+waits for an in-flight refresh, then rechecks the original session generation before
+writing. Existing exact pending payload/key and history/read merge owners remain.
+The combined inbox/header keeps its fifteen-second cadence and separately probes
+idle offline channels every thirty seconds; neither path queues writes or adds push.

@@ -7,7 +7,7 @@ flutter_status: Discovery, collection, wallet, Checkout names and pairing implem
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 current_contract_inspected_checkout: 22b0a48f9575ead182d03c35ab87345711c23b90
-documentation_synced_on: 2026-10-15
+documentation_synced_on: 2026-10-29
 ---
 
 # Checkout voucher usage
@@ -139,7 +139,7 @@ universal error envelope.
 ### Responsibility and state ownership
 
 - [Collection contract](../../../api/voucher-collection.md) owns all seven methods, DTO fields, filters and natural replay.
-- Routes `/vouchers`, `/vouchers/:id`, `/account/vouchers` and Shop vouchers retain verified identity/consent.
+- Routes `/vouchers`, `/vouchers/:id`, `/account/vouchers`, `/shops/:slug/vouchers` retain verified identity/consent.
 - Session-owned collection state rejects old-account replies; public definitions never hold personalized status.
 - Collect explicitly; uncertain responses offer same-endpoint Retry, with pending/cooldown duplicate protection.
 - Checkout collection invalidates review but preserves safe choices; explicitly requote/select/review afterward.

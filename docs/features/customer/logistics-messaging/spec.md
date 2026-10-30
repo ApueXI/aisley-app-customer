@@ -6,7 +6,7 @@ phase: 4
 flutter_status: Text/images and received video/documents implemented locally; live/device acceptance open G27
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
-documentation_synced_on: 2026-10-12
+documentation_synced_on: 2026-10-29
 ---
 
 # Logistics delivery messages
@@ -57,8 +57,8 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 - Ending handling/terminal Order disables sends with ORDER_RELATIONSHIP_ENDED while original scoped
   history remains.
 - A new handling organization must not inherit another organization’s transcript or draft.
-- Poll visible online every 15s; pause background/offline and reject old Customer/session responses.
-- Keep pending first-send context during refresh and reachable older cursor when foreground gap
+- Open threads refresh quietly every 5s; failed reads recover every 30s or focus/resume. Pause background/denied/consent/disposed work, honor Retry-After and reject old sessions.
+- Preserve drafts, validation and pending first-send context; follow latest only when nearby. Keep older readers and their cursor when a gap
   appears.
 - Text-only body1–2000; ready media permits optional caption under G27. No GPS sharing, Order mutation, delivery proof or cash collection
   permission.
@@ -177,7 +177,7 @@ universal error envelope.
   response.
 - Forbidden clears affected private content; consent-required offers reading/acceptance; offline
   offers truthful read/retry limits.
-- Light-only Material styling follows [Buyer design](../../../design-buyer.md); keyboard/back/focus
+- Compact image/message/Send stacks for narrow/large text; purple/white bubbles show sender/time above. Follow [Buyer design](../../../design-buyer.md) for keyboard/back/focus;
   never silently lose safe drafts.
 - Use at least 48×48 logical-pixel touch targets, visible focus, text-scale tolerance and non-color
   status cues.

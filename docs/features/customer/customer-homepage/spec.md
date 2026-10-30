@@ -6,7 +6,7 @@ phase: 2
 flutter_status: Implemented; acceptance partial
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
-documentation_synced_on: 2026-10-28
+documentation_synced_on: 2026-10-29
 ---
 
 # Homepage and discovery
@@ -65,8 +65,8 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
   stays mounted.
 - Category cards share measured label height and a 48px image/icon area; full labels fit at current text scale.
 - Shared Product cards keep square images, two-line titles, aligned price/metadata slots and aligned
-  content while respecting text scaling. Home rails/grids have no quick-add action; Product cards
-  open detail. Search's retained Add to Cart entry uses the Product purchase sheet.
+  content while respecting text scaling. Original prices are struck through without a Was prefix.
+  Home cards open detail without quick-add; Search Add to Cart uses the Product purchase sheet.
 - Deal price/progress is a display projection; expiry/timer does not guarantee checkout eligibility or
   reservation.
 - Recommendation limit8–50 default 20 and opaque nextCursor are server-owned; null means exhausted.

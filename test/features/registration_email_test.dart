@@ -166,8 +166,59 @@ void main() {
       expect(await c.verify('012345'), true);
     },
   );
+  testWidgets('birth date picker bounds dates and preserves cancelled drafts', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: RegistrationScreen(repository: FakeAuth(), clock: () => instant),
+      ),
+    );
+    final field = find.byWidgetPredicate(
+      (w) => w is TextField && w.decoration?.labelText == 'Birth date',
+    );
+    await tester.ensureVisible(field);
+    expect(tester.widget<TextField>(field).readOnly, true);
+    await tester.tap(field);
+    await tester.pumpAndSettle();
+    final picker = tester.widget<DatePickerDialog>(
+      find.byType(DatePickerDialog),
+    );
+    expect(picker.firstDate, DateTime(1900));
+    expect(picker.lastDate, DateTime(2026, 10, 13));
+    expect(find.byType(YearPicker), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextField>(field).controller!.text, isEmpty);
+
+    await tester.tap(find.byTooltip('Choose birth date'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('2000').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('2').last);
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextField>(field).controller!.text, '2000-01-02');
+
+    await tester.tap(field);
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<DatePickerDialog>(find.byType(DatePickerDialog))
+          .initialDate,
+      DateTime(2000, 1, 2),
+    );
+    await tester.tap(find.text('2000').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('3').last);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextField>(field).controller!.text, '2000-01-02');
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
   testWidgets(
-    'registration details stay hidden until OTP and survive changing email',
+    'details precede OTP and survive backgrounding and email changes',
     (tester) async {
       final auth = FakeAuth();
       final router = GoRouter(
@@ -178,47 +229,78 @@ void main() {
             builder: (_, _) =>
                 RegistrationScreen(repository: auth, clock: DateTime.now),
           ),
-          GoRoute(
-            path: '/approval',
-            builder: (_, _) => const Scaffold(body: Text('Pending approval')),
-          ),
         ],
       );
       addTearDown(router.dispose);
       await tester.pumpWidget(MaterialApp.router(routerConfig: router));
       await tester.pumpAndSettle();
       Finder field(String label) => find.byWidgetPredicate(
-        (widget) =>
-            widget is TextField && widget.decoration?.labelText == label,
+        (w) => w is TextField && w.decoration?.labelText == label,
       );
-      expect(field('First name'), findsNothing);
-      await tester.enterText(field('Email address'), 'buyer@example.com');
+      for (final entry in {
+        'First name': 'Preserved',
+        'Last name': 'Buyer',
+        'Contact number': '09171234567',
+        'Email': 'buyer@example.com',
+        'Password': 'Synthetic123',
+        'Confirm password': 'Synthetic123',
+      }.entries) {
+        await tester.ensureVisible(field(entry.key));
+        await tester.enterText(field(entry.key), entry.value);
+      }
+      await tester.ensureVisible(find.byType(DropdownButtonFormField<String>));
+      await tester.tap(find.byType(DropdownButtonFormField<String>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Female').last);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(field('Birth date'));
+      await tester.tap(field('Birth date'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('2000').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+      expect(find.text('Send verification code'), findsNothing);
+      await tester.ensureVisible(find.text('Continue to email verification'));
+      await tester.tap(find.text('Continue to email verification'));
+      await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('Send verification code'));
       await tester.tap(find.text('Send verification code'));
       await tester.pumpAndSettle();
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+      expect(
+        tester.widget<TextField>(field('Password')).controller!.text,
+        'Synthetic123',
+      );
+      expect(
+        tester.widget<TextField>(field('Birth date')).controller!.text,
+        '2000-01-01',
+      );
+      await tester.ensureVisible(field('Verification code'));
       await tester.enterText(field('Verification code'), '012345');
       await tester.ensureVisible(find.text('Verify email'));
       await tester.tap(find.text('Verify email'));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(field('First name'));
-      await tester.enterText(field('First name'), 'Preserved');
-      await tester.ensureVisible(find.text('Change email'));
-      await tester.tap(find.text('Change email'));
+      expect(find.text('Submit registration'), findsOneWidget);
+      expect(auth.registrations, 0);
+      await tester.ensureVisible(field('Email'));
+      await tester.enterText(field('Email'), 'changed@example.com');
       await tester.pumpAndSettle();
-      expect(field('First name'), findsNothing);
-      await tester.ensureVisible(find.text('Send verification code'));
-      await tester.tap(find.text('Send verification code'));
-      await tester.pumpAndSettle();
-      await tester.enterText(field('Verification code'), '012345');
-      await tester.ensureVisible(find.text('Verify email'));
-      await tester.tap(find.text('Verify email'));
-      await tester.pumpAndSettle();
+      expect(find.text('Submit registration'), findsNothing);
       expect(
         tester.widget<TextField>(field('First name')).controller!.text,
         'Preserved',
       );
-      expect(tester.widget<TextField>(field('Email')).readOnly, true);
-      expect(auth.registrations, 0);
+      expect(
+        tester.widget<TextField>(field('Password')).controller!.text,
+        'Synthetic123',
+      );
       await tester.pumpWidget(const SizedBox.shrink());
     },
   );

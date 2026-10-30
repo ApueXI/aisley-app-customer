@@ -34,6 +34,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     );
   }
 
+  bool _showVerification = false;
   final _form = GlobalKey<FormState>();
   final _fields = {
     for (final key in [
@@ -85,9 +86,38 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         !RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value ?? '') ||
         parsed.toIso8601String().substring(0, 10) != value ||
         !parsed.isBefore(DateTime(today.year, today.month, today.day))) {
-      return 'Enter a date before today (YYYY-MM-DD).';
+      return 'Choose a date before today.';
     }
     return _action.fieldError('birth_date');
+  }
+
+  Future<void> _pickBirthDate() async {
+    if (_action.busy) return;
+    final today = DateUtils.dateOnly(widget.clock());
+    final firstDate = DateTime(1900);
+    final lastDate = DateTime(today.year, today.month, today.day - 1);
+    final current = DateTime.tryParse(_text('birth_date')) ?? DateTime(2000);
+    final initialDate = current.isBefore(firstDate)
+        ? firstDate
+        : current.isAfter(lastDate)
+        ? lastDate
+        : current;
+    final date = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
+      initialDatePickerMode: DatePickerMode.year,
+      helpText: 'Choose your birth date',
+    );
+    if (!mounted || date == null || _action.busy) return;
+    _action.clearField('birth_date');
+    setState(() {
+      _fields['birth_date']!.text =
+          '${date.year.toString().padLeft(4, '0')}-'
+          '${date.month.toString().padLeft(2, '0')}-'
+          '${date.day.toString().padLeft(2, '0')}';
+    });
   }
 
   Widget _field(
@@ -99,7 +129,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     int max = 255,
   }) => TextFormField(
     controller: _fields[key],
-    readOnly: key == 'email',
+    enabled: !_action.busy,
     focusNode: _focus[key],
     obscureText: secret,
     enableSuggestions: !secret,
@@ -111,6 +141,11 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
         (validate ?? ((v) => requiredText(v, max: max)))(v) ??
         _action.fieldError(key),
     onChanged: (_) {
+      if (key == 'email' &&
+          _text('email').trim().toLowerCase() != _verification.email) {
+        _verification.reset();
+        _showVerification = false;
+      }
       _action.clearField(key);
       setState(() {});
     },
@@ -170,15 +205,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           const Text(
             'The registration result is unconfirmed. Try signing in before deliberately submitting again; registration may already be pending.',
           ),
-        RegistrationEmailFields(
-          controller: _verification,
-          disabled: _action.busy,
-          onVerified: () {
-            _fields['email']!.text = _verification.verifiedEmail;
-          },
-        ),
         Offstage(
-          offstage: !_verification.verified,
+          offstage: false,
           child: Form(
             key: _form,
             child: Column(
@@ -220,20 +248,33 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                       child: Text('Prefer not to say'),
                     ),
                   ],
-                  onChanged: (v) {
-                    _action.clearField('sex');
-                    setState(() => _sex = v);
-                  },
+                  onChanged: _action.busy
+                      ? null
+                      : (v) {
+                          _action.clearField('sex');
+                          setState(() => _sex = v);
+                        },
                   validator: (v) => v == null
                       ? 'Select an option.'
                       : _action.fieldError('sex'),
                 ),
                 const SizedBox(height: 16),
-                _field(
-                  'birth_date',
-                  'Birth date (YYYY-MM-DD)',
-                  validate: _birthday,
-                  keyboard: TextInputType.datetime,
+                TextFormField(
+                  controller: _fields['birth_date'],
+                  focusNode: _focus['birth_date'],
+                  enabled: !_action.busy,
+                  readOnly: true,
+                  onTap: _pickBirthDate,
+                  decoration: InputDecoration(
+                    labelText: 'Birth date',
+                    hintText: 'YYYY-MM-DD',
+                    suffixIcon: IconButton(
+                      tooltip: 'Choose birth date',
+                      onPressed: _action.busy ? null : _pickBirthDate,
+                      icon: const Icon(Icons.calendar_today_outlined),
+                    ),
+                  ),
+                  validator: _birthday,
                 ),
                 const SizedBox(height: 16),
                 _field(
@@ -262,10 +303,26 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
             ),
           ),
         ),
+        if (!_verification.verified && !_showVerification)
+          FilledButton(
+            onPressed: _action.enabled
+                ? () {
+                    if (!validateForm(_form.currentState!)) return;
+                    setState(() => _showVerification = true);
+                  }
+                : null,
+            child: const Text('Continue to email verification'),
+          ),
+        if (_showVerification)
+          RegistrationEmailFields(
+            controller: _verification,
+            draftEmail: _text('email'),
+            disabled: _action.busy,
+          ),
         if (_verification.verified)
           FilledButton(
             onPressed: _action.enabled ? _submit : null,
-            child: Text(_action.busy ? 'Submitting…' : 'Register'),
+            child: Text(_action.busy ? 'Submitting…' : 'Submit registration'),
           ),
         const Text(
           'Address and ID evidence cannot be submitted in this registration flow.',

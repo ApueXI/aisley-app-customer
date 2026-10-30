@@ -202,6 +202,12 @@ void main() {
       );
       await tester.runAsync(() => c.select(picker));
       await tester.pumpAndSettle();
+      expect(c.selected?.filename, 'photo.png');
+      await tester.scrollUntilVisible(
+        find.text('photo.png'),
+        150,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.text('photo.png'), findsOneWidget);
       final response = Completer<ResponseBody>();
       h.reply = (_) => response.future;

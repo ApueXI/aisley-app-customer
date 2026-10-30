@@ -94,13 +94,19 @@ class _ShopThreadScreenState extends State<ShopThreadScreen> {
   Widget build(BuildContext context) {
     final c = widget.controller;
     return ForegroundPoll(
-      refresh: c.load,
-      paused: () => c.offline || !widget.dependencies.session.active,
+      refresh: c.refresh,
+      interval: const Duration(seconds: 5),
+      retryInterval: const Duration(seconds: 30),
+      recoverable: () => c.offline || c.refreshError != null,
+      busy: () =>
+          c.loading || c.refreshing || c.paging || c.sending || c.coolingDown,
+      paused: () => !widget.dependencies.session.active || c.unavailable,
       child: ListenableBuilder(
         listenable: Listenable.merge([c, widget.dependencies.session]),
         builder: (context, _) => !widget.dependencies.session.active
             ? const SizedBox.shrink()
             : MessageThreadView(
+                compactComposer: true,
                 inbox: widget.dependencies.communication == null
                     ? null
                     : ShopInboxScreen(
@@ -108,7 +114,8 @@ class _ShopThreadScreenState extends State<ShopThreadScreen> {
                         embedded: true,
                       ),
                 title: c.shop?.name ?? 'Shop message',
-                subtitle: c.shop?.availability.label,
+                subtitle:
+                    'Shop messages · ${c.shop?.availability.label ?? 'Checking Shop'}',
                 media: c.media,
                 mediaContext: c.mediaContext,
                 contextAction: _contextCard(context, _latestContext(c)),
@@ -147,7 +154,7 @@ class _ShopThreadScreenState extends State<ShopThreadScreen> {
                 arrivals: c.arrivals,
                 acknowledge: c.acknowledgeArrivals,
                 reason: c.sendReason,
-                error: c.error,
+                error: c.error ?? c.refreshError,
                 pageError: c.pageError,
                 readError: c.readError,
                 fieldError: c.fieldErrors['body'],
@@ -174,25 +181,48 @@ class _ShopThreadScreenState extends State<ShopThreadScreen> {
             'order' => '/orders/${value.id}',
             _ => null,
           };
+    final action = route == null
+        ? null
+        : TextButton(
+            onPressed: () => context.push(route),
+            child: Text(type == 'order' ? 'View Order' : 'View product'),
+          );
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      child: ListTile(
-        minTileHeight: 64,
-        leading: Icon(
-          type == 'order'
-              ? Icons.receipt_long_outlined
-              : Icons.shopping_bag_outlined,
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final details = Row(
+              children: [
+                SizedBox.square(
+                  dimension: 48,
+                  child: Icon(
+                    type == 'order'
+                        ? Icons.receipt_long_outlined
+                        : Icons.shopping_bag_outlined,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(child: Text(value.label)),
+              ],
+            );
+            if (action == null) return details;
+            if (constraints.maxWidth < 300 * catalogTextScale(context)) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [details, action],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(child: details),
+                const SizedBox(width: 8),
+                action,
+              ],
+            );
+          },
         ),
-        title: Text(
-          type == 'order'
-              ? 'Order context'
-              : type == 'product'
-              ? 'Product context'
-              : 'Conversation context',
-        ),
-        subtitle: Text(value.label),
-        trailing: route == null ? null : const Icon(Icons.chevron_right),
-        onTap: route == null ? null : () => context.push(route),
       ),
     );
   }

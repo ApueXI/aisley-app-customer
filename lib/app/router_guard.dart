@@ -21,6 +21,11 @@ String safeReturn(String? value) {
     return uri.toString();
   }
   if (safeCommunicationReturn(uri)) return uri.toString();
+  if (!uri.hasQuery &&
+      RegExp(r'^/shops/[A-Za-z0-9][A-Za-z0-9_-]{0,254}/vouchers$')
+          .hasMatch(uri.path)) {
+    return uri.path;
+  }
   if (uri.path == '/checkout' && !uri.hasQuery) return '/cart';
   if (uri.hasQuery) return '/';
   if (const [

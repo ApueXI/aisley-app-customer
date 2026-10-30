@@ -34,7 +34,7 @@ The server resolves an accepted final-mile task, active Courier/affiliation/orga
 
 ## Flutter delivery/recovery
 
-Poll each visible online inbox/thread at a bounded interval (15 seconds follows the storefront), plus focus/reconnect refresh; pause in background/offline. This is foreground HTTP delivery, not push or guaranteed instant realtime. Keep chat unread, ticket reads and general notification reads separate.
+Open threads use quiet foreground HTTP reads every 5 seconds, with 30-second recovery probes after failed reads and immediate focus/resume refresh. Pause background, disposed, scoped-denied and blocked-consent work; respect busy requests and Retry-After. Preserve drafts/validation and pending keys, serialize writes after in-flight refreshes, and reject old session results. Follow the newest message only when already near the end; older readers retain their position and a new-message cue. Combined inbox/header updates retain their separate 15-second scheduler and recover offline channels with 30-second foreground read probes. This is foreground HTTP delivery, not push or guaranteed instant realtime. Keep chat unread, ticket reads and general notification reads separate.
 
 Disable duplicate sends. Freeze the pending body/context/key after uncertain network/timeout; exact retries reconcile the same logical message. Pending first-send context must survive polling until resolved. `409` can signal idempotency conflict or ended relationship; refresh state and explain, never silently create a new key. Preserve safe draft/key on throttle. Correctable `422` needs a deliberate corrected attempt, while uncertain previous writes require reconciliation first. Render committed messages as sent only after the response confirms them.
 
@@ -56,3 +56,12 @@ Iteration 03 adds `GET /api/v1/customer/conversations/shops/{shop}` (Active Cust
 ## Combined Buyer inbox — 2026-10-17
 
 The Flutter-only `/messages` destination combines the existing authorized Shop, Logistics and Courier inboxes, with All/channel filters and newest-first sorting of loaded previews. Channel-qualified IDs, cursors, permissions, thread routes and read markers remain separate. A single foreground 15s scheduler serves the header badge and visible inboxes; it pauses in background, on offline failures and for blocked consent. Refreshes retain loaded pages and older cursor frontiers. Opening the combined list sends no read mutation; confirmed thread reads/sends refresh the affected channel. The badge sums complete fresh server channel totals, never the loaded page, and labels incomplete/stale results as unknown. Notification/support reads stay independent; this adds no API or background push contract. See [client verification](../references/message-center-verification.md).
+
+
+## Foreground recovery update — 2026-10-29
+
+The quiet five-second thread updates and thirty-second recovery reads described
+above supersede the October 17 offline-pause behavior for failed reads. The shared
+inbox scheduler keeps its fifteen-second regular cadence and separately probes
+idle offline channels every thirty seconds. All recovery is read-only and remains
+foreground/session/consent/throttle gated. See [verification](../reports/buyer-fixes-verification-2026-10-29.md).

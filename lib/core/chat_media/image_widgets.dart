@@ -11,10 +11,13 @@ class ChatImageComposer extends StatefulWidget {
     required this.controller,
     required this.contextValue,
     required this.enabled,
+    this.showPicker = true,
+    this.showGuidance = true,
   });
   final ChatMediaDraftController controller;
   final Map<String, Object?> contextValue;
   final bool enabled;
+  final bool showPicker, showGuidance;
   @override
   State<ChatImageComposer> createState() => _ChatImageComposerState();
 }
@@ -46,20 +49,22 @@ class _ChatImageComposerState extends State<ChatImageComposer>
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          OutlinedButton.icon(
-            onPressed:
-                widget.enabled &&
-                    !c.locked &&
-                    !c.selecting &&
-                    c.items.length < 5
-                ? () => c.add(widget.contextValue)
-                : null,
-            icon: const Icon(Icons.add_photo_alternate_outlined),
-            label: Text(c.selecting ? 'Selecting image…' : 'Add image'),
-          ),
-          const Text(
-            'JPEG or PNG · At most 8 MB each · 4,096 pixels per edge / 8 megapixels · Up to 5 images',
-          ),
+          if (widget.showPicker)
+            OutlinedButton.icon(
+              onPressed:
+                  widget.enabled &&
+                      !c.locked &&
+                      !c.selecting &&
+                      c.items.length < 5
+                  ? () => c.add(widget.contextValue)
+                  : null,
+              icon: const Icon(Icons.add_photo_alternate_outlined),
+              label: Text(c.selecting ? 'Selecting image…' : 'Add image'),
+            ),
+          if (widget.showGuidance)
+            const Text(
+              'JPEG or PNG · At most 8 MB each · 4,096 pixels per edge / 8 megapixels · Up to 5 images',
+            ),
           if (c.error != null)
             Semantics(liveRegion: true, child: Text(c.error!)),
           for (final item in c.items)

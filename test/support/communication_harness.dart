@@ -21,7 +21,12 @@ class CommunicationHarness {
   late CommunicationState state;
   Reply? reply;
   int keys = 0;
-  Future<void> initialize({bool active = true}) async {
+  Future<void> initialize({
+    bool active = true,
+    // Ordinary fixture reads should not race host CPU load from parallel tests
+    // and builds. Timeout-specific cases supply an explicit shorter deadline.
+    Duration deadline = const Duration(seconds: 5),
+  }) async {
     session = SessionController(
       auth,
       policies,
@@ -34,7 +39,7 @@ class CommunicationHarness {
       publicClient: Dio()..httpClientAdapter = adapter,
       privateClient: Dio()..httpClientAdapter = adapter,
       readBackoff: Duration.zero,
-      deadline: const Duration(milliseconds: 200),
+      deadline: deadline,
     );
     state = CommunicationState(
       session,

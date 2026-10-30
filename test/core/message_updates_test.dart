@@ -123,7 +123,7 @@ void main() {
   });
 
   testWidgets(
-    'offline channels pause automatic traffic and manual retry recovers',
+    'offline channels use bounded automatic reads and reconnect without refresh',
     (tester) async {
       h.reply = (o) => throw DioException(
         requestOptions: o,
@@ -131,14 +131,18 @@ void main() {
       );
       await show(tester);
       final initial = h.adapter.requests.length;
-      await tester.pump(const Duration(seconds: 45));
+      await tester.pump(const Duration(seconds: 25));
       await tester.pumpAndSettle();
       expect(h.adapter.requests, hasLength(initial));
       h.reply = (o) => jsonReply(inboxPage(channelFor(o), unread: 0));
-      final refresh = h.state.messages.refresh();
+      await tester.pump(const Duration(seconds: 5));
       await tester.pumpAndSettle();
-      await refresh;
       expect(h.state.messages.unread, 0);
+      expect(h.adapter.requests, hasLength(initial + 3));
+      expect(
+        h.adapter.requests.where((request) => request.method != 'GET'),
+        isEmpty,
+      );
       await tester.pumpWidget(const SizedBox());
     },
   );

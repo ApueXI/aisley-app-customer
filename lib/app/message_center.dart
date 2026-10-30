@@ -105,6 +105,15 @@ class MessageCenter extends ChangeNotifier {
     ]);
   }
 
+  Future<void> recoverOffline() async {
+    if (!session.active) return;
+    await Future.wait([
+      for (final controller in channels.values)
+        if (controller.offline && !controller.busy && !controller.coolingDown)
+          controller.load(retain: true),
+    ]);
+  }
+
   void invalidate(MessageChannel channel, {String? deniedId}) {
     final controller = channels[channel]!;
     if (deniedId == null) {

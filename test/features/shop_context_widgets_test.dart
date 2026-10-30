@@ -44,7 +44,7 @@ void main() {
     );
   }
 
-  Finder getSend() => find.widgetWithText(FilledButton, 'Send message');
+  Finder getSend() => find.widgetWithText(FilledButton, 'Send');
 
   testWidgets('initial discovery shows loading and disables the composer', (
     tester,
@@ -58,7 +58,7 @@ void main() {
     response.complete(jsonReply({'data': shopContext()}));
     await tester.pumpAndSettle();
     expect(find.text('Synthetic Shop'), findsOneWidget);
-    expect(find.text('Shop available'), findsOneWidget);
+    expect(find.textContaining('Shop available'), findsOneWidget);
     expect(tester.widget<TextField>(find.byType(TextField)).enabled, isTrue);
     expect(h.adapter.requests.map((r) => r.method), everyElement('GET'));
     await tester.pumpWidget(const SizedBox.shrink());
@@ -77,7 +77,7 @@ void main() {
       h.reply = (_) => jsonReply({'data': shopContext()});
       await tester.tap(find.byTooltip('Refresh conversation'));
       await tester.pumpAndSettle();
-      expect(find.text('Shop available'), findsOneWidget);
+      expect(find.textContaining('Shop available'), findsOneWidget);
       expect(tester.widget<FilledButton>(getSend()).onPressed, isNotNull);
       await tester.pumpWidget(const SizedBox.shrink());
     },
@@ -106,7 +106,7 @@ void main() {
         };
         await show(tester, h.state.shopThread(shop: otherId));
         await tester.pumpAndSettle();
-        expect(find.text('Shop on vacation'), findsOneWidget);
+        expect(find.textContaining('Shop on vacation'), findsOneWidget);
         expect(
           tester.widget<TextField>(find.byType(TextField)).enabled,
           existing,
@@ -159,7 +159,7 @@ void main() {
         scale: 2,
       );
       await tester.pumpAndSettle();
-      expect(find.text('Shop available'), findsOneWidget);
+      expect(find.textContaining('Shop available'), findsOneWidget);
       await tester.ensureVisible(getSend());
       expect(tester.widget<FilledButton>(getSend()).onPressed, isNotNull);
       final rect = tester.getRect(getSend());

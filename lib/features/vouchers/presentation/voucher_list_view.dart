@@ -5,7 +5,7 @@ import '../../../core/ui/responsive_layout.dart';
 import 'voucher_card.dart';
 import 'voucher_list_controller.dart';
 
-/// Embedded Shop and standalone lists share states, cards and independent paging.
+/// Shop discovery, global discovery and wallet lists share cards and paging.
 class VoucherListView extends StatelessWidget {
   const VoucherListView({
     super.key,
