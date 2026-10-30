@@ -166,6 +166,57 @@ void main() {
       expect(await c.verify('012345'), true);
     },
   );
+  testWidgets('birth date picker bounds dates and preserves cancelled drafts', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: RegistrationScreen(repository: FakeAuth(), clock: () => instant),
+      ),
+    );
+    final field = find.byWidgetPredicate(
+      (w) => w is TextField && w.decoration?.labelText == 'Birth date',
+    );
+    await tester.ensureVisible(field);
+    expect(tester.widget<TextField>(field).readOnly, true);
+    await tester.tap(field);
+    await tester.pumpAndSettle();
+    final picker = tester.widget<DatePickerDialog>(
+      find.byType(DatePickerDialog),
+    );
+    expect(picker.firstDate, DateTime(1900));
+    expect(picker.lastDate, DateTime(2026, 10, 13));
+    expect(find.byType(YearPicker), findsOneWidget);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextField>(field).controller!.text, isEmpty);
+
+    await tester.tap(find.byTooltip('Choose birth date'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('2000').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('2').last);
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextField>(field).controller!.text, '2000-01-02');
+
+    await tester.tap(field);
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<DatePickerDialog>(find.byType(DatePickerDialog))
+          .initialDate,
+      DateTime(2000, 1, 2),
+    );
+    await tester.tap(find.text('2000').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('3').last);
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(tester.widget<TextField>(field).controller!.text, '2000-01-02');
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
   testWidgets(
     'details precede OTP and survive backgrounding and email changes',
     (tester) async {
@@ -190,7 +241,6 @@ void main() {
         'First name': 'Preserved',
         'Last name': 'Buyer',
         'Contact number': '09171234567',
-        'Birth date (YYYY-MM-DD)': '2000-01-01',
         'Email': 'buyer@example.com',
         'Password': 'Synthetic123',
         'Confirm password': 'Synthetic123',
@@ -202,6 +252,13 @@ void main() {
       await tester.tap(find.byType(DropdownButtonFormField<String>));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Female').last);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(field('Birth date'));
+      await tester.tap(field('Birth date'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('2000').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('OK'));
       await tester.pumpAndSettle();
       expect(find.text('Send verification code'), findsNothing);
       await tester.ensureVisible(find.text('Continue to email verification'));
@@ -220,6 +277,10 @@ void main() {
       expect(
         tester.widget<TextField>(field('Password')).controller!.text,
         'Synthetic123',
+      );
+      expect(
+        tester.widget<TextField>(field('Birth date')).controller!.text,
+        '2000-01-01',
       );
       await tester.ensureVisible(field('Verification code'));
       await tester.enterText(field('Verification code'), '012345');

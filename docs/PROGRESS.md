@@ -41,3 +41,9 @@ Short, dated implementation log. Append entries; archive complete logs after 150
 
 - Collect existing profile, email and password fields before email OTP, then explicitly submit. Preserve controllers through verification, email edits and background/resume; lock inputs during submission. Updated affected registration/auth contracts.
 - Verification: 10 focused OTP/controller/widget tests pass, including simulated app-switch retention; full and final scoped analyzers and web build pass. No live API/SMTP, installed Android or release APK acceptance; process termination recovery is outside scope. Existing account approval handling is unchanged.
+
+## 2026-10-30 — Registration birth-date picker
+
+- Replaced typed registration birth date with a calendar picker that opens at year selection, excludes today/future dates and preserves the draft on Cancel and through email verification. Profile already uses a birthday picker; no other editable date fields were found. Updated the authentication presentation contract; backend adoption remains `1858785e` plus recorded slices.
+- Verification: `flutter test --no-pub test/features/registration_email_test.dart test/features/responsive_layout_test.dart` passes all 43 tests, including picker selection/cancellation, date bounds, OTP retention and mounted responsive/accessibility checks. `flutter analyze --no-pub`, formatting of both changed Dart files, `python3 tool/verify_bundle.py` and `git diff --check` pass; the revised Customer spec remains 215 lines.
+- No app builds, live API/SMTP, manual browser or installed Android/TalkBack checks were performed for this change; those acceptance gates remain open.
