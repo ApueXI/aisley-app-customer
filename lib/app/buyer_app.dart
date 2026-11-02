@@ -1,3 +1,5 @@
+import 'appearance/appearance_scope.dart';
+
 import 'dart:async';
 import 'dart:ui' show ViewFocusEvent, ViewFocusState;
 
@@ -65,7 +67,8 @@ class _BuyerAppState extends State<BuyerApp> with WidgetsBindingObserver {
     title: 'AISLEY Buyer',
     debugShowCheckedModeBanner: false,
     theme: buyerTheme(),
-    themeMode: ThemeMode.light,
+    darkTheme: buyerTheme(Brightness.dark),
+    themeMode: AppearanceScope.maybeOf(context)?.mode ?? ThemeMode.light,
     scrollBehavior: const BuyerScrollBehavior(),
     builder: (context, child) => ListenableBuilder(
       listenable: Listenable.merge([

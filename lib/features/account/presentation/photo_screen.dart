@@ -280,8 +280,8 @@ class _ProfilePhotoSectionState extends State<ProfilePhotoSection> {
     ),
   );
 
-  Widget _placeholder() => const ColoredBox(
-    color: Color(0xFFF4F0F3),
+  Widget _placeholder() => ColoredBox(
+    color: Theme.of(context).colorScheme.surfaceContainerHighest,
     child: Icon(
       Icons.person_outline,
       size: 76,

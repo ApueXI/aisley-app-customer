@@ -12,7 +12,7 @@ extension _MessageComposer on _MessageThreadViewState {
   Widget _composerSurface() => Container(
     padding: EdgeInsets.all(widget.compactComposer ? 8 : 16),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surface,
       border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
       borderRadius: BorderRadius.circular(8),
     ),
