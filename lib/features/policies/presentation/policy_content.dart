@@ -9,7 +9,9 @@ class PolicyContent extends StatelessWidget {
     super.key,
     required this.policy,
     required this.launcher,
+    this.usePolicyLabel = false,
   });
+  final bool usePolicyLabel;
   final PublicPolicy policy;
   final TrustedLauncher launcher;
   @override
@@ -17,11 +19,17 @@ class PolicyContent extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       Text(
-        policy.version.title,
+        usePolicyLabel ? policy.label : policy.version.title,
         style: Theme.of(context).textTheme.headlineSmall,
       ),
+      if (usePolicyLabel && policy.version.title != policy.label)
+        Text(policy.version.title),
       const SizedBox(height: 8),
       Text('Version ${policy.version.version}'),
+      if (policy.version.publishedAt != null)
+        Text(
+          'Published ${MaterialLocalizations.of(context).formatMediumDate(policy.version.publishedAt!.toLocal())}',
+        ),
       if (policy.version.changeSummary != null)
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 12),

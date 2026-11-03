@@ -8,13 +8,42 @@ import 'package:aisley_mobile_buyer/features/policies/presentation/policy_view_m
 
 import '../support/fakes.dart';
 
+Map<String, dynamic> both({
+  bool termsRequired = true,
+  bool privacyRequired = true,
+  int version = 1,
+}) => {
+  'policies': [
+    ...(consentJson(required: termsRequired, version: version)['policies']
+        as List),
+    for (final item
+        in consentJson(required: privacyRequired)['policies'] as List)
+      {
+        ...item as Map<String, dynamic>,
+        'type': 'privacy_policy',
+        'label': 'Privacy Policy',
+      },
+  ],
+  'all_required_accepted': !termsRequired && !privacyRequired,
+};
+PolicyBatchAcceptance saved(Map<PolicyType, int> versions) =>
+    PolicyBatchAcceptance.parse({
+      'acceptances': [
+        for (final entry in versions.entries)
+          {
+            ...policyJson(type: entry.key.wire, version: entry.value),
+            'accepted_at': null,
+          },
+      ],
+      'status': both(termsRequired: false, privacyRequired: false),
+    });
+
 void main() {
   late FakePolicies policies;
   late SessionController session;
   late ConsentViewModel model;
   setUp(() async {
-    policies = FakePolicies()
-      ..consent = ConsentStatus.parse(consentJson(required: true));
+    policies = FakePolicies()..consent = ConsentStatus.parse(both());
     session = SessionController(
       FakeAuth(),
       policies,
@@ -22,155 +51,150 @@ void main() {
     );
     await session.bootstrap();
     model = ConsentViewModel(policies, session);
+    await model.load();
   });
   tearDown(() {
     model.dispose();
     session.dispose();
   });
-  test(
-    'foreground publication refresh clears old confirmation immediately',
-    () async {
-      await model.load();
-      model.confirm(true);
-      policies.policy = PublicPolicy.parse(policyJson(version: 2));
+
+  test('both confirmations produce exactly one atomic request', () async {
+    expect(model.documents.length, 2);
+    expect(model.mayAccept, false);
+    model.confirm(PolicyType.terms, true);
+    await model.accept();
+    expect(policies.accepts, 0);
+    expect(model.mayAccept, false);
+    model.confirm(PolicyType.privacy, true);
+    Map<PolicyType, int>? selection;
+    policies.onAcceptTogether = (versions) async {
+      selection = versions;
       policies.consent = ConsentStatus.parse(
-        consentJson(required: true, version: 2),
+        both(termsRequired: false, privacyRequired: false),
       );
-      await session.refreshConsent();
-      await Future<void>.delayed(Duration.zero);
-      expect(model.confirmed, false);
-      expect(model.policy?.version.version, 2);
-      expect(model.mayAccept, false);
-    },
-  );
+      return saved(versions);
+    };
+    await model.accept();
+    expect(selection, {PolicyType.terms: 1, PolicyType.privacy: 1});
+    expect(policies.accepts, 1);
+    expect(session.active, true);
+  });
+
   test(
-    'partial Terms acceptance does not unlock remaining Privacy requirement',
+    'covered document stays satisfied and only pending version is sent',
     () async {
-      final privacy =
-          Map<String, dynamic>.of(
-              (consentJson(required: true)['policies'] as List).single
-                  as Map<String, dynamic>,
-            )
-            ..['type'] = 'privacy_policy'
-            ..['label'] = 'Privacy Policy';
-      policies.consent = ConsentStatus.parse({
-        'policies': [
-          ...consentJson(required: true)['policies'] as List,
-          privacy,
-        ],
-        'all_required_accepted': false,
-      });
-      await session.refreshConsent();
+      policies.consent = ConsentStatus.parse(both(termsRequired: false));
       await model.load();
-      model.confirm(true);
-      policies.onAccept = (type, version) async {
-        policies.consent = ConsentStatus.parse({
-          'policies': [privacy],
-          'all_required_accepted': false,
-        });
-        policies.policy = PublicPolicy.parse(
-          policyJson(type: 'privacy_policy'),
+      expect(model.confirmed(PolicyType.terms), true);
+      expect(model.confirmed(PolicyType.privacy), false);
+      model.confirm(PolicyType.privacy, true);
+      Map<PolicyType, int>? selection;
+      policies.onAcceptTogether = (versions) async {
+        selection = versions;
+        policies.consent = ConsentStatus.parse(
+          both(termsRequired: false, privacyRequired: false),
         );
-        return PolicyAcceptance.parse({...policyJson(), 'accepted_at': null});
+        return saved(versions);
       };
       await model.accept();
-      expect(session.active, false);
-      expect(model.policy?.type, 'privacy_policy');
-      expect(model.confirmed, false);
+      expect(selection, {PolicyType.privacy: 1});
     },
   );
+
+  test('foreground publication clears affected confirmation only', () async {
+    model.confirm(PolicyType.terms, true);
+    model.confirm(PolicyType.privacy, true);
+    policies.policy = PublicPolicy.parse(policyJson(version: 2));
+    policies.consent = ConsentStatus.parse(both(version: 2));
+    await session.refreshConsent();
+    await Future<void>.delayed(Duration.zero);
+    expect(model.confirmed(PolicyType.terms), false);
+    expect(model.confirmed(PolicyType.privacy), true);
+    expect(model.documents[PolicyType.terms]?.version.version, 2);
+    expect(model.mayAccept, false);
+  });
+
   test(
-    'confirmation is explicit; acceptance rechecks status before unlocking',
+    'publication before submission sends nothing and reloads new version',
     () async {
-      await model.load();
-      expect(model.confirmed, false);
+      model.confirm(PolicyType.terms, true);
+      model.confirm(PolicyType.privacy, true);
+      policies.policy = PublicPolicy.parse(policyJson(version: 2));
+      policies.consent = ConsentStatus.parse(both(version: 2));
       await model.accept();
       expect(policies.accepts, 0);
-      model.confirm(true);
-      await model.accept();
-      expect(policies.accepts, 1);
-      expect(session.active, true);
-      expect(policies.statusCalls, 2);
+      expect(model.failure?.code, 'POLICY_VERSION_STALE');
+      expect(model.confirmed(PolicyType.terms), false);
+      expect(session.active, false);
     },
   );
-  test('null required current version cannot fabricate acceptance', () async {
+
+  test('null required current version never enables acceptance', () async {
     policies.consent = ConsentStatus.parse(
       consentJson(required: true, nullCurrent: true),
     );
-    await session.refreshConsent();
     await model.load();
     expect(model.failure?.kind, FailureKind.decode);
-    expect(model.policy, null);
     expect(model.mayAccept, false);
   });
+
   test(
-    'stale publication resets confirmation and reloads new content',
+    'uncertain result reconciles committed consent without replay',
     () async {
-      await model.load();
-      model.confirm(true);
-      policies.onAccept = (_, _) async {
-        policies.policy = PublicPolicy.parse(policyJson(version: 2));
+      model.confirm(PolicyType.terms, true);
+      model.confirm(PolicyType.privacy, true);
+      policies.onAcceptTogether = (_) async {
         policies.consent = ConsentStatus.parse(
-          consentJson(required: true, version: 2),
+          both(termsRequired: false, privacyRequired: false),
         );
-        throw const ApiFailure(
-          FailureKind.http,
-          status: 409,
-          code: 'POLICY_VERSION_STALE',
-        );
-      };
-      await model.accept();
-      expect(model.confirmed, false);
-      expect(model.policy?.version.version, 2);
-      expect(model.failure?.code, 'POLICY_VERSION_STALE');
-      expect(session.active, false);
-    },
-  );
-  test(
-    'uncertain acceptance only offers deliberate exact-version retry',
-    () async {
-      await model.load();
-      model.confirm(true);
-      final versions = <int>[];
-      policies.onAccept = (_, version) async {
-        versions.add(version);
         throw const ApiFailure(FailureKind.timeout);
       };
       await model.accept();
       expect(policies.accepts, 1);
-      expect(model.confirmed, true);
-      expect(session.active, false);
-      await model.accept();
-      expect(versions, [1, 1]);
+      expect(session.active, true);
+      expect(model.failure, null);
     },
   );
-  test('logout during acceptance drops late success and failure', () async {
-    await model.load();
-    model.confirm(true);
-    final pending = Completer<PolicyAcceptance>();
-    policies.onAccept = (_, _) => pending.future;
-    final accepting = model.accept();
-    await session.signOut();
-    pending.completeError(const ApiFailure(FailureKind.http, status: 401));
-    await accepting;
-    expect(model.policy, null);
-    expect(model.confirmed, false);
-    expect(model.failure, null);
-    expect(session.phase, SessionPhase.signedOut);
-  });
-  test('duplicate acceptance is serialized', () async {
-    await model.load();
-    model.confirm(true);
-    final pending = Completer<PolicyAcceptance>();
-    policies.onAccept = (_, _) => pending.future;
-    final first = model.accept();
-    await model.accept();
-    expect(policies.accepts, 1);
-    policies.consent = ConsentStatus.parse(consentJson());
-    pending.complete(
-      PolicyAcceptance.parse({...policyJson(), 'accepted_at': null}),
-    );
-    await first;
-    expect(session.active, true);
-  });
+
+  test(
+    'uncertain unsaved result retains exact confirmations for deliberate retry',
+    () async {
+      model.confirm(PolicyType.terms, true);
+      model.confirm(PolicyType.privacy, true);
+      final selections = <Map<PolicyType, int>>[];
+      policies.onAcceptTogether = (versions) async {
+        selections.add(versions);
+        throw const ApiFailure(FailureKind.timeout);
+      };
+      await model.accept();
+      expect(model.confirmed(PolicyType.terms), true);
+      expect(model.confirmed(PolicyType.privacy), true);
+      expect(session.active, false);
+      await model.accept();
+      expect(selections, [
+        {PolicyType.terms: 1, PolicyType.privacy: 1},
+        {PolicyType.terms: 1, PolicyType.privacy: 1},
+      ]);
+    },
+  );
+
+  test(
+    'duplicate submission is serialized and logout discards late result',
+    () async {
+      model.confirm(PolicyType.terms, true);
+      model.confirm(PolicyType.privacy, true);
+      final pending = Completer<PolicyBatchAcceptance>();
+      policies.onAcceptTogether = (_) => pending.future;
+      final accepting = model.accept();
+      await Future<void>.delayed(Duration.zero);
+      await model.accept();
+      expect(policies.accepts, 1);
+      await session.signOut();
+      pending.complete(saved({PolicyType.terms: 1, PolicyType.privacy: 1}));
+      await accepting;
+      expect(model.documents, isEmpty);
+      expect(model.confirmations, isEmpty);
+      expect(session.phase, SessionPhase.signedOut);
+    },
+  );
 }

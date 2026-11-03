@@ -139,3 +139,13 @@ class PolicyAcceptance {
   late final PolicyVersion version;
   late final DateTime? acceptedAt;
 }
+
+class PolicyBatchAcceptance {
+  PolicyBatchAcceptance.parse(Object? value) {
+    final wire = Wire(value);
+    acceptances = wire.list('acceptances', PolicyAcceptance.parse);
+    status = ConsentStatus.parse(wire.field('status'));
+  }
+  late final List<PolicyAcceptance> acceptances;
+  late final ConsentStatus status;
+}

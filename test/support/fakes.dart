@@ -191,12 +191,34 @@ class FakePolicies implements PolicyRepository {
   PublicPolicy policy = PublicPolicy.parse(policyJson());
   Future<ConsentStatus> Function()? onStatus;
   Future<PolicyAcceptance> Function(PolicyType, int)? onAccept;
+  Future<PolicyBatchAcceptance> Function(Map<PolicyType, int>)?
+  onAcceptTogether;
   Completer<PublicPolicy>? delayedCurrent;
   int statusCalls = 0, accepts = 0;
   @override
   Future<ConsentStatus> status(SessionLease lease) async {
     statusCalls++;
     return onStatus != null ? onStatus!() : consent;
+  }
+
+  @override
+  Future<PolicyBatchAcceptance> acceptTogether(
+    SessionLease lease,
+    Map<PolicyType, int> versions,
+  ) async {
+    accepts++;
+    if (onAcceptTogether != null) return onAcceptTogether!(versions);
+    consent = ConsentStatus.parse(consentJson());
+    return PolicyBatchAcceptance.parse({
+      'acceptances': [
+        for (final entry in versions.entries)
+          {
+            ...policyJson(type: entry.key.wire, version: entry.value),
+            'accepted_at': null,
+          },
+      ],
+      'status': consentJson(),
+    });
   }
 
   @override
@@ -216,7 +238,11 @@ class FakePolicies implements PolicyRepository {
 
   @override
   Future<PublicPolicy> current(PolicyType type, {bool refresh = false}) async =>
-      delayedCurrent != null ? delayedCurrent!.future : policy;
+      delayedCurrent != null
+      ? delayedCurrent!.future
+      : type.wire == policy.type
+      ? policy
+      : PublicPolicy.parse(policyJson(type: type.wire));
   @override
   Future<PolicyHistory> history(PolicyType type) async => PolicyHistory.parse({
     'type': type.wire,
