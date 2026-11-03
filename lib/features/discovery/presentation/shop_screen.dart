@@ -197,17 +197,32 @@ class _ShopScreenState extends State<ShopScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (shop.bannerUrl != null)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: CatalogImage(
-                  url: shop.bannerUrl,
-                  discovery: widget.dependencies.discovery!,
-                  height: 130,
-                  width: double.infinity,
-                  label: '${shop.name} banner',
-                ),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: AspectRatio(
+                aspectRatio: 3,
+                child: shop.bannerUrl != null
+                    ? CatalogImage(
+                        url: shop.bannerUrl,
+                        discovery: widget.dependencies.discovery!,
+                        width: double.infinity,
+                        label: '${shop.name} banner',
+                      )
+                    : ColoredBox(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest,
+                        child: Center(
+                          child: Icon(
+                            Icons.storefront_outlined,
+                            size: 32,
+                            semanticLabel: '${shop.name} cover unavailable',
+                            color: Theme.of(context).colorScheme.secondary,
+                          ),
+                        ),
+                      ),
               ),
+            ),
             const SizedBox(height: 8),
             Text(shop.name, style: Theme.of(context).textTheme.headlineSmall),
             if (shop.category != null) Text(shop.category!.name),

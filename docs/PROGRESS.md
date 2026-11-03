@@ -59,3 +59,8 @@ Short, dated implementation log. Append entries; archive complete logs after 150
 - Adopted `policy-consent-batch-v1`: one panel with both full documents, two version-bound checkboxes and one Accept action. Covered policies stay satisfied; only pending current versions are saved atomically. Added typed repository parsing, explicit confirmation guards, stale-version handling and account-scoped response protection; preserved legacy reads/history, identity and authorization. Updated affected shared/API documentation.
 - Verification: 46 consent, repository, widget and session tests and `flutter analyze --no-pub` passed. Twelve phone/tablet/theme/text-scale combinations passed; exact wire payload, two-confirmation gating, stale/uncertain saves, duplicate taps and account loss were covered. Reviewed readable light/dark local captures using the SDK Material font. Live/deployed exchange, installed Android/TalkBack and release APK acceptance remain open.
 - Backend/API provenance: `policy-consent-batch-v1`, AISLEY commit `6693b0cc9172981fa2370e3cc4e1fe6e9aec7f93`; deploy this additive endpoint before releasing the updated client.
+
+## 2026-11-03 — Buyer Shop cover display
+
+- Shop headers now size the cover responsively and show a themed fallback when no cover exists; the existing public media adapter and image-error fallback handle new Seller cover URLs. Updated the Browse Shop and API operation contracts.
+- Verification: the responsive-layout suite passes (32 tests) and `flutter analyze --no-pub` reports no issues. Live API, installed Android/TalkBack, and deployed image delivery remain unverified.
