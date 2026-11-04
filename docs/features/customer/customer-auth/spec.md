@@ -7,6 +7,7 @@ flutter_status: Implemented; target acceptance pending
 backend_baseline: 7b1a08a0c89d7983a0e0503c5e8d322d2c2fa2a0
 contract_inspected_checkout: 57e9eb20e569321b1c7ab7ae22265a3e5cbd7c50
 documentation_synced_on: 2026-10-12
+registration_client_revision: automatic-registration-v2 (2026-11-04)
 ---
 
 # Customer authentication
@@ -18,7 +19,7 @@ native reset links deferred.
 
 Flutter: **implemented; target acceptance pending**. See the Phase 1 verification record for evidence.
 
-Email → OTP → profile/credentials → pending/no credential → Admin decision outside app → device-token login → /me → consent.
+Details/credentials → dedicated OTP → automatic registration → confirmed pending/active success, no credential → Admin review when required → device-token login → /me → consent.
 
 - Register only supported profile/credential keys; no applicant status polling or imported Courier evidence keys. Login sends device_name and securely stores the returned Customer-scoped token on Android and local web.
 - Distinguish credentials-first INVALID_CREDENTIALS from pending/rejected/suspended/inactive denial, throttling and network/storage failure. No identity may self-approve.
@@ -35,7 +36,7 @@ screen; public backend methods/envelopes remain unchanged. Auth/recovery/Terms/P
 Phone/tablet padding, natural content heights and keyboard/text resizing follow [Buyer design](../../../design-buyer.md).
 
 ## MUST
-- Registration now collects details first, then requires email OTP and `email_verification_token`; see [registration email contract](../../../registration-email.md) for exact endpoints, limits, errors, retry, proof expiry, and client behavior. Adopted locally on 2026-10-14; deployed/device acceptance remains open.
+- Registration collects details first, then uses a dedicated OTP screen and automatically submits once verification succeeds; `email_verification_token` follows the Admin OTP setting; see [registration email contract](../../../registration-email.md) for exact endpoints, limits, errors, retry, proof expiry, and client behavior. Automatic submission and approval-aware success adopted locally on 2026-11-04; deployed/device acceptance remains open.
 
 ### Feature behavior and boundaries
 
@@ -49,8 +50,8 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
   submitting.
 - Normalize email through the request adapter; retain display draft but never store passwords across process
   death.
-- Pending success shows informational approval instructions and a sign-in return, with no token or protected
-  applicant polling.
+- Confirmed success accepts active or pending Customer status: active offers sign-in; pending explains Admin approval.
+  Neither result creates a credential or enables applicant polling.
 - Admin review occurs outside Buyer; pending/rejected accounts cannot open protected support as an approval
   exception.
 - Correct credentials are checked before account-state denial. Do not infer pending status from a failed

@@ -55,7 +55,58 @@ class VerificationFixture implements RegistrationEmailRepository {
   }
 }
 
+class ConfigVerificationFixture extends VerificationFixture
+    implements RegistrationConfigurationRepository {
+  bool required = true;
+  bool configFailure = false;
+  @override
+  Future<bool> registrationEmailRequired() async {
+    if (configFailure) throw const FormatException('Unavailable');
+    return required;
+  }
+}
+
 void main() {
+  test('configuration failure blocks submission and retry adopts bypass; late enforcement requires proof', () async {
+    final repo = ConfigVerificationFixture()..configFailure = true;
+    final c = RegistrationEmailController(repo, clock: () => instant);
+    addTearDown(c.dispose);
+    await Future<void>.delayed(Duration.zero);
+    expect(c.emailVerificationRequired, isNull);
+    expect(c.beginSubmission(), false);
+    repo
+      ..configFailure = false
+      ..required = false;
+    await c.loadConfig();
+    expect(c.beginSubmission(), true);
+    expect(c.beginSubmission(), false);
+    c.finishSubmission();
+    c.requireVerification();
+    expect(c.ready, false);
+    expect(c.emailVerificationRequired, true);
+  });
+
+  test(
+    'proof remains valid during pending persistence and cannot start twice',
+    () async {
+      var now = instant;
+      final c = RegistrationEmailController(
+        VerificationFixture(),
+        clock: () => now,
+      );
+      addTearDown(c.dispose);
+      await Future<void>.delayed(Duration.zero);
+      await c.send('new@example.com');
+      await c.verify('012345');
+      expect(c.beginSubmission(), true);
+      expect(c.beginSubmission(), false);
+      now = now.add(const Duration(hours: 2));
+      expect(c.verified, true);
+      c.finishSubmission();
+      expect(c.verified, false);
+    },
+  );
+
   test(
     'DTO rejects malformed secrets and timestamps without printing the proof',
     () {
@@ -218,7 +269,7 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
   testWidgets(
-    'details precede OTP and survive backgrounding and email changes',
+    'dedicated OTP retains drafts on Back and automatically registers after verification',
     (tester) async {
       final auth = FakeAuth();
       final router = GoRouter(
@@ -236,6 +287,7 @@ void main() {
       await tester.pumpAndSettle();
       Finder field(String label) => find.byWidgetPredicate(
         (w) => w is TextField && w.decoration?.labelText == label,
+        skipOffstage: false,
       );
       for (final entry in {
         'First name': 'Preserved',
@@ -264,9 +316,6 @@ void main() {
       await tester.ensureVisible(find.text('Continue to email verification'));
       await tester.tap(find.text('Continue to email verification'));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('Send verification code'));
-      await tester.tap(find.text('Send verification code'));
-      await tester.pumpAndSettle();
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.hidden);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
@@ -282,25 +331,30 @@ void main() {
         tester.widget<TextField>(field('Birth date')).controller!.text,
         '2000-01-01',
       );
+      await tester.ensureVisible(find.text('Back to edit details'));
+      await tester.tap(find.text('Back to edit details'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.widget<TextField>(field('Password')).controller!.text,
+        'Synthetic123',
+      );
+      await tester.ensureVisible(field('Email'));
+      await tester.enterText(field('Email'), 'changed@example.com');
+      await tester.ensureVisible(find.text('Continue to email verification'));
+      await tester.tap(find.text('Continue to email verification'));
+      await tester.pumpAndSettle();
       await tester.ensureVisible(field('Verification code'));
       await tester.enterText(field('Verification code'), '012345');
       await tester.ensureVisible(find.text('Verify email'));
       await tester.tap(find.text('Verify email'));
       await tester.pumpAndSettle();
-      expect(find.text('Submit registration'), findsOneWidget);
-      expect(auth.registrations, 0);
-      await tester.ensureVisible(field('Email'));
-      await tester.enterText(field('Email'), 'changed@example.com');
-      await tester.pumpAndSettle();
+      expect(find.text('Account created successfully'), findsOneWidget);
+      expect(
+        find.textContaining('Please wait for Admin approval'),
+        findsOneWidget,
+      );
       expect(find.text('Submit registration'), findsNothing);
-      expect(
-        tester.widget<TextField>(field('First name')).controller!.text,
-        'Preserved',
-      );
-      expect(
-        tester.widget<TextField>(field('Password')).controller!.text,
-        'Synthetic123',
-      );
+      expect(auth.registrations, 1);
       await tester.pumpWidget(const SizedBox.shrink());
     },
   );

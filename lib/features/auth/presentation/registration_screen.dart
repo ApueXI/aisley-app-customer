@@ -1,6 +1,7 @@
 import '../data/registration_email.dart';
 import 'registration_email_controller.dart';
-import 'registration_email_fields.dart';
+import 'registration_email_screen.dart';
+import 'registration_success_screen.dart';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -34,7 +35,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     );
   }
 
-  bool _showVerification = false;
+  bool _openingVerification = false;
+  RegistrationResult? _result;
   final _form = GlobalKey<FormState>();
   final _fields = {
     for (final key in [
@@ -144,15 +146,45 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       if (key == 'email' &&
           _text('email').trim().toLowerCase() != _verification.email) {
         _verification.reset();
-        _showVerification = false;
       }
       _action.clearField(key);
       setState(() {});
     },
   );
-  Future<void> _submit() async {
-    if (!_action.enabled || !_verification.verified) return;
+  Future<void> _continueRegistration() async {
+    if (_openingVerification ||
+        !_action.enabled ||
+        _verification.emailVerificationRequired == null) {
+      return;
+    }
     if (!validateForm(_form.currentState!)) return;
+    if (_verification.ready) {
+      await _submit();
+      return;
+    }
+    setState(() => _openingVerification = true);
+    final verified = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => RegistrationEmailScreen(
+          controller: _verification,
+          email: _text('email'),
+        ),
+      ),
+    );
+    if (!mounted) return;
+    setState(() => _openingVerification = false);
+    if (verified == true) {
+      await _submit();
+    } else {
+      _verification.reset();
+    }
+  }
+
+  Future<void> _submit() async {
+    if (!_action.enabled || !_verification.ready) return;
+    if (!validateForm(_form.currentState!)) return;
+    if (!_verification.beginSubmission()) return;
+    RegistrationResult? result;
     final input = RegistrationInput(
       firstName: _text('first_name'),
       middleName: _text('middle_name'),
@@ -160,23 +192,29 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       contactNumber: _text('contact_number'),
       sex: _sex!,
       birthDate: _text('birth_date'),
-      email: _verification.verifiedEmail,
-      emailVerificationToken: _verification.proof!.token,
+      email: _verification.emailVerificationRequired == false
+          ? _text('email')
+          : _verification.verifiedEmail,
+      emailVerificationToken: _verification.emailVerificationRequired == false
+          ? ''
+          : _verification.proof!.token,
       password: _text('password'),
       confirmation: _text('password_confirmation'),
     );
     final success = await _action.submit(() async {
-      await widget.repository.register(input);
+      result = await widget.repository.register(input);
     });
+    _verification.finishSubmission();
     if (!mounted) return;
     _fields['password']!.clear();
     _fields['password_confirmation']!.clear();
     if (success) {
-      context.go('/approval');
+      setState(() => _result = result);
+      _verification.reset();
     } else {
       if (_action.failure?.fields.containsKey('email_verification_token') ==
           true) {
-        _verification.reset();
+        _verification.requireVerification();
       }
       validateForm(_form.currentState!);
     }
@@ -185,153 +223,161 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: Listenable.merge([_action, _verification]),
-    builder: (context, _) => FormPage(
-      title: 'Create an account',
-      busy: _action.busy,
-      dirty: _fields.values.any((c) => c.text.isNotEmpty) || _sex != null,
-      onCancel: () {
-        if (context.canPop()) {
-          context.pop();
-        } else {
-          context.go('/login');
-        }
-      },
-      children: [
-        const Text(
-          'Registration requires Admin approval before you can sign in.',
-        ),
-        if (_action.failure != null) FailureNotice(_action.failure!),
-        if (_action.failure?.uncertain == true)
-          const Text(
-            'The registration result is unconfirmed. Try signing in before deliberately submitting again; registration may already be pending.',
-          ),
-        Offstage(
-          offstage: false,
-          child: Form(
-            key: _form,
-            child: Column(
-              children: [
-                _field('first_name', 'First name'),
-                const SizedBox(height: 16),
-                _field(
-                  'middle_name',
-                  'Middle name (optional)',
-                  validate: (v) => (v?.length ?? 0) > 255
-                      ? 'Use at most 255 characters.'
-                      : null,
+    builder: (context, _) => _result != null
+        ? RegistrationSuccessScreen(active: _result!.status == 'active')
+        : FormPage(
+            title: 'Create an account',
+            busy: _action.busy,
+            dirty: _fields.values.any((c) => c.text.isNotEmpty) || _sex != null,
+            onCancel: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/login');
+              }
+            },
+            children: [
+              const Text(
+                'Complete your details. When email verification is enabled, verifying your email submits your registration automatically.',
+              ),
+              if (_action.failure != null) FailureNotice(_action.failure!),
+              if (_action.failure?.uncertain == true)
+                const Text(
+                  'The registration result is unconfirmed. Try signing in before deliberately submitting again; registration may already be pending.',
                 ),
-                const SizedBox(height: 16),
-                _field('last_name', 'Last name'),
-                const SizedBox(height: 16),
-                _field(
-                  'contact_number',
-                  'Contact number',
-                  keyboard: TextInputType.phone,
-                  max: 32,
-                ),
-                const SizedBox(height: 16),
-                DropdownButtonFormField<String>(
-                  initialValue: _sex,
-                  focusNode: _focus['sex'],
-                  isExpanded: true,
-                  itemHeight: null,
-                  decoration: const InputDecoration(labelText: 'Sex'),
-                  items: const [
-                    DropdownMenuItem(value: 'male', child: Text('Male')),
-                    DropdownMenuItem(value: 'female', child: Text('Female')),
-                    DropdownMenuItem(
-                      value: 'non_binary',
-                      child: Text('Non-binary'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'prefer_not_to_say',
-                      child: Text('Prefer not to say'),
-                    ),
-                  ],
-                  onChanged: _action.busy
-                      ? null
-                      : (v) {
-                          _action.clearField('sex');
-                          setState(() => _sex = v);
-                        },
-                  validator: (v) => v == null
-                      ? 'Select an option.'
-                      : _action.fieldError('sex'),
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _fields['birth_date'],
-                  focusNode: _focus['birth_date'],
-                  enabled: !_action.busy,
-                  readOnly: true,
-                  onTap: _pickBirthDate,
-                  decoration: InputDecoration(
-                    labelText: 'Birth date',
-                    hintText: 'YYYY-MM-DD',
-                    suffixIcon: IconButton(
-                      tooltip: 'Choose birth date',
-                      onPressed: _action.busy ? null : _pickBirthDate,
-                      icon: const Icon(Icons.calendar_today_outlined),
-                    ),
+              Offstage(
+                offstage: false,
+                child: Form(
+                  key: _form,
+                  child: Column(
+                    children: [
+                      _field('first_name', 'First name'),
+                      const SizedBox(height: 16),
+                      _field(
+                        'middle_name',
+                        'Middle name (optional)',
+                        validate: (v) => (v?.length ?? 0) > 255
+                            ? 'Use at most 255 characters.'
+                            : null,
+                      ),
+                      const SizedBox(height: 16),
+                      _field('last_name', 'Last name'),
+                      const SizedBox(height: 16),
+                      _field(
+                        'contact_number',
+                        'Contact number',
+                        keyboard: TextInputType.phone,
+                        max: 32,
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownButtonFormField<String>(
+                        initialValue: _sex,
+                        focusNode: _focus['sex'],
+                        isExpanded: true,
+                        itemHeight: null,
+                        decoration: const InputDecoration(labelText: 'Sex'),
+                        items: const [
+                          DropdownMenuItem(value: 'male', child: Text('Male')),
+                          DropdownMenuItem(
+                            value: 'female',
+                            child: Text('Female'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'non_binary',
+                            child: Text('Non-binary'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'prefer_not_to_say',
+                            child: Text('Prefer not to say'),
+                          ),
+                        ],
+                        onChanged: _action.busy
+                            ? null
+                            : (v) {
+                                _action.clearField('sex');
+                                setState(() => _sex = v);
+                              },
+                        validator: (v) => v == null
+                            ? 'Select an option.'
+                            : _action.fieldError('sex'),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _fields['birth_date'],
+                        focusNode: _focus['birth_date'],
+                        enabled: !_action.busy,
+                        readOnly: true,
+                        onTap: _pickBirthDate,
+                        decoration: InputDecoration(
+                          labelText: 'Birth date',
+                          hintText: 'YYYY-MM-DD',
+                          suffixIcon: IconButton(
+                            tooltip: 'Choose birth date',
+                            onPressed: _action.busy ? null : _pickBirthDate,
+                            icon: const Icon(Icons.calendar_today_outlined),
+                          ),
+                        ),
+                        validator: _birthday,
+                      ),
+                      const SizedBox(height: 16),
+                      _field(
+                        'email',
+                        'Email',
+                        validate: emailError,
+                        keyboard: TextInputType.emailAddress,
+                      ),
+                      const SizedBox(height: 16),
+                      _field(
+                        'password',
+                        'Password',
+                        validate: passwordError,
+                        secret: true,
+                      ),
+                      const SizedBox(height: 16),
+                      _field(
+                        'password_confirmation',
+                        'Confirm password',
+                        secret: true,
+                        validate: (v) => v != _text('password')
+                            ? 'Passwords must match.'
+                            : requiredText(v),
+                      ),
+                    ],
                   ),
-                  validator: _birthday,
                 ),
-                const SizedBox(height: 16),
-                _field(
-                  'email',
-                  'Email',
-                  validate: emailError,
-                  keyboard: TextInputType.emailAddress,
-                ),
-                const SizedBox(height: 16),
-                _field(
-                  'password',
-                  'Password',
-                  validate: passwordError,
-                  secret: true,
-                ),
-                const SizedBox(height: 16),
-                _field(
-                  'password_confirmation',
-                  'Confirm password',
-                  secret: true,
-                  validate: (v) => v != _text('password')
-                      ? 'Passwords must match.'
-                      : requiredText(v),
+              ),
+              if (_verification.configLoading)
+                const Text('Loading registration settings…'),
+              if (_verification.configError != null) ...[
+                Text(_verification.configError!),
+                TextButton(
+                  onPressed: _verification.loadConfig,
+                  child: const Text('Retry registration settings'),
                 ),
               ],
-            ),
+              FilledButton(
+                onPressed:
+                    _action.enabled &&
+                        !_openingVerification &&
+                        _verification.emailVerificationRequired != null
+                    ? _continueRegistration
+                    : null,
+                child: Text(
+                  _action.busy
+                      ? 'Creating your account…'
+                      : _verification.ready
+                      ? 'Create account'
+                      : 'Continue to email verification',
+                ),
+              ),
+              const Text(
+                'Address and ID evidence cannot be submitted in this registration flow.',
+              ),
+              TextButton(
+                onPressed: _action.busy ? null : () => context.go('/login'),
+                child: const Text('Already registered? Sign in'),
+              ),
+            ],
           ),
-        ),
-        if (!_verification.verified && !_showVerification)
-          FilledButton(
-            onPressed: _action.enabled
-                ? () {
-                    if (!validateForm(_form.currentState!)) return;
-                    setState(() => _showVerification = true);
-                  }
-                : null,
-            child: const Text('Continue to email verification'),
-          ),
-        if (_showVerification)
-          RegistrationEmailFields(
-            controller: _verification,
-            draftEmail: _text('email'),
-            disabled: _action.busy,
-          ),
-        if (_verification.verified)
-          FilledButton(
-            onPressed: _action.enabled ? _submit : null,
-            child: Text(_action.busy ? 'Submitting…' : 'Submit registration'),
-          ),
-        const Text(
-          'Address and ID evidence cannot be submitted in this registration flow.',
-        ),
-        TextButton(
-          onPressed: _action.busy ? null : () => context.go('/login'),
-          child: const Text('Already registered? Sign in'),
-        ),
-      ],
-    ),
   );
 }

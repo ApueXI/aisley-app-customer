@@ -64,3 +64,8 @@ Short, dated implementation log. Append entries; archive complete logs after 150
 
 - Shop headers now size the cover responsively and show a themed fallback when no cover exists; the existing public media adapter and image-error fallback handle new Seller cover URLs. Updated the Browse Shop and API operation contracts.
 - Verification: the responsive-layout suite passes (32 tests) and `flutter analyze --no-pub` reports no issues. Live API, installed Android/TalkBack, and deployed image delivery remain unverified.
+
+## 2026-11-04 — Dedicated OTP and automatic registration
+
+- Adopted `automatic-registration-v2`: existing details precede a dedicated OTP screen; successful verification submits registration once and confirmed persistence opens success. Buyer accepts active/pending results and shows sign-in readiness or Admin-approval guidance. Added the existing public OTP configuration/bypass with failed-read retry, late proof enforcement, pending-expiry and duplicate guards. Retained drafts/evidence, native password clearing and deliberate uncertain-result recovery. No dependency, API, schema or approval-authority change; source branch began at `902b2e9`; platform API baseline remains unchanged.
+- Verification: 18 registration controller/widget tests passed; full Flutter analyzer, web build and Android release APK passed. Relevant code formatted; portable JSON/spec lengths and Git whitespace checked. Mocks/builds do not certify live SMTP/deployed API/storage, installed Android, accessibility services or signing/release acceptance. Canonical verification: AISLEY `docs/references/registration-automatic-submission-verification.md`.

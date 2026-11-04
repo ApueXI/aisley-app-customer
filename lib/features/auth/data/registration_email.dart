@@ -65,3 +65,7 @@ abstract interface class RegistrationEmailRepository {
     String code,
   );
 }
+
+abstract interface class RegistrationConfigurationRepository {
+  Future<bool> registrationEmailRequired();
+}

@@ -85,7 +85,7 @@ class _RegistrationEmailFieldsState extends State<RegistrationEmailFields> {
             ),
             const SizedBox(height: 8),
             Text(
-              c.verified ? c.verifiedEmail : 'Confirm your email with a six-digit code before completing registration. Your application will still need approval.',
+              c.verified ? c.verifiedEmail : 'Enter the six-digit code sent to your email. Check your spam folder too. Verifying will automatically submit your registration.',
             ),
             if (c.message != null) ...[
               const SizedBox(height: 12),

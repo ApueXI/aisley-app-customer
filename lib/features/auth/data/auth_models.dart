@@ -47,9 +47,10 @@ class RegistrationResult {
     wire.string('message');
     final customer = Wire(wire.field('customer'));
     id = customer.uuid('id');
+    status = customer.string('status');
     customer.string('email');
     if (customer.string('role') != 'customer' ||
-        customer.string('status') != 'pending' ||
+        !const ['pending', 'active'].contains(customer.string('status')) ||
         wire.data.containsKey('token')) {
       throw const ApiFailure(FailureKind.decode);
     }
@@ -68,6 +69,7 @@ class RegistrationResult {
     profile.nullableString('profile_photo_path');
   }
   late final String id;
+  late final String status;
 }
 
 class RegistrationInput {
@@ -102,7 +104,8 @@ class RegistrationInput {
     'contact_number': contactNumber.trim(),
     'sex': sex,
     'birth_date': birthDate,
-    'email_verification_token': emailVerificationToken,
+    if (emailVerificationToken.isNotEmpty)
+      'email_verification_token': emailVerificationToken,
     'email': normalizeEmail(email),
     'password': password,
     'password_confirmation': confirmation,
