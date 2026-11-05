@@ -143,7 +143,7 @@ class _FormPageState extends State<FormPage> {
                 constraints: BoxConstraints(maxWidth: widget.maxWidth),
                 child: Material(
                   color: widget.maxWidth <= 560
-                      ? Colors.white
+                      ? Theme.of(context).colorScheme.surface
                       : Colors.transparent,
                   shape: widget.maxWidth <= 560
                       ? RoundedRectangleBorder(

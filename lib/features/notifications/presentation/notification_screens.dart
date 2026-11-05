@@ -129,7 +129,9 @@ class _NotificationInboxScreenState extends State<NotificationInboxScreen> {
       for (final item in controller.items)
         Card(
           margin: const EdgeInsets.only(bottom: 8),
-          color: item.readAt == null ? const Color(0xFFFFF0F6) : Colors.white,
+          color: item.readAt == null
+              ? Theme.of(context).colorScheme.primaryContainer
+              : Theme.of(context).colorScheme.surface,
           child: ListTile(
             minTileHeight: 72,
             leading: Icon(

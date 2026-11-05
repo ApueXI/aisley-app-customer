@@ -6,34 +6,44 @@ const buyerBorder = Color(0xFFE4DFE3);
 const buyerCanvas = Color(0xFFF5F5F5);
 const buyerTint = Color(0xFFFFF0F6);
 
-ThemeData buyerTheme() {
+ThemeData buyerTheme([Brightness brightness = Brightness.light]) {
+  final dark = brightness == Brightness.dark;
   final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(8));
-  final text = ThemeData.light().textTheme;
+  final text = ThemeData(brightness: brightness).textTheme;
+  final scheme =
+      ColorScheme.fromSeed(
+        seedColor: const Color(0xFFE6007A),
+        brightness: brightness,
+      ).copyWith(
+        primary: dark ? const Color(0xFFFF85BD) : buyerPink,
+        onPrimary: dark ? const Color(0xFF4C0029) : Colors.white,
+        secondary: dark ? const Color(0xFFDCB0F1) : buyerPurple,
+        onSecondary: dark ? const Color(0xFF351047) : Colors.white,
+        surface: dark ? const Color(0xFF211D22) : Colors.white,
+        surfaceTint: Colors.transparent,
+        surfaceContainerHighest: dark
+            ? const Color(0xFF302A31)
+            : const Color(0xFFF3F1F3),
+        primaryContainer: dark ? const Color(0xFF55203D) : buyerTint,
+        onPrimaryContainer: dark ? const Color(0xFFFFD9E9) : buyerPink,
+        secondaryContainer: dark
+            ? const Color(0xFF422B4D)
+            : const Color(0xFFF3EDF6),
+        onSecondaryContainer: dark ? const Color(0xFFF3DAFF) : buyerPurple,
+        onSurface: dark ? const Color(0xFFF0E8EF) : const Color(0xFF211C23),
+        onSurfaceVariant: dark
+            ? const Color(0xFFCFC2CD)
+            : const Color(0xFF625A61),
+        outlineVariant: dark ? const Color(0xFF4A424B) : buyerBorder,
+        error: dark ? const Color(0xFFFFB4AB) : const Color(0xFFB42318),
+      );
   return ThemeData(
-    brightness: Brightness.light,
+    brightness: brightness,
     useMaterial3: true,
     visualDensity: VisualDensity.standard,
     materialTapTargetSize: MaterialTapTargetSize.padded,
-    colorScheme:
-        ColorScheme.fromSeed(
-          seedColor: const Color(0xFFE6007A),
-          brightness: Brightness.light,
-        ).copyWith(
-          primary: buyerPink,
-          secondary: buyerPurple,
-          surface: Colors.white,
-          surfaceTint: Colors.transparent,
-          surfaceContainerHighest: const Color(0xFFF3F1F3),
-          primaryContainer: buyerTint,
-          onPrimaryContainer: buyerPink,
-          secondaryContainer: const Color(0xFFF3EDF6),
-          onSecondaryContainer: buyerPurple,
-          onSurface: const Color(0xFF211C23),
-          onSurfaceVariant: const Color(0xFF625A61),
-          outlineVariant: buyerBorder,
-          error: const Color(0xFFB42318),
-        ),
-    scaffoldBackgroundColor: buyerCanvas,
+    colorScheme: scheme,
+    scaffoldBackgroundColor: dark ? const Color(0xFF141218) : buyerCanvas,
     textTheme: text.copyWith(
       headlineSmall: text.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
       titleLarge: text.titleLarge?.copyWith(
@@ -44,54 +54,56 @@ ThemeData buyerTheme() {
       bodyMedium: text.bodyMedium?.copyWith(height: 1.45),
       bodySmall: text.bodySmall?.copyWith(
         height: 1.4,
-        color: const Color(0xFF625A61),
+        color: scheme.onSurfaceVariant,
       ),
       labelLarge: text.labelLarge?.copyWith(fontWeight: FontWeight.w600),
     ),
-    appBarTheme: const AppBarTheme(
-      backgroundColor: Colors.white,
-      foregroundColor: Color(0xFF211C23),
+    appBarTheme: AppBarTheme(
+      backgroundColor: scheme.surface,
+      foregroundColor: scheme.onSurface,
       centerTitle: false,
       elevation: 0,
       scrolledUnderElevation: 0,
       titleTextStyle: TextStyle(
-        color: Color(0xFF211C23),
+        color: scheme.onSurface,
         fontSize: 18,
         fontWeight: FontWeight.w700,
       ),
-      shape: Border(bottom: BorderSide(color: buyerBorder)),
+      shape: Border(bottom: BorderSide(color: scheme.outlineVariant)),
     ),
     cardTheme: CardThemeData(
       elevation: 0,
-      color: Colors.white,
+      color: scheme.surface,
       margin: EdgeInsets.zero,
-      shape: shape.copyWith(side: const BorderSide(color: buyerBorder)),
+      shape: shape.copyWith(side: BorderSide(color: scheme.outlineVariant)),
     ),
-    dividerTheme: const DividerThemeData(
-      color: buyerBorder,
+    dividerTheme: DividerThemeData(
+      color: scheme.outlineVariant,
       space: 24,
       thickness: 1,
     ),
-    listTileTheme: const ListTileThemeData(
-      iconColor: buyerPurple,
+    listTileTheme: ListTileThemeData(
+      iconColor: scheme.secondary,
       minVerticalPadding: 12,
-      selectedTileColor: buyerTint,
-      selectedColor: buyerPink,
+      selectedTileColor: scheme.primaryContainer,
+      selectedColor: scheme.primary,
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: Colors.white,
+      fillColor: scheme.surface,
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Color(0xFF8B8188)),
+        borderSide: BorderSide(
+          color: dark ? scheme.outline : const Color(0xFF8B8188),
+        ),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       floatingLabelBehavior: FloatingLabelBehavior.always,
-      hintStyle: const TextStyle(color: Color(0xFF625A61)),
+      hintStyle: TextStyle(color: scheme.onSurfaceVariant),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: buyerPink, width: 2),
+        borderSide: BorderSide(color: scheme.primary, width: 2),
       ),
     ),
     filledButtonTheme: FilledButtonThemeData(
@@ -123,20 +135,20 @@ ThemeData buyerTheme() {
     ),
     chipTheme: ChipThemeData(
       shape: shape,
-      side: const BorderSide(color: buyerBorder),
-      selectedColor: const Color(0xFFFCE8F2),
-      labelStyle: const TextStyle(color: buyerPurple),
+      side: BorderSide(color: scheme.outlineVariant),
+      selectedColor: dark ? scheme.primaryContainer : const Color(0xFFFCE8F2),
+      labelStyle: TextStyle(color: scheme.secondary),
     ),
     navigationBarTheme: NavigationBarThemeData(
-      backgroundColor: Colors.white,
+      backgroundColor: scheme.surface,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       indicatorColor: Colors.transparent,
       labelTextStyle: WidgetStateProperty.resolveWith(
         (states) => TextStyle(
           color: states.contains(WidgetState.selected)
-              ? buyerPink
-              : const Color(0xFF625A61),
+              ? scheme.primary
+              : scheme.onSurfaceVariant,
           fontSize: 12,
           fontWeight: states.contains(WidgetState.selected)
               ? FontWeight.w700
@@ -144,25 +156,25 @@ ThemeData buyerTheme() {
         ),
       ),
       iconTheme: WidgetStateProperty.fromMap({
-        WidgetState.selected: IconThemeData(color: buyerPink),
-        WidgetState.any: IconThemeData(color: Color(0xFF625A61)),
+        WidgetState.selected: IconThemeData(color: scheme.primary),
+        WidgetState.any: IconThemeData(color: scheme.onSurfaceVariant),
       }),
     ),
     dialogTheme: DialogThemeData(
-      backgroundColor: Colors.white,
+      backgroundColor: scheme.surface,
       surfaceTintColor: Colors.transparent,
       shape: shape,
     ),
-    bottomSheetTheme: const BottomSheetThemeData(
-      backgroundColor: Colors.white,
+    bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: scheme.surface,
       surfaceTintColor: Colors.transparent,
       showDragHandle: true,
     ),
-    tabBarTheme: const TabBarThemeData(
-      labelColor: buyerPink,
-      unselectedLabelColor: Color(0xFF625A61),
-      indicatorColor: buyerPink,
-      dividerColor: buyerBorder,
+    tabBarTheme: TabBarThemeData(
+      labelColor: scheme.primary,
+      unselectedLabelColor: scheme.onSurfaceVariant,
+      indicatorColor: scheme.primary,
+      dividerColor: scheme.outlineVariant,
     ),
   );
 }

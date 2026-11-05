@@ -31,7 +31,7 @@ class ProductCardTile extends StatelessWidget {
     child: Card(
       clipBehavior: Clip.antiAlias,
       elevation: 0,
-      color: Colors.white,
+      color: Theme.of(context).colorScheme.surface,
       shape: RoundedRectangleBorder(
         side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
         borderRadius: BorderRadius.circular(8),
@@ -71,8 +71,8 @@ class ProductCardTile extends StatelessWidget {
                           ),
                           child: Text(
                             '${product.discountPercent}% off',
-                            style: const TextStyle(
-                              color: Colors.white,
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onPrimary,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),

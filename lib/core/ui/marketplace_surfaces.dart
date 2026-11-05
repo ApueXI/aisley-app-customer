@@ -91,7 +91,7 @@ class MarketShortcut extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Material(
-    color: Colors.white,
+    color: Theme.of(context).colorScheme.surface,
     borderRadius: BorderRadius.circular(8),
     clipBehavior: Clip.antiAlias,
     child: InkWell(

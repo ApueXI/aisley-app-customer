@@ -8,6 +8,10 @@ abstract interface class PolicyRepository {
   Future<PolicyHistory> history(PolicyType type);
   Future<PublicPolicy> version(PolicyType type, int version);
   Future<ConsentStatus> status(SessionLease lease);
+  Future<PolicyBatchAcceptance> acceptTogether(
+    SessionLease lease,
+    Map<PolicyType, int> versions,
+  );
   Future<PolicyAcceptance> accept(
     SessionLease lease,
     PolicyType type,
@@ -84,6 +88,48 @@ class ApiPolicyRepository implements PolicyRepository {
     Wire(await client.request('GET', 'policy-consent/status', lease: lease))
         .field('data'),
   );
+  @override
+  Future<PolicyBatchAcceptance> acceptTogether(
+    SessionLease lease,
+    Map<PolicyType, int> versions,
+  ) async {
+    if (versions.isEmpty || versions.values.any((version) => version < 1)) {
+      throw const ApiFailure(FailureKind.decode);
+    }
+    final result = PolicyBatchAcceptance.parse(
+      Wire(
+        await client.request(
+          'POST',
+          'policy-consent/accept',
+          lease: lease,
+          body: {
+            'acceptances': versions.entries
+                .map(
+                  (entry) => {
+                    'type': entry.key.wire,
+                    'version': entry.value,
+                    'confirmation': true,
+                  },
+                )
+                .toList(growable: false),
+          },
+        ),
+      ).field('data'),
+    );
+    if (result.acceptances.length != versions.length ||
+        result.acceptances.map((item) => item.type).toSet().length !=
+            versions.length ||
+        result.acceptances.any(
+          (item) =>
+              versions[PolicyType.fromWire(item.type)] !=
+                  item.version.version ||
+              item.version.status != 'published',
+        )) {
+      throw const ApiFailure(FailureKind.decode);
+    }
+    return result;
+  }
+
   @override
   Future<PolicyAcceptance> accept(
     SessionLease lease,

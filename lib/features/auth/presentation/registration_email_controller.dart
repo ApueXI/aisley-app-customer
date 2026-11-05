@@ -8,9 +8,12 @@ import '../../../core/networking/api_failure.dart';
 class RegistrationEmailController extends ChangeNotifier {
   RegistrationEmailController(this.repository, {DateTime Function()? clock})
     : clock = clock ?? DateTime.now {
+    unawaited(loadConfig());
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (_disposed) return;
-      if (proof != null && !proof!.expiresAt.isAfter(this.clock())) {
+      if (!submissionPending &&
+          proof != null &&
+          !proof!.expiresAt.isAfter(this.clock())) {
         proof = null;
         challenge = null;
         message =
@@ -29,7 +32,58 @@ class RegistrationEmailController extends ChangeNotifier {
   DateTime? _retryAt;
   int _generation = 0;
   Timer? _timer;
-  bool get verified => proof != null && proof!.expiresAt.isAfter(clock());
+  bool? emailVerificationRequired;
+  bool configLoading = false;
+  String? configError;
+  bool submissionPending = false;
+  int _configGeneration = 0;
+  bool get ready =>
+      emailVerificationRequired != null &&
+      (emailVerificationRequired == false || verified);
+  bool get verified =>
+      proof != null && (submissionPending || proof!.expiresAt.isAfter(clock()));
+
+  Future<void> loadConfig() async {
+    final generation = ++_configGeneration;
+    configLoading = true;
+    configError = null;
+    notifyListeners();
+    try {
+      final source = repository;
+      final required = source is RegistrationConfigurationRepository
+          ? await (source as RegistrationConfigurationRepository)
+                .registrationEmailRequired()
+                .timeout(const Duration(seconds: 20))
+          : true;
+      if (_disposed || generation != _configGeneration) return;
+      emailVerificationRequired = required;
+    } on Exception {
+      if (_disposed || generation != _configGeneration) return;
+      emailVerificationRequired = null;
+      configError = 'Unable to load registration settings. Retry to continue.';
+    } finally {
+      if (!_disposed && generation == _configGeneration) {
+        configLoading = false;
+        notifyListeners();
+      }
+    }
+  }
+
+  void requireVerification() {
+    emailVerificationRequired = true;
+    reset();
+  }
+
+  bool beginSubmission() {
+    if (!ready || configLoading || submissionPending || busy) return false;
+    submissionPending = true;
+    return true;
+  }
+
+  void finishSubmission() {
+    submissionPending = false;
+  }
+
   bool get expired =>
       challenge != null && !challenge!.expiresAt.isAfter(clock());
   bool get coolingDown => _retryAt?.isAfter(clock()) == true;
@@ -53,7 +107,7 @@ class RegistrationEmailController extends ChangeNotifier {
   }
 
   Future<bool> send(String value) async {
-    if (busy || resendSeconds > 0) return false;
+    if (submissionPending || busy || resendSeconds > 0) return false;
     final normalized = value.trim().toLowerCase();
     return _perform(() async {
       final result = await repository.requestRegistrationCode(normalized);
@@ -66,7 +120,8 @@ class RegistrationEmailController extends ChangeNotifier {
   }
 
   Future<bool> verify(String code) async {
-    if (busy ||
+    if (submissionPending ||
+        busy ||
         coolingDown ||
         expired ||
         challenge == null ||
@@ -79,7 +134,7 @@ class RegistrationEmailController extends ChangeNotifier {
       return () {
         proof = result;
         verifiedEmail = target;
-        message = 'Email verified. Complete your registration.';
+        message = 'Email verified. Creating your account…';
       };
     });
   }

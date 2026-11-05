@@ -256,7 +256,7 @@ class _PurchaseOptionsSheet extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.surface,
                 border: Border.all(
                   color: Theme.of(context).colorScheme.outlineVariant,
                 ),

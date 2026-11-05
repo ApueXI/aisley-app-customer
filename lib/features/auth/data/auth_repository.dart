@@ -17,11 +17,24 @@ abstract interface class AuthRepository {
   Future<void> logout(SessionLease lease);
 }
 
-class ApiAuthRepository implements AuthRepository, RegistrationEmailRepository {
+class ApiAuthRepository
+    implements
+        AuthRepository,
+        RegistrationEmailRepository,
+        RegistrationConfigurationRepository {
   ApiAuthRepository(this.client, {required this.deviceName});
   final ApiClient client;
   final String deviceName;
   static const _path = 'customer/auth/';
+  @override
+  Future<bool> registrationEmailRequired() async {
+    final value = await client.request('GET', '${_path}registration/config');
+    if (value['email_verification_required'] is! bool) {
+      throw const FormatException('Invalid registration configuration.');
+    }
+    return value['email_verification_required'] as bool;
+  }
+
   @override
   Future<RegistrationEmailChallenge> requestRegistrationCode(
     String email,

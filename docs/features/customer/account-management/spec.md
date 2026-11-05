@@ -66,6 +66,8 @@ Phone/tablet padding, natural content heights and keyboard/text resizing follow 
 - Picker dismissal preserves a valid selection; explicit removal/cancel/account loss clears previews.
 - [Upload recovery evidence](../../../references/upload-recovery-verification.md) separates synthetic checks from live/device gates.
 - Promotional preference is required boolean, default off and independent of required policy consent.
+- Settings → Appearance offers System/Light/Dark; default Light, immediate device-local persistence independent of logout.
+- Follow the design guide for the appearance dialog, dark palette, navigation preservation and failed-save Retry.
 - Preference read/update uses snake_case data; opted-in timestamp may be null.
 - Private forms/bytes/pending uploads are disposed on account change/authorization loss.
 - Backend profile dimension/decode hardening remains G15; do not certify global upload-policy parity from
@@ -187,7 +189,7 @@ universal error envelope.
 - Conflict refresh requires review before a new deliberate write. Success follows a confirmed server response.
 - Forbidden clears affected private content; consent-required offers reading/acceptance; offline offers
   truthful read/retry limits.
-- Light-only Material styling follows [Buyer design](../../../design-buyer.md); keyboard/back/focus never
+- Light/dark Material styling follows [Buyer design](../../../design-buyer.md); keyboard/back/focus never
   silently lose safe drafts.
 - Use at least 48×48 logical-pixel touch targets, visible focus, text-scale tolerance and non-color status
   cues.

@@ -1,3 +1,5 @@
+import '../../../app/appearance/appearance_tile.dart';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -112,6 +114,7 @@ class AccountHomeScreen extends StatelessWidget {
             title: 'Settings and policies',
             child: Column(
               children: const [
+                AppearanceTile(),
                 _AccountDestination(
                   icon: Icons.tune,
                   title: 'Promotional messages',

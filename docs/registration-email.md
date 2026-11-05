@@ -28,7 +28,7 @@ There is no durable registration replay key or applicant polling API. After an u
 
 ## Client flow
 
-Complete registration details/evidence and email → code entry/resend → explicit registration submission → existing approval or account-ready destination. Keep proofs/codes in memory only. Changing email invalidates local verification and requires another code; expiry returns to verification while preserving draft details and selected evidence. Protect existing unsaved work; preserve each client's password-clearing and upload-cancellation behavior. Ignore late responses after reset, route exit, disposal, or a newer attempt.
+Complete registration details/evidence and email → dedicated code-entry/resend page → automatic initial registration submission → confirmed success with approval or account-ready guidance. Keep proofs/codes in memory only. Changing email invalidates local verification and requires another code; expiry returns to verification while preserving draft details and selected evidence. Protect existing unsaved work; preserve each client's password-clearing and upload-cancellation behavior. Ignore late responses after reset, route exit, disposal, or a newer attempt.
 
 Use one accessible code field with paste, one-time-code autofill, a numeric keyboard, six-digit validation, and leading-zero preservation. Explain expiry and spam-folder checks; respect reduced motion. Existing role palettes/native themes apply. Verification failure, offline/timeout, throttling, and final approval are distinct states.
 
@@ -43,3 +43,9 @@ Challenge and encrypted mail intent commit together. Existing database jobs, cla
 `auth:cleanup-registration-codes` runs hourly, clears obsolete challenge secrets, and removes obsolete challenge history after 24 hours without resetting the hourly quota. Apply migrations and restart workers/scheduler before releasing updated web and mobile clients. Enforcement is mandatory; older clients cannot complete new registration without verification. Existing accounts are not backfilled or newly gated.
 
 Local acceptance must cover all role routes, no pre-verification side effects, normalization, hashing/encryption, leading zeros, wrong attempts, resend/expiry, correct retry, proof binding/single use, registration rollback, evidence cleanup, duplicate races, mail delivery/obsolete skipping, client cancellation, draft preservation, and accessible responsive states. Record PostgreSQL process concurrency, deployed API/worker behavior, real SMTP inbox delivery, and installed-device checks separately from local mocks/builds.
+
+## Automatic submission and confirmed success — 2026-11-04
+
+The dedicated OTP screen explains that verification submits registration automatically. On successful verification, dispatch the captured registration once; show success only after the existing registration API confirms persistence. Preserve drafts/evidence across Back and backgrounding, freeze the pending payload, defer local proof expiry during persistence, and ignore obsolete callbacks. Never automatically retry failed/uncertain registration: retain safe input, apply existing password-clearing rules, show sign-in guidance when unconfirmed, and require a deliberate retry.
+
+Buyer success distinguishes `customer.status=active` (ready to sign in) from `pending` (wait for Admin approval). Courier success waits for the selected Logistics organization. Registration returns no credential. Both clients discover the existing OTP configuration, block on failed reads with explicit retry, and bypass OTP when disabled without claiming email verification. Late server proof requirements return to verification. Client source and local tests establish adoption; live SMTP, deployed API and installed-device acceptance remain open.

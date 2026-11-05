@@ -71,7 +71,7 @@ class PurchaseBar extends StatelessWidget {
     return ConstrainedBox(
       constraints: BoxConstraints(maxHeight: maxHeight),
       child: Material(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         child: Container(
           decoration: BoxDecoration(
             border: Border(
@@ -155,7 +155,7 @@ class MarketTabs<T> extends StatelessWidget {
           selected: entry.key == selected,
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               border: Border(
                 bottom: BorderSide(
                   color: entry.key == selected

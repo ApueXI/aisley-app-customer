@@ -52,7 +52,7 @@ Preserve unrelated work. Keep credentials, device data and private uploads out o
 17. Stay within the requested feature. Flutter work does not authorize backend changes, migrations, seeds, unrelated refactoring or edits to another checkout.
 18. Read registration/upload references for relevant work. Preserve native adapters; browser-selected files require bytes/streams and cannot rely on OS paths.
 19. After an entry makes `docs/PROGRESS.md` exceed 150 physical lines, preserve the complete file in `docs/logs/PROGRESS-YYYY-MM-DD.md`, using a unique suffix when needed. Start a fresh standard header with current backend/Flutter status and a dated archive link. Never overwrite or rewrite archives.
-20. Follow `docs/design-buyer.md`: light-only branding, familiar shopping patterns, clear next actions, predictable back/cancel, accessible touch/focus/text and honest loading/error states.
+20. Follow `docs/design-buyer.md`: light/dark branding with a device-local appearance choice, familiar shopping patterns, clear next actions, predictable back/cancel, accessible touch/focus/text and honest loading/error states.
 
 ## Read before changing code
 

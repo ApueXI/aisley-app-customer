@@ -2,7 +2,7 @@
 
 Status: shared marketplace presentation is applied across Buyer features. The 2026-10-28 Stitch navigation and purchase-flow revision is implemented locally; final independent verification and installed-device accessibility acceptance remain pending. Adapted from Aisley's Customer branding and interaction contract at `docs/design.md`; the existing web guide governs the storefront, while this document governs the standalone Buyer app.
 
-Use a light-only Material theme with brand pink `#E6007A`, accessible control/text pink `#B60060`, secondary `#4C1268`, error `#B42318`, and warning `#FF8800`. Neutral surfaces dominate; supporting typography/borders and restrained primary accents follow the brand's 60/30/10 balance. Verify foreground/background contrast and adjust text/surface use where a brand accent is insufficient. Do not rely on color alone for status, selected variants, unread or validation.
+Use light and dark Material themes with brand pink `#E6007A`, accessible control/text pink `#B60060`, secondary `#4C1268`, error `#B42318`, and warning `#FF8800`. Neutral surfaces dominate; supporting typography/borders and restrained primary accents follow the brand's 60/30/10 balance. Verify foreground/background contrast and adjust text/surface use where a brand accent is insufficient. Do not rely on color alone for status, selected variants, unread or validation.
 
 Use familiar marketplace patterns: search near discovery, Product images and price prominent, clear variant/quantity controls, Shop-grouped Cart/Checkout, explicit COD total, readable Order milestones, and separate message channels. Phone/tablet navigation uses Home/Notifications/Account; header utilities provide Messages, Cart, and Terms/Privacy. Shops and Cart open as back-navigable pages. Desktop navigation follows [workspace](workspace.md). Bazaar/MoneyFest and unavailable workflows need no enabled destinations.
 
@@ -95,3 +95,9 @@ near the end; older readers keep their place and a new-message cue. Failed reads
 use bounded thirty-second recovery, with lifecycle/session/consent/throttle guards.
 Stitch screenshot comparison and remaining parity limits are recorded in the
 [design review](reports/buyer-fixes-design-2026-10-29.md).
+
+## Appearance settings — 2026-11-02
+
+Account → Settings and policies → Appearance opens a scrollable Material choice dialog with System, Light and Dark, the current selection, and Cancel. Buyer initially uses Light. System follows device brightness; explicit Light/Dark override it. Apply choices immediately across every route without resetting navigation, drafts or scroll. Remember the choice on this device independently of identity, including after logout. No API or account synchronization is involved.
+
+Dark mode uses pink `#FF85BD`, purple `#DCB0F1`, canvas `#141218`, surface `#211D22`, primary text `#F0E8EF` and supporting text `#CFC2CD`. Use semantic foreground/background pairs from `buyerTheme`, including onPrimary/onSecondary for filled accents. Product images and map pins retain their authored colors. Appearance read failures use the default; a failed save keeps the immediate choice and shows Retry saving. This section supersedes older light-only wording in copied feature specifications and white-surface/message instructions.

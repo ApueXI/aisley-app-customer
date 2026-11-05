@@ -153,7 +153,7 @@ class _MarketplaceHeaderState extends State<MarketplaceHeader> {
       labelText: 'Search Products or Shops',
       floatingLabelBehavior: FloatingLabelBehavior.auto,
       filled: true,
-      fillColor: const Color(0xFFF5F5F5),
+      fillColor: Theme.of(context).scaffoldBackgroundColor,
       contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
@@ -165,7 +165,10 @@ class _MarketplaceHeaderState extends State<MarketplaceHeader> {
       suffixIcon: IconButton.filled(
         tooltip: 'Search',
         onPressed: () => _submit(_search.text),
-        icon: const Icon(Icons.search, color: Colors.white),
+        icon: Icon(
+          Icons.search,
+          color: Theme.of(context).colorScheme.onPrimary,
+        ),
       ),
     ),
   );
@@ -186,7 +189,7 @@ class _MarketplaceHeaderState extends State<MarketplaceHeader> {
   );
   @override
   Widget build(BuildContext context) => Material(
-    color: Colors.white,
+    color: Theme.of(context).colorScheme.surface,
     child: DecoratedBox(
       decoration: BoxDecoration(
         border: Border(

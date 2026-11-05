@@ -26,7 +26,9 @@ class MessageBubble extends StatelessWidget {
               ),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: row.mine ? const Color(0xFFFCE8F2) : Colors.white,
+                color: row.mine
+                    ? Theme.of(context).colorScheme.primaryContainer
+                    : Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(8),
                   topRight: const Radius.circular(8),
@@ -77,7 +79,9 @@ class MessageBubble extends StatelessWidget {
 
   Widget _conversation(BuildContext context) {
     final theme = Theme.of(context);
-    final ink = row.mine ? Colors.white : theme.colorScheme.onSurface;
+    final ink = row.mine
+        ? theme.colorScheme.onSecondary
+        : theme.colorScheme.onSurface;
     final at = row.at?.toLocal();
     final localizations = MaterialLocalizations.of(context);
     final timestamp = at == null
@@ -106,7 +110,9 @@ class MessageBubble extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: row.mine ? theme.colorScheme.secondary : Colors.white,
+                  color: row.mine
+                      ? theme.colorScheme.secondary
+                      : theme.colorScheme.surface,
                   borderRadius: BorderRadius.circular(16),
                   border: row.mine
                       ? null

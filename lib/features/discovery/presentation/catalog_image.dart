@@ -78,8 +78,8 @@ class _CatalogImageState extends State<CatalogImage> {
                 );
               }
               if (snapshot.hasError) return _fallback(context);
-              return const ColoredBox(
-                color: Color(0xFFF4F0F3),
+              return ColoredBox(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 child: Center(
                   child: SizedBox.square(
                     dimension: 20,
@@ -92,7 +92,7 @@ class _CatalogImageState extends State<CatalogImage> {
   );
 
   Widget _fallback(BuildContext context) => ColoredBox(
-    color: const Color(0xFFF4F0F3),
+    color: Theme.of(context).colorScheme.surfaceContainerHighest,
     child: Center(
       child: Icon(
         Icons.image_outlined,
