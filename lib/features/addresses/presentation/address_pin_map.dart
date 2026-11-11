@@ -112,30 +112,32 @@ class _AddressPinMapState extends State<AddressPinMap> {
         if (!_failed)
           SizedBox(
             height: 300,
-            child: _prepared
-                ? _adapter!.build(
-                    style: geoapifyMapStyle(
-                      widget.locations.config.geoapifyPublicApiKey,
-                    ),
-                    initial: widget.point,
-                    onReady: () {
-                      if (!_current(generation)) return;
-                      _deadline?.cancel();
-                      setState(() => _ready = true);
-                    },
-                    onError: () => _fail(generation),
-                    onSelect: (point) {
-                      if (_current(generation) &&
-                          _ready &&
-                          point.latitude.isFinite &&
-                          point.longitude.isFinite &&
-                          point.latitude.abs() <= 90 &&
-                          point.longitude.abs() <= 180) {
-                        widget.onSelect(point);
-                      }
-                    },
-                  )
-                : const Center(child: Text('Loading address map…')),
+            child: ClipRect(
+              child: _prepared
+                  ? _adapter!.build(
+                      style: geoapifyMapStyle(
+                        widget.locations.config.geoapifyPublicApiKey,
+                      ),
+                      initial: widget.point,
+                      onReady: () {
+                        if (!_current(generation)) return;
+                        _deadline?.cancel();
+                        setState(() => _ready = true);
+                      },
+                      onError: () => _fail(generation),
+                      onSelect: (point) {
+                        if (_current(generation) &&
+                            _ready &&
+                            point.latitude.isFinite &&
+                            point.longitude.isFinite &&
+                            point.latitude.abs() <= 90 &&
+                            point.longitude.abs() <= 180) {
+                          widget.onSelect(point);
+                        }
+                      },
+                    )
+                  : const Center(child: Text('Loading address map…')),
+            ),
           ),
         if (!_failed && !_ready)
           const LinearProgressIndicator(semanticsLabel: 'Loading address map'),
@@ -143,7 +145,7 @@ class _AddressPinMapState extends State<AddressPinMap> {
           Semantics(
             liveRegion: true,
             child: const Text(
-              'The map is unavailable. You can still review or enter coordinates, or cancel and save a manual address.',
+              'The map is unavailable. Retry, confirm the selected pin, or cancel and save the address without a pin.',
             ),
           ),
           OutlinedButton(

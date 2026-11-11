@@ -95,6 +95,7 @@ void main() {
     WidgetTester tester, {
     bool mapsEnabled = true,
     double scale = 1,
+    bool savedPin = false,
   }) async {
     final loader = PsgcLoader(bundle: NcrAssets());
     final ncr = (await loader.regions()).firstWhere(
@@ -110,8 +111,8 @@ void main() {
           'barangay': 'Barangay 1',
           'postalCode': '1000',
           'country': 'Philippines',
-          'latitude': null,
-          'longitude': null,
+          'latitude': savedPin ? 14.6123456789 : null,
+          'longitude': savedPin ? 121.023456789 : null,
         });
     writes = [];
     final config = mapConfig(enabled: mapsEnabled);
@@ -200,6 +201,8 @@ void main() {
       tester,
     ) async {
       await open(tester, mapsEnabled: failure != 'disabled', scale: 2);
+      expect(find.text('Enter or edit coordinates'), findsNothing);
+      expect(find.textContaining('Confirmed pin:'), findsNothing);
       if (failure != 'disabled') {
         await tap(tester, 'Pin location or use GPS');
         expect(find.byType(MapPinDialog), findsOneWidget);
@@ -225,6 +228,33 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     });
   }
+
+  testWidgets(
+    'saved pin stays hidden, persists internally and can be removed',
+    (tester) async {
+      await open(tester, mapsEnabled: false, savedPin: true);
+      expect(find.text('Address pin confirmed'), findsOneWidget);
+      expect(find.textContaining('14.612'), findsNothing);
+      expect(find.textContaining('121.023'), findsNothing);
+      expect(find.text('Enter or edit coordinates'), findsNothing);
+      await tap(tester, 'Save address');
+      expect(writes.single['latitude'], 14.6123456789);
+      expect(writes.single['longitude'], 121.023456789);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
+  testWidgets('saved pin can be removed without displaying its values', (
+    tester,
+  ) async {
+    await open(tester, mapsEnabled: false, savedPin: true);
+    await tap(tester, 'Remove pin');
+    expect(find.text('Address pin confirmed'), findsNothing);
+    await tap(tester, 'Save address');
+    expect(writes.single['latitude'], isNull);
+    expect(writes.single['longitude'], isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
 
   testWidgets('unselected exact Barangay text blocks save and provider entry', (
     tester,

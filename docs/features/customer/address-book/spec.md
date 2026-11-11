@@ -68,8 +68,8 @@ Phone/tablet/desktop padding, natural content heights and keyboard/text resizing
   is a dropdown restricted to Philippines.
 - Pin location makes one intentional Philippines-filtered Geoapify request; no lookup on typing/cascade
   changes.
-- Review candidates, then show MapLibre tap/drag and numeric adjustment; explicitly confirm valid pairs.
-  Preparation failure exposes Retry and numeric/text fallback; see the MapLibre evidence for lifecycle limits.
+- Review candidate labels, then adjust the MapLibre pin by tap/drag or GPS and explicitly Confirm pin.
+  Never display or accept numeric coordinates; preparation failure offers Retry or text-address saving.
 - Changing location text clears stale coordinates; GPS choice never silently overwrites
   recipient/locality text.
 - Use current location requests foreground permission once per deliberate action and allows denial/text

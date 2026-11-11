@@ -211,16 +211,23 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.textContaining('save the address manually'), findsOneWidget);
       expect(find.text('Open location settings'), findsNothing);
-      await tester.enterText(find.byType(TextField).first, '14.6');
-      await tester.enterText(find.byType(TextField).last, '121');
-      await tap(tester, 'Confirm these coordinates');
+      expect(find.byType(TextField), findsNothing);
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, 'Confirm pin'),
+            )
+            .onPressed,
+        isNull,
+      );
+      await tap(tester, 'Cancel pin');
       await tester.pumpAndSettle();
-      expect(result!.latitude, 14.6);
+      expect(result, isNull);
     },
   );
 
   testWidgets(
-    'blocked GPS settings failure preserves numeric fallback and cancellation',
+    'blocked GPS settings failure preserves pin fallback and cancellation',
     (tester) async {
       maps.gpsFailure = const LocationChoiceFailure(
         'Permission blocked',
@@ -254,7 +261,7 @@ void main() {
       maps.gpsFailure = null;
       await tap(tester, 'Use current location');
       expect(find.textContaining('Permission denied'), findsNothing);
-      await tap(tester, 'Confirm these coordinates');
+      await tap(tester, 'Confirm pin');
       await tester.pumpAndSettle();
       expect(result!.latitude, adjusted.latitude);
     },
@@ -320,6 +327,8 @@ void main() {
       await tap(tester, 'Find this address on the map');
       expect(maps.geocodes, 1);
       expect(renderer.prepares, 0);
+      expect(find.textContaining('14.6'), findsNothing);
+      expect(find.textContaining('121'), findsNothing);
       await tap(tester, 'Saved pin');
       expect(maps.tilePoints.single.latitude, 14.6);
       expect(renderer.initial!.longitude, 121);
@@ -332,18 +341,49 @@ void main() {
       ); // Both tap and drag adapters report the same typed pair.
       await tester.pump();
       expect(renderer.moves.last.recenter, isFalse);
-      expect(
-        tester.widget<TextField>(find.byType(TextField).first).controller!.text,
-        '14.610000',
-      );
+      expect(find.byType(TextField), findsNothing);
+      expect(find.textContaining('14.61'), findsNothing);
+      expect(find.textContaining('121.02'), findsNothing);
       await tap(tester, 'Use current location');
       expect(renderer.moves.last.recenter, isTrue);
       expect(maps.geocodes, 1);
-      await tap(tester, 'Confirm these coordinates');
+      await tap(tester, 'Confirm pin');
       await tester.pumpAndSettle();
       expect(result!.latitude, adjusted.latitude);
       expect(result!.longitude, adjusted.longitude);
       expect(renderer.disposed, isTrue);
+    },
+  );
+
+  testWidgets(
+    'invalid map selections are ignored and pin precision is preserved',
+    (tester) async {
+      await open(tester, initial: saved);
+      renderer.ready!();
+      await tester.pump();
+      renderer.select!(
+        const GeoCandidate(
+          label: 'Invalid',
+          latitude: double.nan,
+          longitude: 121,
+        ),
+      );
+      renderer.select!(
+        const GeoCandidate(label: 'Invalid', latitude: 91, longitude: 121),
+      );
+      await tester.pump();
+      expect(renderer.moves, isEmpty);
+      const precise = GeoCandidate(
+        label: 'Adjusted pin',
+        latitude: 14.6123456789,
+        longitude: 121.023456789,
+      );
+      renderer.select!(precise);
+      await tester.pump();
+      await tap(tester, 'Confirm pin');
+      await tester.pumpAndSettle();
+      expect(result!.latitude, precise.latitude);
+      expect(result!.longitude, precise.longitude);
     },
   );
 
@@ -380,7 +420,7 @@ void main() {
   });
 
   testWidgets(
-    'tile failure keeps numeric inputs and deliberate retry uses a fresh renderer',
+    'tile failure keeps selected pin and deliberate retry uses a fresh renderer',
     (tester) async {
       maps.tileFails = true;
       final renderers = <FakeMap>[];
@@ -402,17 +442,12 @@ void main() {
       expect(renderers.last.builds, greaterThan(0));
       renderers.last.ready!();
       await tester.pump();
-      await tester.ensureVisible(find.byType(TextField).first);
-      await tester.enterText(find.byType(TextField).first, 'NaN');
-      await tap(tester, 'Confirm these coordinates');
-      expect(
-        find.text('Enter a finite, valid latitude and longitude pair.'),
-        findsOneWidget,
-      );
-      await tester.enterText(find.byType(TextField).first, '14.62');
-      await tap(tester, 'Confirm these coordinates');
+      expect(find.byType(TextField), findsNothing);
+      renderers.last.select!(adjusted);
+      await tester.pump();
+      await tap(tester, 'Confirm pin');
       await tester.pumpAndSettle();
-      expect(result!.latitude, 14.62);
+      expect(result!.latitude, adjusted.latitude);
     },
   );
 
@@ -433,7 +468,7 @@ void main() {
         await tester.pump();
         expect(find.text('Retry map'), findsOneWidget);
         expect(renderer.disposed, isTrue);
-        await tap(tester, 'Confirm these coordinates');
+        await tap(tester, 'Confirm pin');
         await tester.pumpAndSettle();
         expect(result!.longitude, 121);
       },
@@ -463,12 +498,14 @@ void main() {
         await tester.pump();
         expect(renderer.disposed, isTrue);
         expect(find.text('Synthetic map'), findsNothing);
+        expect(find.byType(TextField), findsNothing);
         expect(
           tester
-              .widget<TextField>(find.byType(TextField).first)
-              .controller!
-              .text,
-          isEmpty,
+              .widget<FilledButton>(
+                find.widgetWithText(FilledButton, 'Confirm pin'),
+              )
+              .onPressed,
+          isNull,
         );
         await tap(tester, 'Cancel pin');
         await tester.pumpAndSettle();
@@ -506,11 +543,16 @@ void main() {
     select(adjusted);
     await tap(tester, 'Find this address on the map');
     expect(maps.geocodes, 0);
+    expect(find.byType(TextField), findsNothing);
     expect(
-      tester.widget<TextField>(find.byType(TextField).first).controller!.text,
-      isEmpty,
+      tester
+          .widget<FilledButton>(
+            find.widgetWithText(FilledButton, 'Confirm pin'),
+          )
+          .onPressed,
+      isNull,
     );
-    await tap(tester, 'Confirm these coordinates');
+    await tap(tester, 'Cancel pin');
     await tester.pumpAndSettle();
     expect(result, isNull);
   });
@@ -523,7 +565,7 @@ void main() {
     expect(find.text('Retry map'), findsOneWidget);
     expect(renderer.prepares, 0);
     expect(renderer.disposed, isTrue);
-    await tap(tester, 'Confirm these coordinates');
+    await tap(tester, 'Confirm pin');
     await tester.pumpAndSettle();
     expect(result!.longitude, saved.longitude);
   });
@@ -549,14 +591,14 @@ void main() {
   });
 
   testWidgets(
-    'narrow doubled text and landscape retain reachable map and coordinate actions',
+    'narrow doubled text and landscape retain reachable map and pin actions',
     (tester) async {
       await open(tester, initial: saved, size: const Size(320, 480), scale: 2);
       renderer.ready!();
       await tester.pump();
       expect(tester.takeException(), isNull);
       await tap(tester, '© OpenMapTiles');
-      await tester.ensureVisible(find.byType(TextField).last);
+      await tester.ensureVisible(find.text('Confirm pin'));
       tester.view.physicalSize = const Size(844, 390);
       await tester.pump();
       expect(maps.tiles, 1);
