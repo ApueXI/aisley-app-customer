@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/app_dependencies.dart';
 import '../../../core/ui/responsive_layout.dart';
 import 'order_action_dialogs.dart';
+import 'order_preparation_panel.dart';
 import 'order_detail_controller.dart';
 import 'order_facts.dart';
 import 'order_timeline.dart';
@@ -170,6 +171,22 @@ class _OrderDetailScreenState extends State<OrderDetailScreen>
                           ),
                           child: const Text('View Shop'),
                         ),
+                      ),
+                    if (_controller.order!.preparation != null &&
+                        _controller.order!.status == 'seller_processing' &&
+                        _controller.order!.preparation!.acceptedAt != null)
+                      OrderPreparationPanel(
+                        preparation: _controller.order!.preparation!,
+                        canExtend: _controller.canExtendPreparation,
+                        onExtend: () async {
+                          final confirmed = await confirmPreparationExtension(
+                            context,
+                            _controller,
+                          );
+                          if (confirmed && mounted) {
+                            await _controller.extendPreparation();
+                          }
+                        },
                       ),
                     const SizedBox(height: 16),
                     Wrap(

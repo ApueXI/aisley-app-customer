@@ -6,6 +6,7 @@ import '../../checkout/data/commerce_address.dart';
 import '../../checkout/data/voucher_models.dart';
 import '../../checkout/data/shipping_models.dart';
 import 'tracking_models.dart';
+import 'order_preparation.dart';
 
 const orderGroups = [
   'to_pay',
@@ -36,11 +37,14 @@ class OrderActions {
   OrderActions.parse(Object? json) {
     final w = Wire(json);
     canCancel = w.boolean('canCancel');
+    canExtendPreparation = !w.data.containsKey('canExtendPreparation')
+        ? false
+        : w.boolean('canExtendPreparation');
     canModify = w.boolean('canModify');
     canReview = w.boolean('canReview');
     fields = w.strings('modifiableFields');
   }
-  late final bool canCancel, canModify, canReview;
+  late final bool canCancel, canModify, canReview, canExtendPreparation;
   late final List<String> fields;
 }
 
@@ -50,6 +54,10 @@ class BuyerOrder {
     id = w.uuid('id');
     reference = w.string('reference');
     batchId = nullableUuid(w, 'checkoutBatchId');
+    final rawPreparation = w.data['preparation'];
+    preparation = rawPreparation == null
+        ? null
+        : OrderPreparation.parse(rawPreparation);
     placedAt = requiredTime(w, 'placedAt');
     latestTrackingAt = requiredTime(w, 'latestTrackingAt');
     status = w.string('status');
@@ -110,13 +118,21 @@ class BuyerOrder {
   late final bool timelineHasMore, mapAvailable;
   late final OrderDelivery? delivery;
   late final OrderActions actions;
+  late final OrderPreparation? preparation;
+  bool get canExtendPreparation =>
+      supported &&
+      status == 'seller_processing' &&
+      paymentStatus == 'pending' &&
+      preparation != null &&
+      actions.canExtendPreparation;
   bool get supported =>
       orderStatuses.contains(status) &&
       orderGroups.contains(group) &&
       paymentMethod == 'cod';
   bool get canCancel =>
       supported &&
-      status == 'placed' &&
+      (status == 'placed' ||
+          (status == 'seller_processing' && preparation != null)) &&
       paymentStatus == 'pending' &&
       actions.canCancel;
   bool get canCorrect =>

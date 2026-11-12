@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import '../../../core/commerce/commerce_controller.dart';
 import '../../../core/networking/api_failure.dart';
 import '../../addresses/data/address_models.dart';
 import '../../addresses/data/address_repository.dart';
+
 import '../data/order_models.dart';
 import '../data/order_repository.dart';
 import '../data/tracking_models.dart';
@@ -30,6 +33,9 @@ class OrderDetailController extends CommerceController {
       addressesFresh = false;
   int _page = 0, _query = 0;
   String? pageError, addressError;
+  Timer? _deadlineTimer;
+  bool get canExtendPreparation =>
+      mutable && order?.canExtendPreparation == true;
   bool get mutable => !stale && !loading && mutations.canStart(id);
   bool get canCorrect => mutable && order?.canCorrect == true;
   bool get canCancel => mutable && order?.canCancel == true;
@@ -53,6 +59,22 @@ class OrderDetailController extends CommerceController {
       final value = await repository.detail(credential, id);
       if (!current(generation, credential) || query != _query) return;
       order = value;
+      _deadlineTimer?.cancel();
+      final preparation = value.preparation;
+      if (preparation != null &&
+          preparation.active &&
+          !preparation.overdue &&
+          preparation.deadlineAt != null) {
+        final remaining = preparation.deadlineAt!.difference(
+          preparation.serverTime,
+        );
+        _deadlineTimer = Timer(
+          remaining.isNegative
+              ? Duration.zero
+              : remaining + const Duration(milliseconds: 100),
+          load,
+        );
+      }
       // Start tracking pagination at page 1: the embedded preview may be shorter than 25.
       timeline = _merge(const [], value.timeline);
       _page = 0;
@@ -156,6 +178,12 @@ class OrderDetailController extends CommerceController {
     }
   }
 
+  Future<void> extendPreparation() async {
+    final value = order;
+    if (value == null || !canExtendPreparation) return;
+    await _after(mutations.extendPreparation(value, fresh: !stale));
+  }
+
   Future<void> cancel(String? reason) async {
     final value = order;
     if (value == null || !canCancel) return;
@@ -186,7 +214,14 @@ class OrderDetailController extends CommerceController {
   }
 
   @override
+  void dispose() {
+    _deadlineTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   void reset({required bool preserveUnresolved}) {
+    _deadlineTimer?.cancel();
     order = null;
     timeline = const [];
     addresses = const [];
