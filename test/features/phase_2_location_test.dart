@@ -11,7 +11,6 @@ import 'package:aisley_mobile_buyer/core/networking/api_failure.dart';
 import 'package:aisley_mobile_buyer/features/addresses/data/address_models.dart';
 import 'package:aisley_mobile_buyer/features/addresses/data/map_location_service.dart';
 import 'package:aisley_mobile_buyer/features/addresses/data/psgc_loader.dart';
-import 'package:aisley_mobile_buyer/features/addresses/presentation/coordinate_dialog.dart';
 import 'package:aisley_mobile_buyer/features/addresses/presentation/psgc_fields.dart';
 
 import '../support/fakes.dart';
@@ -377,42 +376,6 @@ void main() {
       expect(cityMenu.controller!.text, 'Saved city for review');
       expect(cityMenu.enabled, isFalse);
       await tester.pumpWidget(const SizedBox());
-    },
-  );
-  testWidgets(
-    'numeric coordinates require a valid pair and explicit confirmation',
-    (tester) async {
-      GeoCandidate? result;
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Builder(
-            builder: (context) => Scaffold(
-              body: TextButton(
-                onPressed: () async {
-                  result = await showDialog<GeoCandidate>(
-                    context: context,
-                    builder: (_) => const CoordinateDialog(),
-                  );
-                },
-                child: const Text('Coordinates'),
-              ),
-            ),
-          ),
-        ),
-      );
-      await tester.tap(find.text('Coordinates'));
-      await tester.pumpAndSettle();
-      final fields = find.byType(TextField);
-      await tester.enterText(fields.first, '14.6');
-      await tester.tap(find.text('Confirm'));
-      await tester.pumpAndSettle();
-      expect(result, isNull);
-      expect(find.byType(CoordinateDialog), findsOneWidget);
-      await tester.enterText(fields.last, '121');
-      await tester.tap(find.text('Confirm'));
-      await tester.pumpAndSettle();
-      expect(result!.latitude, 14.6);
-      expect(result!.longitude, 121);
     },
   );
   testWidgets(

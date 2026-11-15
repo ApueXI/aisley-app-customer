@@ -79,8 +79,8 @@ class OrderRepository {
     final value = BuyerOrder.parse(
       Wire(
         await api.request(
-          pending.correction ? 'PATCH' : 'POST',
-          'customer/orders/${requireUuid(pending.orderId)}/${pending.correction ? 'modification' : 'cancel'}',
+          pending.kind == OrderMutationKind.correction ? 'PATCH' : 'POST',
+          'customer/orders/${requireUuid(pending.orderId)}/${pending.kind.path}',
           lease: lease,
           body: pending.payload,
           idempotencyKey: pending.key,
@@ -88,14 +88,26 @@ class OrderRepository {
       ).object('data'),
     );
     if (value.id != pending.orderId ||
-        !pending.correction && value.status != 'cancelled' ||
-        pending.correction &&
+        pending.kind == OrderMutationKind.cancel &&
+            value.status != 'cancelled' ||
+        pending.kind == OrderMutationKind.correction &&
             value.address.version! <=
-                (pending.payload['expected_revision'] as int)) {
+                (pending.payload['expected_revision'] as int) ||
+        pending.kind == OrderMutationKind.extension &&
+            value.preparation?.extensionUsed != true) {
       throw const ApiFailure(FailureKind.decode);
     }
     return value;
   }
+}
+
+enum OrderMutationKind {
+  cancel('cancel'),
+  correction('modification'),
+  extension('preparation-extension');
+
+  const OrderMutationKind(this.path);
+  final String path;
 }
 
 class PendingOrderMutation {
@@ -105,11 +117,11 @@ class PendingOrderMutation {
     required Map<String, dynamic> payload,
     required this.customerId,
     required this.sessionGeneration,
-    required this.correction,
+    required this.kind,
   }) : payload = Map.unmodifiable(payload);
   final String orderId, key, customerId;
   final int sessionGeneration;
-  final bool correction;
+  final OrderMutationKind kind;
   final Map<String, dynamic> payload;
   @override
   String toString() => 'PendingOrderMutation';

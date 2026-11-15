@@ -49,7 +49,7 @@ Quote candidates contain voucher `id,name,code,issuerType,benefitType,valueType,
 | Wishlist save/remove | UUID route, no owner/pricing payload; PUT/DELETE are naturally idempotent |
 | Guest resolver | `productIds:[UUID]`, at most 12; public read through POST, no private history |
 | History merge | `items:[{productId,viewedAt?}]`, at most 12 by current config; timestamps not future and within configured age; malformed/duplicate input is validation, unavailable Products omitted |
-| Cancel | optional `reason` ≤500; UUID key; owned eligible `placed` Order |
+| Cancel | optional `reason` ≤500; UUID key; owned eligible placed or overdue processing Order |
 | Address correction | `address_id`, optional nullable integer `expected_revision` ≥1; UUID key; server state lock; recipient/contact only at identical trimmed location and seven-decimal pin, otherwise `422 ADDRESS_LOCATION_CHANGE_NOT_ALLOWED` |
 | Q&A create | `question`, UUID key; visible Product; current maximum 1,000 characters |
 | Review create | `rating` integer 1–5, `body` plain text ≤2,000; no UUID-header requirement; identical Order Item replay returns same Review, changed content conflicts |
@@ -105,3 +105,7 @@ The [B06 funding delta](legacy-voucher-funding.md) rejects unaffordable legacy S
 ## Combined consent contract
 
 `policy-consent-batch-v1` adds `POST /api/v1/policy-consent/accept` with `acceptances:[{type,version,confirmation:true}]` and response `data:{acceptances:PolicyAcceptance[],status:Consent}`. One or two pending shared types, atomic commit, exact-current checks and immutable idempotent timestamps; private/no-store. See the shared policy specification for actor checks, errors, and reconciliation.
+
+## Preparation deadline revision — 2026-11-12
+
+[order-preparation-v1](order-preparation.md) defines `POST /api/v1/customer/orders/{order}/preparation-extension`, UUID replay keys and empty JSON body, `200 {data:Order}`, added `preparation` fields/`actions.canExtendPreparation`, overdue-processing cancellation, authorization/errors and client adoption boundaries.

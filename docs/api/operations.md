@@ -386,7 +386,7 @@ Named types define all nested fields locally. Status201 replay semantics vary: S
 `POST /api/v1/customer/orders/{order}/cancel`
 
 - Access: Active Customer + consent.
-- Request: reason optional nullable string≤500; UUID header; placed COD only.
+- Request: reason optional nullable string≤500; UUID header; eligible placed or overdue processing COD only.
 - Response: HTTP 200; `{data:Order}`.
 - Retry: UUID Idempotency-Key required. Freeze payload/key; exact retry only after uncertain outcome. Changed intent uses a new key after reconciliation.
 - Notes: Only recipient/contact may change at identical trimmed location and seven-decimal pin; location changes return 422 ADDRESS_LOCATION_CHANGE_NOT_ALLOWED on address_id. Edited original rows are allowed; frozen prices/provider/routes stay unchanged.
@@ -1203,3 +1203,7 @@ Stable `voucher-collection-001` through `voucher-collection-007` in [operation i
 ### Atomic policy acceptance — policy-consent-batch-v1
 
 `POST /api/v1/policy-consent/accept` accepts one or two pending, explicitly confirmed current Terms/Privacy versions in one transaction. See the [shared policy contract](../features/shared/policy-viewing-consent/spec.md#combined-acceptance--policy-consent-batch-v1-2026-11-03) for exact JSON, response, authorization, conflict, cache and retry behavior. The single-policy operation remains compatible with older clients.
+
+## Preparation deadline revision — 2026-11-12
+
+[order-preparation-v1](order-preparation.md) defines `POST /api/v1/customer/orders/{order}/preparation-extension`, UUID replay keys and empty JSON body, `200 {data:Order}`, added `preparation` fields/`actions.canExtendPreparation`, overdue-processing cancellation, authorization/errors and client adoption boundaries.

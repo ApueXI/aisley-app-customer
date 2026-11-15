@@ -31,9 +31,19 @@ class OrderMutationController extends CommerceController {
     if (!fresh || !order.canCancel || !canStart(order.id)) return null;
     final text = reason?.trim();
     if (text != null && text.length > 500) return null;
-    return _begin(order, false, {
+    return _begin(order, OrderMutationKind.cancel, {
       'reason': text == null || text.isEmpty ? null : text,
     });
+  }
+
+  Future<BuyerOrder?> extendPreparation(
+    BuyerOrder order, {
+    required bool fresh,
+  }) async {
+    if (!fresh || !order.canExtendPreparation || !canStart(order.id)) {
+      return null;
+    }
+    return _begin(order, OrderMutationKind.extension, {});
   }
 
   Future<BuyerOrder?> correct(
@@ -49,7 +59,7 @@ class OrderMutationController extends CommerceController {
         !order.address.permitsContactCorrection(address)) {
       return null;
     }
-    return _begin(order, true, {
+    return _begin(order, OrderMutationKind.correction, {
       'address_id': address.id,
       'expected_revision': order.address.version,
     });
@@ -63,7 +73,7 @@ class OrderMutationController extends CommerceController {
       !_conflicts.contains(id);
   Future<BuyerOrder?> _begin(
     BuyerOrder order,
-    bool correction,
+    OrderMutationKind kind,
     Map<String, dynamic> payload,
   ) {
     _pending[order.id] = PendingOrderMutation(
@@ -72,7 +82,7 @@ class OrderMutationController extends CommerceController {
       payload: payload,
       customerId: session.customer!.id,
       sessionGeneration: session.generation,
-      correction: correction,
+      kind: kind,
     );
     return retry(order.id);
   }

@@ -49,8 +49,6 @@ class MapPinDialog extends StatefulWidget {
 }
 
 class _MapPinDialogState extends State<MapPinDialog> {
-  final _latitude = TextEditingController(),
-      _longitude = TextEditingController();
   GeoCandidate? _selected;
   List<GeoCandidate> _candidates = const [];
   int _epoch = 0, _recenterRevision = 0;
@@ -65,14 +63,11 @@ class _MapPinDialogState extends State<MapPinDialog> {
     super.initState();
     widget.dependencies.session.registerPrivateCleanup(_clearPrivate);
     _selected = _allowed ? widget.initial : null;
-    if (_selected != null) _writeCoordinates(_selected!);
   }
 
   @override
   void dispose() {
     widget.dependencies.session.unregisterPrivateCleanup(_clearPrivate);
-    _latitude.dispose();
-    _longitude.dispose();
     super.dispose();
   }
 
@@ -82,8 +77,6 @@ class _MapPinDialogState extends State<MapPinDialog> {
     _busy = false;
     _selected = null;
     _candidates = const [];
-    _latitude.clear();
-    _longitude.clear();
     _error = null;
     _settings = null;
     if (mounted) setState(() {});
@@ -131,7 +124,6 @@ class _MapPinDialogState extends State<MapPinDialog> {
             for (final candidate in _candidates)
               ListTile(
                 title: Text(candidate.label),
-                subtitle: Text('${candidate.latitude}, ${candidate.longitude}'),
                 trailing: const Icon(Icons.location_on_outlined),
                 onTap: () => _choose(candidate),
               ),
@@ -150,31 +142,12 @@ class _MapPinDialogState extends State<MapPinDialog> {
               ),
             ],
             const SizedBox(height: 12),
-            TextField(
-              controller: _latitude,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-                signed: true,
-              ),
-              decoration: const InputDecoration(
-                labelText: 'Latitude (−90 to 90)',
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _longitude,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-                signed: true,
-              ),
-              decoration: const InputDecoration(
-                labelText: 'Longitude (−180 to 180)',
-              ),
-            ),
             const SizedBox(height: 16),
             FilledButton(
-              onPressed: _busy || !_allowed ? null : _confirm,
-              child: const Text('Confirm these coordinates'),
+              onPressed: _busy || !_allowed || _selected == null
+                  ? null
+                  : _confirm,
+              child: const Text('Confirm pin'),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -278,11 +251,6 @@ class _MapPinDialogState extends State<MapPinDialog> {
     });
   }
 
-  void _writeCoordinates(GeoCandidate candidate) {
-    _latitude.text = candidate.latitude.toStringAsFixed(6);
-    _longitude.text = candidate.longitude.toStringAsFixed(6);
-  }
-
   void _choose(GeoCandidate candidate, {bool moveCamera = true}) {
     if (!mounted || !_allowed) return;
     setState(() {
@@ -290,7 +258,6 @@ class _MapPinDialogState extends State<MapPinDialog> {
       _error = null;
       _settings = null;
       if (moveCamera) _recenterRevision++;
-      _writeCoordinates(candidate);
     });
   }
 
@@ -299,16 +266,14 @@ class _MapPinDialogState extends State<MapPinDialog> {
       Navigator.pop(context);
       return;
     }
-    final latitude = double.tryParse(_latitude.text.trim()),
-        longitude = double.tryParse(_longitude.text.trim());
-    if (latitude == null ||
-        longitude == null ||
-        !latitude.isFinite ||
-        !longitude.isFinite ||
-        latitude.abs() > 90 ||
-        longitude.abs() > 180) {
+    final selected = _selected;
+    if (selected == null ||
+        !selected.latitude.isFinite ||
+        !selected.longitude.isFinite ||
+        selected.latitude.abs() > 90 ||
+        selected.longitude.abs() > 180) {
       setState(() {
-        _error = 'Enter a finite, valid latitude and longitude pair.';
+        _error = 'Choose a location on the map or use current location.';
         _settings = null;
       });
       return;
@@ -317,8 +282,8 @@ class _MapPinDialogState extends State<MapPinDialog> {
       context,
       GeoCandidate(
         label: 'Confirmed address pin',
-        latitude: latitude,
-        longitude: longitude,
+        latitude: selected.latitude,
+        longitude: selected.longitude,
       ),
     );
   }

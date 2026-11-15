@@ -7,7 +7,6 @@ import '../data/address_models.dart';
 import '../data/map_location_service.dart';
 import '../data/psgc_loader.dart';
 import 'address_controller.dart';
-import 'coordinate_dialog.dart';
 import 'map_pin_dialog.dart';
 import 'psgc_fields.dart';
 
@@ -288,19 +287,15 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
             }),
           ),
           if (_pin != null) ...[
-            Text('Confirmed pin: ${_pin!.latitude}, ${_pin!.longitude}'),
+            const Text('Address pin confirmed'),
             TextButton(
               onPressed: () => setState(() {
                 _pin = null;
                 _dirty = true;
               }),
-              child: const Text('Remove coordinates'),
+              child: const Text('Remove pin'),
             ),
           ],
-          OutlinedButton(
-            onPressed: _coordinates,
-            child: const Text('Enter or edit coordinates'),
-          ),
           if (widget.dependencies.config.mapsEnabled)
             OutlinedButton.icon(
               onPressed: _choosePin,
@@ -349,19 +344,6 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
           _controller.fieldErrors[key],
     ),
   );
-
-  Future<void> _coordinates() async {
-    final pin = await showDialog<GeoCandidate>(
-      context: context,
-      builder: (_) => CoordinateDialog(initial: _pin),
-    );
-    if (mounted && pin != null && widget.dependencies.session.active) {
-      setState(() {
-        _pin = pin;
-        _dirty = true;
-      });
-    }
-  }
 
   Future<void> _choosePin() async {
     // Search text is not a selected locality, even if every field is nonempty.

@@ -31,6 +31,13 @@
 
   <title>AISLEY Buyer</title>
   <link rel="manifest" href="manifest.json">
+  <style>
+    /* Keep SDK controls inside the platform view's Flutter paint order. */
+    .maplibregl-map {
+      isolation: isolate;
+      z-index: 0;
+    }
+  </style>
 </head>
 <body>
   <!--
